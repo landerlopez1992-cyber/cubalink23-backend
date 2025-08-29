@@ -704,3 +704,4 @@ def update_payment_settings():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+# Última actualización: Fri Aug 29 17:47:01 EDT 2025
