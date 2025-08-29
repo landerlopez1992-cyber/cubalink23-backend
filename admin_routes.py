@@ -942,3 +942,4 @@ def test_support_chat():
 
 # ===== ÚLTIMA ACTUALIZACIÓN =====
 # Última actualización: Wed Aug 29 17:55:00 CDT 2024
+# Deploy forzado: Fri Aug 29 18:00:30 EDT 2025
