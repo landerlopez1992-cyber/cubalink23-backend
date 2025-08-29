@@ -59,54 +59,150 @@ class SupabaseService:
             return False
     
     def get_products(self):
-        """Obtener todos los productos"""
+        """Obtener productos con imágenes"""
         try:
-            response = requests.get(
-                f'{self.supabase_url}/rest/v1/store_products',
-                headers=self.headers
-            )
-            return response.json() if response.status_code == 200 else []
+            response = requests.get(f'{self.supabase_url}/rest/v1/products?select=*', headers=self.headers)
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return []
         except Exception as e:
             print(f"Error getting products: {e}")
             return []
     
-    def add_product(self, product_data):
-        """Agregar nuevo producto"""
+    def add_product(self, data):
+        """Agregar producto con imagen"""
         try:
+            product_data = {
+                'name': data.get('name', ''),
+                'description': data.get('description', ''),
+                'price': float(data.get('price', 0)),
+                'category': data.get('category', ''),
+                'image_url': data.get('image_url', ''),
+                'stock': int(data.get('stock', 0)),
+                'active': data.get('active', True),
+                'created_at': datetime.now().isoformat()
+            }
+            
             response = requests.post(
-                f'{self.supabase_url}/rest/v1/store_products',
+                f'{self.supabase_url}/rest/v1/products',
                 headers=self.headers,
                 json=product_data
             )
-            return response.json() if response.status_code == 201 else None
+            
+            if response.status_code == 201:
+                return response.json()
+            else:
+                raise Exception(f"Error adding product: {response.text}")
         except Exception as e:
             print(f"Error adding product: {e}")
-            return None
+            raise e
     
-    def update_product(self, product_id, product_data):
+    def update_product(self, product_id, data):
         """Actualizar producto"""
         try:
             response = requests.patch(
-                f'{self.supabase_url}/rest/v1/store_products?id=eq.{product_id}',
+                f'{self.supabase_url}/rest/v1/products?id=eq.{product_id}',
                 headers=self.headers,
-                json=product_data
+                json=data
             )
-            return response.status_code == 204
+            
+            if response.status_code == 204:
+                return {'success': True}
+            else:
+                raise Exception(f"Error updating product: {response.text}")
         except Exception as e:
             print(f"Error updating product: {e}")
-            return False
+            raise e
     
     def delete_product(self, product_id):
         """Eliminar producto"""
         try:
             response = requests.delete(
-                f'{self.supabase_url}/rest/v1/store_products?id=eq.{product_id}',
+                f'{self.supabase_url}/rest/v1/products?id=eq.{product_id}',
                 headers=self.headers
             )
-            return response.status_code == 204
+            
+            if response.status_code == 204:
+                return True
+            else:
+                raise Exception(f"Error deleting product: {response.text}")
         except Exception as e:
             print(f"Error deleting product: {e}")
-            return False
+            raise e
+
+    # ===== GESTIÓN DE BANNERS PUBLICITARIOS =====
+    def get_banners(self):
+        """Obtener banners publicitarios"""
+        try:
+            response = requests.get(f'{self.supabase_url}/rest/v1/banners?select=*', headers=self.headers)
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return []
+        except Exception as e:
+            print(f"Error getting banners: {e}")
+            return []
+    
+    def add_banner(self, data):
+        """Agregar banner con imagen"""
+        try:
+            banner_data = {
+                'title': data.get('title', ''),
+                'description': data.get('description', ''),
+                'image_url': data.get('image_url', ''),
+                'banner_type': data.get('banner_type', 'welcome'),  # 'welcome' o 'flights'
+                'active': data.get('active', True),
+                'order': int(data.get('order', 0)),
+                'created_at': datetime.now().isoformat()
+            }
+            
+            response = requests.post(
+                f'{self.supabase_url}/rest/v1/banners',
+                headers=self.headers,
+                json=banner_data
+            )
+            
+            if response.status_code == 201:
+                return response.json()
+            else:
+                raise Exception(f"Error adding banner: {response.text}")
+        except Exception as e:
+            print(f"Error adding banner: {e}")
+            raise e
+    
+    def update_banner(self, banner_id, data):
+        """Actualizar banner"""
+        try:
+            response = requests.patch(
+                f'{self.supabase_url}/rest/v1/banners?id=eq.{banner_id}',
+                headers=self.headers,
+                json=data
+            )
+            
+            if response.status_code == 204:
+                return {'success': True}
+            else:
+                raise Exception(f"Error updating banner: {response.text}")
+        except Exception as e:
+            print(f"Error updating banner: {e}")
+            raise e
+    
+    def delete_banner(self, banner_id):
+        """Eliminar banner"""
+        try:
+            response = requests.delete(
+                f'{self.supabase_url}/rest/v1/banners?id=eq.{banner_id}',
+                headers=self.headers
+            )
+            
+            if response.status_code == 204:
+                return True
+            else:
+                raise Exception(f"Error deleting banner: {response.text}")
+        except Exception as e:
+            print(f"Error deleting banner: {e}")
+            raise e
     
     def get_orders(self):
         """Obtener todas las órdenes"""
@@ -254,7 +350,7 @@ class SupabaseService:
                 headers=self.headers
             )
             products_response = requests.get(
-                f'{self.supabase_url}/rest/v1/store_products?select=count',
+                f'{self.supabase_url}/rest/v1/products?select=count',
                 headers=self.headers
             )
             orders_response = requests.get(
