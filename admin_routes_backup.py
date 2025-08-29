@@ -333,374 +333,453 @@ def toggle_driver_status(driver_id):
         return jsonify({'error': str(e)}), 500
 
 # Nuevas rutas para vendedores
-
-
-# ===== SISTEMA DE CHAT DE SOPORTE =====
-@admin.route('/support-chat')
+@admin.route('/api/vendors/<int:vendor_id>/approve', methods=['POST'])
 @login_required
-def support_chat():
-    """Panel de chat de soporte"""
-    return render_template('admin/support_chat.html', config=ADMIN_CONFIG)
-
-@admin.route('/support-chat/active')
-@login_required
-def active_chats():
-    """Chats activos"""
-    return render_template('admin/active_chats.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/support-chats')
-@login_required
-def api_support_chats():
+def approve_vendor(vendor_id):
     try:
-        support_chats = [
-            {
-                'id': 1,
-                'user_id': 'user_123',
-                'user_name': 'Juan Pérez',
-                'user_type': 'customer',
-                'status': 'active',
-                'last_message': 'Necesito ayuda con mi pedido',
-                'last_message_time': '2024-01-15T10:30:00Z',
-                'unread_count': 2,
-                'created_at': '2024-01-15T09:15:00Z'
-            },
-            {
-                'id': 2,
-                'user_id': 'seller_456',
-                'user_name': 'María González',
-                'user_type': 'seller',
-                'status': 'waiting',
-                'last_message': '¿Cómo puedo subir productos?',
-                'last_message_time': '2024-01-15T10:25:00Z',
-                'unread_count': 1,
-                'created_at': '2024-01-15T09:30:00Z'
-            }
-        ]
-        return jsonify(support_chats)
+        # Lógica para aprobar vendedor
+        return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@admin.route('/api/support-chats/<int:chat_id>/messages')
+# Rutas para solicitudes de aprobación
+@admin.route('/approvals')
 @login_required
-def api_chat_messages(chat_id):
+def approvals():
+    return render_template('admin/approvals.html')
+
+@admin.route('/api/approvals')
+@login_required
+def api_approvals():
+    try:
+        approvals = [
+            {
+                'id': 1,
+                'type': 'vendor',
+                'name': 'María González',
+                'email': 'maria@example.com',
+                'status': 'pending',
+                'created_at': '2024-01-15T10:30:00Z'
+            },
+            {
+                'id': 2,
+                'type': 'driver',
+                'name': 'Luis Rodríguez',
+                'email': 'luis@example.com',
+                'status': 'pending',
+                'created_at': '2024-01-14T15:45:00Z'
+            }
+        ]
+        return jsonify(approvals)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== SISTEMA DE VENDEDORES =====
+@admin.route('/vendors')
+@login_required
+def vendors():
+    """Panel de gestión de vendedores"""
+    return render_template('admin/vendors.html', config=ADMIN_CONFIG)
+
+@admin.route('/vendors/pending')
+@login_required
+def pending_vendors():
+    """Vendedores pendientes de aprobación"""
+    return render_template('admin/pending_vendors.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/vendors/pending')
+@login_required
+def api_pending_vendors():
+    try:
+        pending_vendors = [
+            {
+                'id': 1,
+                'user_id': 'user_123',
+                'business_name': 'Tienda María',
+                'business_type': 'tienda',
+                'business_email': 'maria@tienda.com',
+                'business_phone': '+53 555 1234',
+                'profile_photo': 'https://example.com/photo.jpg',
+                'delivery_method': 'express',
+                'created_at': '2024-01-15T10:30:00Z',
+                'status': 'pending'
+            }
+        ]
+        return jsonify(pending_vendors)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/vendors/<int:vendor_id>/approve', methods=['POST'])
+@login_required
+def approve_vendor(vendor_id):
+    try:
+        # Lógica para aprobar vendedor
+        return jsonify({'success': True, 'message': 'Vendedor aprobado exitosamente'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/vendors/<int:vendor_id>/suspend', methods=['POST'])
+@login_required
+def suspend_vendor(vendor_id):
+    try:
+        # Lógica para suspender vendedor
+        return jsonify({'success': True, 'message': 'Vendedor suspendido temporalmente'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/vendors/<int:vendor_id>/block', methods=['POST'])
+@login_required
+def block_vendor(vendor_id):
+    try:
+        # Lógica para bloquear vendedor
+        return jsonify({'success': True, 'message': 'Vendedor bloqueado permanentemente'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== PRODUCTOS DE VENDEDORES =====
+@admin.route('/seller-products')
+@login_required
+def seller_products():
+    """Panel de productos de vendedores"""
+    return render_template('admin/seller_products.html', config=ADMIN_CONFIG)
+
+@admin.route('/seller-products/pending')
+@login_required
+def pending_products():
+    """Productos pendientes de aprobación"""
+    return render_template('admin/pending_products.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/seller-products/pending')
+@login_required
+def api_pending_products():
+    try:
+        pending_products = [
+            {
+                'id': 1,
+                'seller_id': 1,
+                'seller_name': 'Tienda María',
+                'name': 'Producto de Prueba',
+                'description': 'Descripción del producto',
+                'price': 25.99,
+                'category': 'Electrónicos',
+                'images': ['https://example.com/image1.jpg'],
+                'status': 'pending',
+                'created_at': '2024-01-15T10:30:00Z'
+            }
+        ]
+        return jsonify(pending_products)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/seller-products/<int:product_id>/approve', methods=['POST'])
+@login_required
+def approve_product(product_id):
+    try:
+        # Lógica para aprobar producto
+        return jsonify({'success': True, 'message': 'Producto aprobado exitosamente'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/seller-products/<int:product_id>/reject', methods=['POST'])
+@login_required
+def reject_product(product_id):
+    try:
+        data = request.json
+        reason = data.get('reason', 'No cumple con los estándares de calidad')
+        # Lógica para rechazar producto
+        return jsonify({'success': True, 'message': f'Producto rechazado: {reason}'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== SISTEMA DE REPARTIDORES =====
+@admin.route('/drivers')
+@login_required
+def drivers():
+    """Panel de gestión de repartidores"""
+    return render_template('admin/drivers.html', config=ADMIN_CONFIG)
+
+@admin.route('/drivers/active')
+@login_required
+def active_drivers():
+    """Repartidores activos"""
+    return render_template('admin/active_drivers.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/drivers')
+@login_required
+def api_drivers():
+    try:
+        drivers = [
+            {
+                'id': 1,
+                'user_id': 'user_456',
+                'name': 'Carlos López',
+                'vehicle_type': 'motorcycle',
+                'vehicle_plate': 'ABC123',
+                'rating': 4.8,
+                'total_deliveries': 150,
+                'total_earnings': 1250.75,
+                'wallet_balance': 350.25,
+                'payment_method': 'per_delivery',
+                'is_available': True,
+                'profile_photo': 'https://example.com/driver.jpg',
+                'status': 'active'
+            }
+        ]
+        return jsonify(drivers)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/drivers/<int:driver_id>/set-payment', methods=['POST'])
+@login_required
+def set_driver_payment(driver_id):
+    try:
+        data = request.json
+        payment_method = data.get('payment_method')
+        rate = data.get('rate')
+        # Lógica para configurar método de pago
+        return jsonify({'success': True, 'message': 'Método de pago actualizado'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== ENTREGAS =====
+@admin.route('/deliveries')
+@login_required
+def deliveries():
+    """Panel de gestión de entregas"""
+    return render_template('admin/deliveries.html', config=ADMIN_CONFIG)
+
+@admin.route('/deliveries/pending')
+@login_required
+def pending_deliveries():
+    """Entregas pendientes"""
+    return render_template('admin/pending_deliveries.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/deliveries/pending')
+@login_required
+def api_pending_deliveries():
+    try:
+        pending_deliveries = [
+            {
+                'id': 1,
+                'order_id': 'order_123',
+                'customer_name': 'Juan Pérez',
+                'pickup_location': 'Tienda Centro',
+                'delivery_location': 'Calle 23 #456',
+                'estimated_time': 30,
+                'status': 'pending',
+                'created_at': '2024-01-15T10:30:00Z'
+            }
+        ]
+        return jsonify(pending_deliveries)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== SISTEMA DE RENTA CAR =====
+@admin.route('/vehicles')
+@login_required
+def vehicles():
+    """Panel de gestión de vehículos"""
+    return render_template('admin/vehicles.html', config=ADMIN_CONFIG)
+
+@admin.route('/vehicles/add')
+@login_required
+def add_vehicle():
+    """Agregar vehículo"""
+    return render_template('admin/add_vehicle.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/vehicles')
+@login_required
+def api_vehicles():
+    try:
+        vehicles = [
+            {
+                'id': 1,
+                'vehicle_type': 'sedan',
+                'brand': 'Toyota',
+                'model': 'Corolla',
+                'year': 2023,
+                'license_plate': 'XYZ789',
+                'daily_rate': 85.00,
+                'weekly_rate': 500.00,
+                'high_season_rate': 120.00,
+                'fuel_full_tank_price': 45.00,
+                'min_rental_days': 1,
+                'max_rental_days': 30,
+                'is_available': True,
+                'images': ['https://example.com/car1.jpg'],
+                'commission_amount': 50.00
+            }
+        ]
+        return jsonify(vehicles)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/vehicles', methods=['POST'])
+@login_required
+def create_vehicle():
+    try:
+        data = request.json
+        # Lógica para crear vehículo
+        return jsonify({'success': True, 'message': 'Vehículo agregado exitosamente'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== RESERVAS DE RENTA CAR =====
+@admin.route('/rentals')
+@login_required
+def rentals():
+    """Panel de gestión de reservas"""
+    return render_template('admin/rentals.html', config=ADMIN_CONFIG)
+
+@admin.route('/rentals/active')
+@login_required
+def active_rentals():
+    """Reservas activas"""
+    return render_template('admin/active_rentals.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/rentals')
+@login_required
+def api_rentals():
+    try:
+        rentals = [
+            {
+                'id': 1,
+                'user_id': 'user_789',
+                'customer_name': 'Ana García',
+                'vehicle_id': 1,
+                'vehicle_info': 'Toyota Corolla 2023',
+                'pickup_date': '2022024-01-20',
+                'return_date': '2024-01-25',
+                'total_amount': 425.00,
+                'commission_amount': 50.00,
+                'status': 'confirmed',
+                'created_at': '2024-01-15T10:30:00Z'
+            }
+        ]
+        return jsonify(rentals)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== SISTEMA DE ALERTAS DINGCONNECT =====
+@admin.route('/alerts')
+@login_required
+def alerts():
+    """Panel de alertas del sistema"""
+    return render_template('admin/alerts.html', config=ADMIN_CONFIG)
+
+@admin.route('/alerts/dingconnect')
+@login_required
+def dingconnect_alerts():
+    """Alertas específicas de DingConnect"""
+    return render_template('admin/dingconnect_alerts.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/alerts')
+@login_required
+def api_alerts():
+    try:
+        alerts = [
+            {
+                'id': 1,
+                'alert_type': 'dingconnect_balance',
+                'title': 'Saldo bajo en DingConnect',
+                'message': 'El saldo de DingConnect está por debajo del mínimo requerido',
+                'severity': 'high',
+                'is_resolved': False,
+                'affected_records': ['recharge_123', 'recharge_456'],
+                'created_at': '2024-01-15T10:30:00Z'
+            },
+            {
+                'id': 2,
+                'alert_type': 'api_error',
+                'title': 'Error en API de recargas',
+                'message': 'Error de conexión con DingConnect API',
+                'severity': 'critical',
+                'is_resolved': False,
+                'affected_records': ['recharge_789'],
+                'created_at': '2024-01-15T09:15:00Z'
+            }
+        ]
+        return jsonify(alerts)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/alerts/<int:alert_id>/resolve', methods=['POST'])
+@login_required
+def resolve_alert(alert_id):
+    try:
+        # Lógica para resolver alerta
+        return jsonify({'success': True, 'message': 'Alerta resuelta exitosamente'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== RECARGAS FALLIDAS =====
+@admin.route('/recharges/failed')
+@login_required
+def failed_recharges():
+    """Recargas fallidas"""
+    return render_template('admin/failed_recharges.html', config=ADMIN_CONFIG)
+
+@admin.route('/recharges/pending')
+@login_required
+def pending_recharges():
+    """Recargas pendientes"""
+    return render_template('admin/pending_recharges.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/recharges/failed')
+@login_required
+def api_failed_recharges():
+    try:
+        failed_recharges = [
+            {
+                'id': 1,
+                'user_id': 'user_123',
+                'customer_name': 'Pedro López',
+                'phone_number': '+53 555 1234',
+                'amount': 10.00,
+                'provider': 'Cubacel',
+                'status': 'failed',
+                'internal_status': 'api_error',
+                'error_message': 'Saldo insuficiente en DingConnect',
+                'created_at': '2024-01-15T10:30:00Z'
+            }
+        ]
+        return jsonify(failed_recharges)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== MENSAJES DEL SISTEMA =====
+@admin.route('/system-messages')
+@login_required
+def system_messages():
+    """Panel de mensajes del sistema"""
+    return render_template('admin/system_messages.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/system-messages')
+@login_required
+def api_system_messages():
     try:
         messages = [
             {
                 'id': 1,
-                'chat_id': chat_id,
-                'sender_type': 'user',
-                'sender_name': 'Juan Pérez',
-                'message': 'Hola, necesito ayuda con mi pedido #12345',
-                'timestamp': '2024-01-15T09:15:00Z',
-                'is_read': True
-            },
-            {
-                'id': 2,
-                'chat_id': chat_id,
-                'sender_type': 'admin',
-                'sender_name': 'Soporte',
-                'message': 'Hola Juan, ¿en qué puedo ayudarte con tu pedido?',
-                'timestamp': '2024-01-15T09:16:00Z',
-                'is_read': True
+                'recipient_type': 'seller',
+                'recipient_name': 'María González',
+                'subject': 'Producto rechazado',
+                'message': 'Su producto "Producto de Prueba" ha sido rechazado por no cumplir con los estándares de calidad.',
+                'is_read': False,
+                'created_at': '2024-01-15T10:30:00Z'
             }
         ]
         return jsonify(messages)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@admin.route('/api/support-chats/<int:chat_id>/send-message', methods=['POST'])
+@admin.route('/api/system-messages', methods=['POST'])
 @login_required
-def send_support_message(chat_id):
+def send_system_message():
     try:
         data = request.json
-        message = data.get('message', '')
+        # Lógica para enviar mensaje del sistema
         return jsonify({'success': True, 'message': 'Mensaje enviado exitosamente'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@admin.route('/api/support-stats')
-@login_required
-def api_support_stats():
-    try:
-        stats = {
-            'total_chats': 25,
-            'active_chats': 8,
-            'waiting_chats': 5,
-            'resolved_chats': 12,
-            'avg_response_time': '2.5 minutos',
-            'satisfaction_rate': 4.8
-        }
-        return jsonify(stats)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== SISTEMA DE BILLETERA DIGITAL =====
-@admin.route('/wallet')
-@login_required
-def wallet_management():
-    """Panel de gestión de billetera digital"""
-    return render_template('admin/wallet.html', config=ADMIN_CONFIG)
-
-@admin.route('/wallet/transactions')
-@login_required
-def wallet_transactions():
-    """Transacciones de billetera"""
-    return render_template('admin/wallet_transactions.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/wallet/transactions')
-@login_required
-def api_wallet_transactions():
-    try:
-        transactions = [
-            {
-                'id': 1,
-                'from_user': 'Juan Pérez',
-                'to_user': 'María González',
-                'amount': 50.00,
-                'type': 'transfer', # transfer, payment, withdrawal, deposit
-                'status': 'completed',
-                'description': 'Transferencia entre usuarios',
-                'created_at': '2024-01-15T10:30:00Z'
-            },
-            {
-                'id': 2,
-                'user': 'Carlos López',
-                'amount': 25.00,
-                'type': 'payment',
-                'status': 'completed',
-                'description': 'Pago de servicio de entrega',
-                'created_at': '2024-01-15T09:15:00Z'
-            },
-            {
-                'id': 3,
-                'user': 'Ana García',
-                'amount': 100.00,
-                'type': 'withdrawal',
-                'status': 'pending',
-                'description': 'Retiro a tarjeta bancaria',
-                'created_at': '2024-01-15T08:45:00Z'
-            }
-        ]
-        return jsonify(transactions)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/wallet/balance/<user_id>')
-@login_required
-def api_wallet_balance(user_id):
-    try:
-        balance = {
-            'user_id': user_id,
-            'user_name': 'Juan Pérez',
-            'balance': 250.75,
-            'pending_balance': 50.00,
-            'total_transactions': 45,
-            'last_transaction': '2024-01-15T10:30:00Z'
-        }
-        return jsonify(balance)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== SISTEMA DE MÉTODOS DE PAGO =====
-@admin.route('/payment-methods')
-@login_required
-def payment_methods():
-    """Panel de gestión de métodos de pago"""
-    return render_template('admin/payment_methods.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/payment-methods')
-@login_required
-def api_payment_methods():
-    try:
-        payment_methods = [
-            {
-                'id': 1,
-                'name': 'CASH',
-                'type': 'cash',
-                'is_active': True,
-                'available_for': ['sellers', 'drivers'], # sellers, drivers, customers
-                'description': 'Pago en efectivo',
-                'commission_rate': 0.0,
-                'min_amount': 0.0,
-                'max_amount': 10000.0
-            },
-            {
-                'id': 2,
-                'name': 'Tarjeta de Crédito/Débito',
-                'type': 'card',
-                'is_active': True,
-                'available_for': ['sellers', 'drivers', 'customers'],
-                'description': 'Pago con tarjeta bancaria',
-                'commission_rate': 2.5,
-                'min_amount': 1.0,
-                'max_amount': 5000.0
-            },
-            {
-                'id': 3,
-                'name': 'Transferencia Bancaria',
-                'type': 'bank_transfer',
-                'is_active': True,
-                'available_for': ['sellers', 'drivers'],
-                'description': 'Transferencia directa a cuenta bancaria',
-                'commission_rate': 1.0,
-                'min_amount': 10.0,
-                'max_amount': 10000.0
-            }
-        ]
-        return jsonify(payment_methods)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/payment-methods/<int:method_id>/toggle', methods=['POST'])
-@login_required
-def toggle_payment_method(method_id):
-    try:
-        data = request.json
-        is_active = data.get('is_active', False)
-        
-        # Lógica para activar/desactivar método de pago
-        return jsonify({
-            'success': True, 
-            'message': f'Método de pago {"activado" if is_active else "desactivado"} exitosamente'
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/payment-methods/<int:method_id>/update', methods=['POST'])
-@login_required
-def update_payment_method(method_id):
-    try:
-        data = request.json
-        
-        # Lógica para actualizar método de pago
-        return jsonify({
-            'success': True, 
-            'message': 'Método de pago actualizado exitosamente'
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== SALARIOS Y PAGOS =====
-@admin.route('/payroll')
-@login_required
-def payroll():
-    """Panel de nómina y pagos"""
-    return render_template('admin/payroll.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/payroll/sellers')
-@login_required
-def api_seller_payroll():
-    try:
-        seller_payments = [
-            {
-                'id': 1,
-                'seller_name': 'María González',
-                'total_sales': 1250.00,
-                'commission_rate': 10.0,
-                'commission_amount': 125.00,
-                'payment_method': 'CASH',
-                'status': 'pending',
-                'created_at': '2024-01-15T10:30:00Z'
-            },
-            {
-                'id': 2,
-                'seller_name': 'Pedro López',
-                'total_sales': 850.00,
-                'commission_rate': 10.0,
-                'commission_amount': 85.00,
-                'payment_method': 'card',
-                'status': 'completed',
-                'created_at': '2024-01-15T09:15:00Z'
-            }
-        ]
-        return jsonify(seller_payments)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/payroll/drivers')
-@login_required
-def api_driver_payroll():
-    try:
-        driver_payments = [
-            {
-                'id': 1,
-                'driver_name': 'Carlos López',
-                'total_deliveries': 25,
-                'payment_method': 'per_delivery',
-                'rate_per_delivery': 5.00,
-                'total_amount': 125.00,
-                'payment_method': 'CASH',
-                'status': 'pending',
-                'created_at': '2024-01-15T10:30:00Z'
-            },
-            {
-                'id': 2,
-                'driver_name': 'Luis Rodríguez',
-                'total_deliveries': 18,
-                'payment_method': 'per_km',
-                'total_km': 150,
-                'rate_per_km': 0.50,
-                'total_amount': 75.00,
-                'payment_method': 'card',
-                'status': 'completed',
-                'created_at': '2024-01-15T09:15:00Z'
-            }
-        ]
-        return jsonify(driver_payments)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/payroll/approve/<int:payment_id>', methods=['POST'])
-@login_required
-def approve_payment(payment_id):
-    try:
-        data = request.json
-        payment_method = data.get('payment_method', 'CASH')
-        
-        # Lógica para aprobar pago
-        return jsonify({
-            'success': True, 
-            'message': f'Pago aprobado exitosamente por {payment_method}'
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== CONFIGURACIÓN DE PAGOS =====
-@admin.route('/payment-settings')
-@login_required
-def payment_settings():
-    """Configuración de pagos"""
-    return render_template('admin/payment_settings.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/payment-settings')
-@login_required
-def api_payment_settings():
-    try:
-        settings = {
-            'cash_enabled': True,
-            'card_enabled': True,
-            'bank_transfer_enabled': True,
-            'min_cash_amount': 10.0,
-            'max_cash_amount': 1000.0,
-            'card_commission': 2.5,
-            'bank_transfer_commission': 1.0,
-            'auto_approve_cash': False,
-            'require_admin_approval_cash': True
-        }
-        return jsonify(settings)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/payment-settings/update', methods=['POST'])
-@login_required
-def update_payment_settings():
-    try:
-        data = request.json
-        
-        # Lógica para actualizar configuración
-        return jsonify({
-            'success': True, 
-            'message': 'Configuración de pagos actualizada exitosamente'
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
