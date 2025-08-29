@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billetera Digital - {{ config.app_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar { min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .main-content { background-color: #f8f9fa; min-height: 100vh; }
+        .card { border: none; border-radius: 15px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .transaction-card { transition: transform 0.2s; }
+        .transaction-card:hover { transform: translateY(-2px); }
+        .amount-positive { color: #28a745; }
+        .amount-negative { color: #dc3545; }
+        .amount-neutral { color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar p-0">
+                <div class="p-3 text-white">
+                    <h4><i class="fas fa-wallet"></i> {{ config.app_name }}</h4>
+                    <hr>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/vendors"><i class="fas fa-store"></i> Vendedores</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/drivers"><i class="fas fa-motorcycle"></i> Repartidores</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/vehicles"><i class="fas fa-car"></i> Renta Car</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/support-chat"><i class="fas fa-headset"></i> Chat de Soporte</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/alerts"><i class="fas fa-exclamation-triangle"></i> Alertas</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white active" href="/admin/wallet"><i class="fas fa-wallet"></i> Billetera</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/payment-methods"><i class="fas fa-credit-card"></i> Métodos de Pago</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/payroll"><i class="fas fa-money-bill-wave"></i> Nómina</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <div class="p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h2><i class="fas fa-wallet"></i> Billetera Digital</h2>
+                            <p class="text-muted">Gestión de transacciones y saldos</p>
+                        </div>
+                        <div>
+                            <a href="/admin/wallet/transactions" class="btn btn-info"><i class="fas fa-list"></i> Ver Transacciones</a>
+                            <a href="/admin/payment-methods" class="btn btn-success"><i class="fas fa-credit-card"></i> Métodos de Pago</a>
+                        </div>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="total-transactions">0</h4>
+                                            <p class="mb-0">Total Transacciones</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-exchange-alt fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="total-volume">$0</h4>
+                                            <p class="mb-0">Volumen Total</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-dollar-sign fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="pending-transactions">0</h4>
+                                            <p class="mb-0">Pendientes</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-clock fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="active-users">0</h4>
+                                            <p class="mb-0">Usuarios Activos</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-users fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Transactions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-history"></i> Transacciones Recientes</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Usuario</th>
+                                            <th>Tipo</th>
+                                            <th>Monto</th>
+                                            <th>Descripción</th>
+                                            <th>Estado</th>
+                                            <th>Fecha</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="transactions-table">
+                                        <!-- Transactions will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTransactions();
+        });
+
+        function loadTransactions() {
+            fetch('/admin/api/wallet/transactions')
+                .then(response => response.json())
+                .then(data => {
+                    displayTransactions(data);
+                    updateStats(data);
+                })
+                .catch(error => {
+                    console.error('Error loading transactions:', error);
+                    showAlert('Error cargando transacciones', 'danger');
+                });
+        }
+
+        function displayTransactions(transactions) {
+            const tableBody = document.getElementById('transactions-table');
+            tableBody.innerHTML = '';
+
+            transactions.forEach(transaction => {
+                const row = document.createElement('tr');
+                row.className = 'transaction-card';
+                
+                const amountClass = getAmountClass(transaction.type, transaction.amount);
+                const typeIcon = getTransactionTypeIcon(transaction.type);
+                const statusBadge = getStatusBadge(transaction.status);
+
+                row.innerHTML = `
+                    <td>
+                        <div>
+                            <strong>${transaction.from_user || transaction.user}</strong>
+                            ${transaction.to_user ? `<br><small class="text-muted">→ ${transaction.to_user}</small>` : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <i class="${typeIcon}"></i>
+                        ${getTransactionTypeLabel(transaction.type)}
+                    </td>
+                    <td>
+                        <span class="${amountClass}">
+                            <strong>$${transaction.amount}</strong>
+                        </span>
+                    </td>
+                    <td>
+                        <small>${transaction.description}</small>
+                    </td>
+                    <td>
+                        ${statusBadge}
+                    </td>
+                    <td>
+                        <small>${formatTime(transaction.created_at)}</small>
+                    </td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewTransaction(${transaction.id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            ${transaction.status === 'pending' ? 
+                                `<button class="btn btn-sm btn-outline-success" onclick="approveTransaction(${transaction.id})">
+                                    <i class="fas fa-check"></i>
+                                </button>` : ''
+                            }
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function getAmountClass(type, amount) {
+            if (type === 'withdrawal') return 'amount-negative';
+            if (type === 'deposit') return 'amount-positive';
+            if (type === 'transfer') return 'amount-neutral';
+            if (type === 'payment') return 'amount-negative';
+            return 'amount-neutral';
+        }
+
+        function getTransactionTypeIcon(type) {
+            const icons = {
+                'transfer': 'fas fa-exchange-alt',
+                'payment': 'fas fa-credit-card',
+                'withdrawal': 'fas fa-arrow-down',
+                'deposit': 'fas fa-arrow-up'
+            };
+            return icons[type] || 'fas fa-money-bill';
+        }
+
+        function getTransactionTypeLabel(type) {
+            const labels = {
+                'transfer': 'Transferencia',
+                'payment': 'Pago',
+                'withdrawal': 'Retiro',
+                'deposit': 'Depósito'
+            };
+            return labels[type] || type;
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'completed': '<span class="badge bg-success">Completado</span>',
+                'pending': '<span class="badge bg-warning">Pendiente</span>',
+                'failed': '<span class="badge bg-danger">Fallido</span>',
+                'cancelled': '<span class="badge bg-secondary">Cancelado</span>'
+            };
+            return badges[status] || '<span class="badge bg-secondary">Desconocido</span>';
+        }
+
+        function updateStats(transactions) {
+            document.getElementById('total-transactions').textContent = transactions.length;
+            
+            const totalVolume = transactions.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+            document.getElementById('total-volume').textContent = '$' + totalVolume.toFixed(2);
+            
+            document.getElementById('pending-transactions').textContent = transactions.filter(t => t.status === 'pending').length;
+        }
+
+        function viewTransaction(transactionId) {
+            // Implementar vista detallada de transacción
+            showAlert('Funcionalidad en desarrollo', 'info');
+        }
+
+        function approveTransaction(transactionId) {
+            if (confirm('¿Estás seguro de que quieres aprobar esta transacción?')) {
+                fetch(`/admin/api/wallet/transactions/${transactionId}/approve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('Transacción aprobada exitosamente', 'success');
+                        loadTransactions();
+                    } else {
+                        showAlert('Error aprobando transacción', 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('Error aprobando transacción', 'danger');
+                });
+            }
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString('es-ES');
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+            document.body.appendChild(alertDiv);
+            setTimeout(() => { alertDiv.remove(); }, 5000);
+        }
+    </script>
+</body>
+</html>

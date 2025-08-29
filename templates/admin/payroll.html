@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nómina y Pagos - {{ config.app_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar { min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .main-content { background-color: #f8f9fa; min-height: 100vh; }
+        .card { border: none; border-radius: 15px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .payment-card { transition: transform 0.2s; }
+        .payment-card:hover { transform: translateY(-2px); }
+        .amount-positive { color: #28a745; }
+        .amount-pending { color: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar p-0">
+                <div class="p-3 text-white">
+                    <h4><i class="fas fa-money-bill-wave"></i> {{ config.app_name }}</h4>
+                    <hr>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/vendors"><i class="fas fa-store"></i> Vendedores</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/drivers"><i class="fas fa-motorcycle"></i> Repartidores</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/vehicles"><i class="fas fa-car"></i> Renta Car</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/support-chat"><i class="fas fa-headset"></i> Chat de Soporte</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/alerts"><i class="fas fa-exclamation-triangle"></i> Alertas</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/wallet"><i class="fas fa-wallet"></i> Billetera</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/payment-methods"><i class="fas fa-credit-card"></i> Métodos de Pago</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white active" href="/admin/payroll"><i class="fas fa-money-bill-wave"></i> Nómina</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <div class="p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h2><i class="fas fa-money-bill-wave"></i> Nómina y Pagos</h2>
+                            <p class="text-muted">Gestiona pagos a vendedores y repartidores</p>
+                        </div>
+                        <div>
+                            <button class="btn btn-success" onclick="generatePayroll()">
+                                <i class="fas fa-calculator"></i> Generar Nómina
+                            </button>
+                            <button class="btn btn-primary" onclick="bulkApprovePayments()">
+                                <i class="fas fa-check-double"></i> Aprobar Todo
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="total-payments">$0</h4>
+                                            <p class="mb-0">Total a Pagar</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-dollar-sign fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="pending-payments">0</h4>
+                                            <p class="mb-0">Pagos Pendientes</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-clock fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="completed-payments">0</h4>
+                                            <p class="mb-0">Pagos Completados</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-check-circle fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="total-workers">0</h4>
+                                            <p class="mb-0">Trabajadores</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-users fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <ul class="nav nav-tabs mb-4" id="payrollTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="sellers-tab" data-bs-toggle="tab" data-bs-target="#sellers" type="button" role="tab">
+                                <i class="fas fa-store"></i> Vendedores
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="drivers-tab" data-bs-toggle="tab" data-bs-target="#drivers" type="button" role="tab">
+                                <i class="fas fa-motorcycle"></i> Repartidores
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content" id="payrollTabContent">
+                        <!-- Sellers Tab -->
+                        <div class="tab-pane fade show active" id="sellers" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-store"></i> Pagos a Vendedores</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Vendedor</th>
+                                                    <th>Ventas</th>
+                                                    <th>Comisión</th>
+                                                    <th>Método de Pago</th>
+                                                    <th>Estado</th>
+                                                    <th>Fecha</th>
+                                                    <th>Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="sellers-payments-table">
+                                                <!-- Sellers payments will be loaded here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Drivers Tab -->
+                        <div class="tab-pane fade" id="drivers" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-motorcycle"></i> Pagos a Repartidores</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Repartidor</th>
+                                                    <th>Entregas</th>
+                                                    <th>Ganancias</th>
+                                                    <th>Método de Pago</th>
+                                                    <th>Estado</th>
+                                                    <th>Fecha</th>
+                                                    <th>Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="drivers-payments-table">
+                                                <!-- Drivers payments will be loaded here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Method Modal -->
+    <div class="modal fade" id="paymentMethodModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Seleccionar Método de Pago</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="payment-method-form">
+                        <div class="mb-3">
+                            <label class="form-label">Método de Pago</label>
+                            <select class="form-select" id="payment-method-select" required>
+                                <option value="">Selecciona un método</option>
+                                <option value="CASH">CASH</option>
+                                <option value="card">Tarjeta de Crédito/Débito</option>
+                                <option value="bank_transfer">Transferencia Bancaria</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Monto a Pagar</label>
+                            <input type="text" class="form-control" id="payment-amount" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Notas (opcional)</label>
+                            <textarea class="form-control" id="payment-notes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmPayment()">Confirmar Pago</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentPaymentId = null;
+        let currentPaymentAmount = 0;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSellerPayments();
+            loadDriverPayments();
+        });
+
+        function loadSellerPayments() {
+            fetch('/admin/api/payroll/sellers')
+                .then(response => response.json())
+                .then(data => {
+                    displaySellerPayments(data);
+                    updateStats();
+                })
+                .catch(error => {
+                    console.error('Error loading seller payments:', error);
+                    showAlert('Error cargando pagos de vendedores', 'danger');
+                });
+        }
+
+        function loadDriverPayments() {
+            fetch('/admin/api/payroll/drivers')
+                .then(response => response.json())
+                .then(data => {
+                    displayDriverPayments(data);
+                    updateStats();
+                })
+                .catch(error => {
+                    console.error('Error loading driver payments:', error);
+                    showAlert('Error cargando pagos de repartidores', 'danger');
+                });
+        }
+
+        function displaySellerPayments(payments) {
+            const tableBody = document.getElementById('sellers-payments-table');
+            tableBody.innerHTML = '';
+
+            payments.forEach(payment => {
+                const row = document.createElement('tr');
+                row.className = 'payment-card';
+                
+                const statusBadge = getPaymentStatusBadge(payment.status);
+                const methodBadge = getPaymentMethodBadge(payment.payment_method);
+
+                row.innerHTML = `
+                    <td>
+                        <strong>${payment.seller_name}</strong><br>
+                        <small class="text-muted">ID: ${payment.id}</small>
+                    </td>
+                    <td>
+                        <strong>$${payment.total_sales}</strong><br>
+                        <small class="text-muted">Comisión: ${payment.commission_rate}%</small>
+                    </td>
+                    <td>
+                        <span class="amount-positive">
+                            <strong>$${payment.commission_amount}</strong>
+                        </span>
+                    </td>
+                    <td>${methodBadge}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <small>${formatTime(payment.created_at)}</small>
+                    </td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            ${payment.status === 'pending' ? 
+                                `<button class="btn btn-sm btn-outline-success" onclick="approvePayment(${payment.id}, ${payment.commission_amount}, 'seller')">
+                                    <i class="fas fa-check"></i> Aprobar
+                                </button>` : 
+                                `<button class="btn btn-sm btn-outline-secondary" disabled>
+                                    <i class="fas fa-check"></i> Pagado
+                                </button>`
+                            }
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function displayDriverPayments(payments) {
+            const tableBody = document.getElementById('drivers-payments-table');
+            tableBody.innerHTML = '';
+
+            payments.forEach(payment => {
+                const row = document.createElement('tr');
+                row.className = 'payment-card';
+                
+                const statusBadge = getPaymentStatusBadge(payment.status);
+                const methodBadge = getPaymentMethodBadge(payment.payment_method);
+
+                row.innerHTML = `
+                    <td>
+                        <strong>${payment.driver_name}</strong><br>
+                        <small class="text-muted">ID: ${payment.id}</small>
+                    </td>
+                    <td>
+                        <strong>${payment.total_deliveries}</strong><br>
+                        <small class="text-muted">${payment.payment_method === 'per_delivery' ? 'Por entrega' : 'Por km'}</small>
+                    </td>
+                    <td>
+                        <span class="amount-positive">
+                            <strong>$${payment.total_amount}</strong>
+                        </span>
+                    </td>
+                    <td>${methodBadge}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <small>${formatTime(payment.created_at)}</small>
+                    </td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            ${payment.status === 'pending' ? 
+                                `<button class="btn btn-sm btn-outline-success" onclick="approvePayment(${payment.id}, ${payment.total_amount}, 'driver')">
+                                    <i class="fas fa-check"></i> Aprobar
+                                </button>` : 
+                                `<button class="btn btn-sm btn-outline-secondary" disabled>
+                                    <i class="fas fa-check"></i> Pagado
+                                </button>`
+                            }
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function getPaymentStatusBadge(status) {
+            const badges = {
+                'pending': '<span class="badge bg-warning">Pendiente</span>',
+                'completed': '<span class="badge bg-success">Completado</span>',
+                'failed': '<span class="badge bg-danger">Fallido</span>'
+            };
+            return badges[status] || '<span class="badge bg-secondary">Desconocido</span>';
+        }
+
+        function getPaymentMethodBadge(method) {
+            const badges = {
+                'CASH': '<span class="badge bg-success">CASH</span>',
+                'card': '<span class="badge bg-primary">Tarjeta</span>',
+                'bank_transfer': '<span class="badge bg-info">Transferencia</span>'
+            };
+            return badges[method] || '<span class="badge bg-secondary">Desconocido</span>';
+        }
+
+        function approvePayment(paymentId, amount, type) {
+            currentPaymentId = paymentId;
+            currentPaymentAmount = amount;
+            
+            document.getElementById('payment-amount').value = '$' + amount;
+            document.getElementById('payment-method-select').value = '';
+            document.getElementById('payment-notes').value = '';
+            
+            new bootstrap.Modal(document.getElementById('paymentMethodModal')).show();
+        }
+
+        function confirmPayment() {
+            const paymentMethod = document.getElementById('payment-method-select').value;
+            const notes = document.getElementById('payment-notes').value;
+            
+            if (!paymentMethod) {
+                showAlert('Por favor selecciona un método de pago', 'warning');
+                return;
+            }
+
+            fetch(`/admin/api/payroll/approve/${currentPaymentId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    payment_method: paymentMethod,
+                    notes: notes
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Pago aprobado exitosamente', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('paymentMethodModal')).hide();
+                    loadSellerPayments();
+                    loadDriverPayments();
+                } else {
+                    showAlert('Error aprobando pago', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Error aprobando pago', 'danger');
+            });
+        }
+
+        function generatePayroll() {
+            if (confirm('¿Estás seguro de que quieres generar la nómina para este período?')) {
+                fetch('/admin/api/payroll/generate', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('Nómina generada exitosamente', 'success');
+                        loadSellerPayments();
+                        loadDriverPayments();
+                    } else {
+                        showAlert('Error generando nómina', 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('Error generando nómina', 'danger');
+                });
+            }
+        }
+
+        function bulkApprovePayments() {
+            if (confirm('¿Estás seguro de que quieres aprobar todos los pagos pendientes?')) {
+                fetch('/admin/api/payroll/bulk-approve', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('Pagos aprobados exitosamente', 'success');
+                        loadSellerPayments();
+                        loadDriverPayments();
+                    } else {
+                        showAlert('Error aprobando pagos', 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('Error aprobando pagos', 'danger');
+                });
+            }
+        }
+
+        function updateStats() {
+            // Esta función se actualizará cuando tengamos datos reales
+            // Por ahora usamos valores de ejemplo
+            document.getElementById('total-payments').textContent = '$1,250.00';
+            document.getElementById('pending-payments').textContent = '8';
+            document.getElementById('completed-payments').textContent = '12';
+            document.getElementById('total-workers').textContent = '20';
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString('es-ES');
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+            document.body.appendChild(alertDiv);
+            setTimeout(() => { alertDiv.remove(); }, 5000);
+        }
+    </script>
+</body>
+</html>

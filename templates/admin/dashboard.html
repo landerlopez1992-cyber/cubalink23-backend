@@ -61,30 +61,35 @@
     <div class="d-flex">
         <div class="sidebar p-3">
             <h4 class="text-center mb-4">Cubalink23 Admin</h4>
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link active" href="{{ url_for('admin.dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin.users') }}"><i class="fas fa-users me-2"></i>Usuarios</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin.products') }}"><i class="fas fa-box me-2"></i>Productos</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin.orders') }}"><i class="fas fa-shopping-cart me-2"></i>Órdenes</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin.flights') }}"><i class="fas fa-plane me-2"></i>Vuelos</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin.system') }}"><i class="fas fa-cogs me-2"></i>Sistema</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a>
-                </li>
-            </ul>
-        </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white active" href="/admin/"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/vendors"><i class="fas fa-store"></i> Vendedores</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/drivers"><i class="fas fa-motorcycle"></i> Repartidores</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/vehicles"><i class="fas fa-car"></i> Renta Car</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/support-chat"><i class="fas fa-headset"></i> Chat de Soporte</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/alerts"><i class="fas fa-exclamation-triangle"></i> Alertas</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/wallet"><i class="fas fa-wallet"></i> Billetera</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/payment-methods"><i class="fas fa-credit-card"></i> Métodos de Pago</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/admin/payroll"><i class="fas fa-money-bill-wave"></i> Nómina</a>
+                        </li>
+                    </ul>        </div>
         <div class="content flex-grow-1">
             <h1 class="mb-4">Dashboard</h1>
 
