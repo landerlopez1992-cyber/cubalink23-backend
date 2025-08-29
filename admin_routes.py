@@ -229,7 +229,7 @@ def toggle_user_status(user_id):
     try:
         data = request.json
         blocked = data.get('blocked', False)
-        success = supabase_service.update_user_status(user_id, blocked)
+        success = supabase_service.toggle_user_status(user_id, blocked)
         return jsonify({'success': success})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -263,6 +263,59 @@ def update_order_status(order_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# ===== GESTIÓN DE VUELOS =====
+@admin.route('/flights')
+@require_auth
+def flights():
+    """Gestión de vuelos y rutas"""
+    return render_template('admin/flights.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/flights')
+@require_auth
+def get_flights():
+    """Obtener vuelos desde Duffel API"""
+    try:
+        # Simular datos de vuelos (en realidad vendrían de Duffel API)
+        flights = [
+            {
+                'id': '1',
+                'origin': 'MIA',
+                'destination': 'HAV',
+                'airline': 'American Airlines',
+                'departure': '2024-01-15T10:00:00Z',
+                'arrival': '2024-01-15T11:30:00Z',
+                'price': 450,
+                'seats': 156
+            },
+            {
+                'id': '2',
+                'origin': 'MVD',
+                'destination': 'MIA',
+                'airline': 'LATAM',
+                'departure': '2024-01-16T14:00:00Z',
+                'arrival': '2024-01-16T18:30:00Z',
+                'price': 380,
+                'seats': 89
+            }
+        ]
+        return jsonify(flights)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/routes')
+@require_auth
+def get_routes():
+    """Obtener rutas populares"""
+    try:
+        routes = [
+            {'route': 'MIA-HAV', 'searches': 156},
+            {'route': 'MVD-MIA', 'searches': 89},
+            {'route': 'LAX-HAV', 'searches': 67}
+        ]
+        return jsonify(routes)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # ===== CONFIGURACIÓN DEL SISTEMA =====
 @admin.route('/system')
 @require_auth
@@ -288,60 +341,6 @@ def update_config():
         data = request.json
         config = supabase_service.update_app_config(data)
         return jsonify(config)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== GESTIÓN DE VUELOS Y RUTAS =====
-@admin.route('/flights')
-@require_auth
-def flights():
-    """Gestión de vuelos y rutas"""
-    return render_template('admin/flights.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/flights')
-@require_auth
-def get_flights():
-    """Obtener vuelos desde Duffel API"""
-    try:
-        # Simular datos de vuelos (en realidad vendrían de Duffel API)
-        flights = [
-            {
-                'id': '1',
-                'origin': 'MIA',
-                'destination': 'HAV',
-                'airline': 'American Airlines',
-                'departure_time': '2024-01-15 10:30:00',
-                'arrival_time': '2024-01-15 11:45:00',
-                'price': 299.99,
-                'status': 'active'
-            },
-            {
-                'id': '2',
-                'origin': 'MVD',
-                'destination': 'MIA',
-                'airline': 'LATAM',
-                'departure_time': '2024-01-16 14:20:00',
-                'arrival_time': '2024-01-16 18:30:00',
-                'price': 450.00,
-                'status': 'active'
-            }
-        ]
-        return jsonify(flights)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/routes')
-@require_auth
-def get_routes():
-    """Obtener rutas populares"""
-    try:
-        routes = [
-            {'route': 'MIA-HAV', 'searches': 156, 'bookings': 23},
-            {'route': 'MVD-MIA', 'searches': 89, 'bookings': 12},
-            {'route': 'LAX-HAV', 'searches': 67, 'bookings': 8},
-            {'route': 'MIA-MVD', 'searches': 45, 'bookings': 6}
-        ]
-        return jsonify(routes)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -581,14 +580,152 @@ def update_advanced_config():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# ===== RUTAS ORIGINALES QUE FALTAN =====
 
+# ===== GESTIÓN DE USUARIOS =====
+@admin.route('/users')
+@require_auth
+def users():
+    """Gestión de usuarios"""
+    return render_template('admin/users.html', config=ADMIN_CONFIG)
 
-# ===== NUEVAS FUNCIONALIDADES AGREGADAS =====
-# ===== SISTEMA DE VENDEDORES =====
+@admin.route('/api/users', methods=['GET'])
+def get_users():
+    """Obtener usuarios desde Supabase"""
+    try:
+        users = supabase_service.get_users()
+        return jsonify(users)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/users/<user_id>/toggle', methods=['POST'])
+def toggle_user_status(user_id):
+    """Bloquear/desbloquear usuario"""
+    try:
+        data = request.json
+        blocked = data.get('blocked', False)
+        success = supabase_service.toggle_user_status(user_id, blocked)
+        return jsonify({'success': success})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== GESTIÓN DE ÓRDENES =====
+@admin.route('/orders')
+@require_auth
+def orders():
+    """Gestión de órdenes"""
+    return render_template('admin/orders.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/orders')
+@require_auth
+def get_orders():
+    """Obtener órdenes desde Supabase"""
+    try:
+        orders = supabase_service.get_orders()
+        return jsonify(orders)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/orders/<order_id>/status', methods=['PUT'])
+@require_auth
+def update_order_status(order_id):
+    """Actualizar estado de orden"""
+    try:
+        data = request.json
+        status = data.get('status')
+        success = supabase_service.update_order_status(order_id, status)
+        return jsonify({'success': success})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== GESTIÓN DE VUELOS =====
+@admin.route('/flights')
+@require_auth
+def flights():
+    """Gestión de vuelos y rutas"""
+    return render_template('admin/flights.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/flights')
+@require_auth
+def get_flights():
+    """Obtener vuelos desde Duffel API"""
+    try:
+        # Simular datos de vuelos (en realidad vendrían de Duffel API)
+        flights = [
+            {
+                'id': '1',
+                'origin': 'MIA',
+                'destination': 'HAV',
+                'airline': 'American Airlines',
+                'departure': '2024-01-15T10:00:00Z',
+                'arrival': '2024-01-15T11:30:00Z',
+                'price': 450,
+                'seats': 156
+            },
+            {
+                'id': '2',
+                'origin': 'MVD',
+                'destination': 'MIA',
+                'airline': 'LATAM',
+                'departure': '2024-01-16T14:00:00Z',
+                'arrival': '2024-01-16T18:30:00Z',
+                'price': 380,
+                'seats': 89
+            }
+        ]
+        return jsonify(flights)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/routes')
+@require_auth
+def get_routes():
+    """Obtener rutas populares"""
+    try:
+        routes = [
+            {'route': 'MIA-HAV', 'searches': 156},
+            {'route': 'MVD-MIA', 'searches': 89},
+            {'route': 'LAX-HAV', 'searches': 67}
+        ]
+        return jsonify(routes)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== CONFIGURACIÓN DEL SISTEMA =====
+@admin.route('/system')
+@require_auth
+def system():
+    """Configuración del sistema"""
+    return render_template('admin/system.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/config')
+@require_auth
+def get_config():
+    """Obtener configuración de la app"""
+    try:
+        config = supabase_service.get_app_config()
+        return jsonify(config)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/config', methods=['PUT'])
+@require_auth
+def update_config():
+    """Actualizar configuración de la app"""
+    try:
+        data = request.json
+        config = supabase_service.update_app_config(data)
+        return jsonify(config)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== NUEVAS FUNCIONALIDADES =====
+
+# ===== GESTIÓN DE VENDEDORES =====
 @admin.route('/vendors')
 @require_auth
 def vendors():
-    """Panel de gestión de vendedores"""
+    """Gestión de vendedores"""
     return render_template('admin/vendors.html', config=ADMIN_CONFIG)
 
 @admin.route('/vendors/pending')
@@ -597,34 +734,12 @@ def pending_vendors():
     """Vendedores pendientes de aprobación"""
     return render_template('admin/pending_vendors.html', config=ADMIN_CONFIG)
 
-@admin.route('/api/vendors')
+@admin.route('/api/vendors/pending')
 @require_auth
-def api_vendors():
+def get_pending_vendors():
+    """Obtener vendedores pendientes"""
     try:
-        vendors = [
-            {
-                'id': 1,
-                'business_name': 'María González',
-                'business_type': 'Restaurante',
-                'business_email': 'maria@restaurante.com',
-                'business_phone': '+53 5 123 4567',
-                'delivery_method': 'express',
-                'status': 'approved',
-                'wallet_balance': 250.75,
-                'profile_photo': 'https://picsum.photos/200'
-            },
-            {
-                'id': 2,
-                'business_name': 'Pedro López',
-                'business_type': 'Tienda',
-                'business_email': 'pedro@tienda.com',
-                'business_phone': '+53 5 987 6543',
-                'delivery_method': 'auto_entrega',
-                'status': 'pending',
-                'wallet_balance': 0.00,
-                'profile_photo': 'https://picsum.photos/201'
-            }
-        ]
+        vendors = supabase_service.get_pending_vendors()
         return jsonify(vendors)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -632,32 +747,38 @@ def api_vendors():
 @admin.route('/api/vendors/<int:vendor_id>/approve', methods=['POST'])
 @require_auth
 def approve_vendor(vendor_id):
+    """Aprobar vendedor"""
     try:
-        return jsonify({'success': True, 'message': 'Vendedor aprobado exitosamente'})
+        success = supabase_service.approve_vendor(vendor_id)
+        return jsonify({'success': success})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @admin.route('/api/vendors/<int:vendor_id>/suspend', methods=['POST'])
 @require_auth
 def suspend_vendor(vendor_id):
+    """Suspender vendedor"""
     try:
-        return jsonify({'success': True, 'message': 'Vendedor suspendido exitosamente'})
+        success = supabase_service.suspend_vendor(vendor_id)
+        return jsonify({'success': success})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @admin.route('/api/vendors/<int:vendor_id>/block', methods=['POST'])
 @require_auth
 def block_vendor(vendor_id):
+    """Bloquear vendedor"""
     try:
-        return jsonify({'success': True, 'message': 'Vendedor bloqueado exitosamente'})
+        success = supabase_service.block_vendor(vendor_id)
+        return jsonify({'success': success})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ===== SISTEMA DE REPARTIDORES =====
+# ===== GESTIÓN DE REPARTIDORES =====
 @admin.route('/drivers')
 @require_auth
 def drivers():
-    """Panel de gestión de repartidores"""
+    """Gestión de repartidores"""
     return render_template('admin/drivers.html', config=ADMIN_CONFIG)
 
 @admin.route('/drivers/active')
@@ -668,45 +789,31 @@ def active_drivers():
 
 @admin.route('/api/drivers')
 @require_auth
-def api_drivers():
+def get_drivers():
+    """Obtener repartidores"""
     try:
-        drivers = [
-            {
-                'id': 1,
-                'name': 'Carlos López',
-                'user_id': 'user_123',
-                'vehicle_type': 'motorcycle',
-                'vehicle_plate': 'ABC-123',
-                'rating': 4.8,
-                'total_deliveries': 45,
-                'total_earnings': 225.00,
-                'wallet_balance': 75.50,
-                'is_available': True,
-                'profile_photo': 'https://picsum.photos/202'
-            },
-            {
-                'id': 2,
-                'name': 'Luis Rodríguez',
-                'user_id': 'user_124',
-                'vehicle_type': 'car',
-                'vehicle_plate': 'XYZ-789',
-                'rating': 4.6,
-                'total_deliveries': 32,
-                'total_earnings': 160.00,
-                'wallet_balance': 45.25,
-                'is_available': False,
-                'profile_photo': 'https://picsum.photos/203'
-            }
-        ]
+        drivers = supabase_service.get_drivers()
         return jsonify(drivers)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ===== SISTEMA DE RENTA CAR =====
+@admin.route('/api/drivers/<int:driver_id>/set-payment', methods=['POST'])
+@require_auth
+def set_driver_payment(driver_id):
+    """Configurar método de pago del repartidor"""
+    try:
+        data = request.json
+        payment_method = data.get('payment_method')
+        success = supabase_service.set_driver_payment_method(driver_id, payment_method)
+        return jsonify({'success': success})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== GESTIÓN DE RENTA CAR =====
 @admin.route('/vehicles')
 @require_auth
 def vehicles():
-    """Panel de gestión de vehículos"""
+    """Gestión de vehículos"""
     return render_template('admin/vehicles.html', config=ADMIN_CONFIG)
 
 @admin.route('/vehicles/add')
@@ -717,229 +824,219 @@ def add_vehicle():
 
 @admin.route('/api/vehicles')
 @require_auth
-def api_vehicles():
+def get_vehicles():
+    """Obtener vehículos"""
     try:
-        vehicles = [
-            {
-                'id': 1,
-                'brand': 'Toyota',
-                'model': 'Corolla',
-                'year': 2022,
-                'license_plate': 'ABC-123',
-                'transmission': 'Automático',
-                'seats': 5,
-                'fuel_type': 'Gasolina',
-                'vehicle_type': 'Sedán',
-                'daily_rate': 50.00,
-                'weekly_rate': 300.00,
-                'high_season_rate': 75.00,
-                'is_available': True,
-                'min_rental_days': 1,
-                'max_rental_days': 30,
-                'commission_amount': 50.00,
-                'images': ['https://picsum.photos/300/200']
-            }
-        ]
+        vehicles = supabase_service.get_vehicles()
         return jsonify(vehicles)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ===== SISTEMA DE BILLETERA DIGITAL =====
-@admin.route('/wallet')
+@admin.route('/api/vehicles', methods=['POST'])
 @require_auth
-def wallet_management():
-    """Panel de gestión de billetera digital"""
-    return render_template('admin/wallet.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/wallet/transactions')
-@require_auth
-def api_wallet_transactions():
+def add_vehicle_api():
+    """Agregar vehículo via API"""
     try:
-        transactions = [
-            {
-                'id': 1,
-                'from_user': 'Juan Pérez',
-                'to_user': 'María González',
-                'amount': 50.00,
-                'type': 'transfer',
-                'status': 'completed',
-                'description': 'Transferencia entre usuarios',
-                'created_at': '2024-01-15T10:30:00Z'
-            }
-        ]
-        return jsonify(transactions)
+        data = request.json
+        vehicle = supabase_service.add_vehicle(data)
+        return jsonify(vehicle)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ===== SISTEMA DE MÉTODOS DE PAGO =====
-@admin.route('/payment-methods')
+@admin.route('/rentals')
 @require_auth
-def payment_methods():
-    """Panel de gestión de métodos de pago"""
-    return render_template('admin/payment_methods.html', config=ADMIN_CONFIG)
+def rentals():
+    """Gestión de alquileres"""
+    return render_template('admin/rentals.html', config=ADMIN_CONFIG)
 
-@admin.route('/api/payment-methods')
+@admin.route('/rentals/active')
 @require_auth
-def api_payment_methods():
+def active_rentals():
+    """Alquileres activos"""
+    return render_template('admin/active_rentals.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/rentals')
+@require_auth
+def get_rentals():
+    """Obtener alquileres"""
     try:
-        payment_methods = [
-            {
-                'id': 1,
-                'name': 'CASH',
-                'type': 'cash',
-                'is_active': True,
-                'available_for': ['sellers', 'drivers'],
-                'description': 'Pago en efectivo',
-                'commission_rate': 0.0,
-                'min_amount': 0.0,
-                'max_amount': 10000.0
-            },
-            {
-                'id': 2,
-                'name': 'Tarjeta de Crédito/Débito',
-                'type': 'card',
-                'is_active': True,
-                'available_for': ['sellers', 'drivers', 'customers'],
-                'description': 'Pago con tarjeta bancaria',
-                'commission_rate': 2.5,
-                'min_amount': 1.0,
-                'max_amount': 5000.0
-            }
-        ]
-        return jsonify(payment_methods)
+        rentals = supabase_service.get_rentals()
+        return jsonify(rentals)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ===== SISTEMA DE NÓMINA =====
-@admin.route('/payroll')
-@require_auth
-def payroll():
-    """Panel de nómina y pagos"""
-    return render_template('admin/payroll.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/payroll/sellers')
-@require_auth
-def api_seller_payroll():
-    try:
-        seller_payments = [
-            {
-                'id': 1,
-                'seller_name': 'María González',
-                'total_sales': 1250.00,
-                'commission_rate': 10.0,
-                'commission_amount': 125.00,
-                'payment_method': 'CASH',
-                'status': 'pending',
-                'created_at': '2024-01-15T10:30:00Z'
-            }
-        ]
-        return jsonify(seller_payments)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== SISTEMA DE ALERTAS =====
+# ===== GESTIÓN DE ALERTAS =====
 @admin.route('/alerts')
 @require_auth
 def alerts():
-    """Panel de alertas del sistema"""
+    """Gestión de alertas"""
     return render_template('admin/alerts.html', config=ADMIN_CONFIG)
+
+@admin.route('/alerts/dingconnect')
+@require_auth
+def dingconnect_alerts():
+    """Alertas de DingConnect"""
+    return render_template('admin/dingconnect_alerts.html', config=ADMIN_CONFIG)
 
 @admin.route('/api/alerts')
 @require_auth
-def api_alerts():
+def get_alerts():
+    """Obtener alertas"""
     try:
-        alerts = [
-            {
-                'id': 1,
-                'title': 'Saldo DingConnect Bajo',
-                'message': 'El saldo de DingConnect es insuficiente para procesar recargas',
-                'severity': 'critical',
-                'alert_type': 'dingconnect_balance',
-                'is_resolved': False,
-                'created_at': '2024-01-15T10:30:00Z',
-                'affected_records': []
-            }
-        ]
+        alerts = supabase_service.get_alerts()
         return jsonify(alerts)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ===== SISTEMA DE CHAT DE SOPORTE =====
-@admin.route('/support-chat')
+@admin.route('/api/alerts/<int:alert_id>/resolve', methods=['POST'])
 @require_auth
-def support_chat():
-    """Panel de chat de soporte"""
-    return render_template('admin/support_chat.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/support-chats')
-@require_auth
-def api_support_chats():
+def resolve_alert(alert_id):
+    """Resolver alerta"""
     try:
-        chats = [
-            {
-                'id': 1,
-                'user_name': 'Juan Pérez',
-                'user_type': 'customer',
-                'last_message': 'Necesito ayuda con mi pedido',
-                'last_message_time': '2024-01-15T10:30:00Z',
-                'status': 'active',
-                'unread_count': 2
-            }
-        ]
-        return jsonify(chats)
+        success = supabase_service.resolve_alert(alert_id)
+        return jsonify({'success': success})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ===== ÚLTIMA ACTUALIZACIÓN =====
-# Última actualización: Wed Aug 29 17:45:00 CDT 2024
-
-
-# ===== RUTA TEMPORAL PARA TESTING =====
-@admin.route('/test')
-def test_dashboard():
-    """Ruta temporal para testing sin autenticación"""
-    return render_template('admin/dashboard.html', config=ADMIN_CONFIG)
-
-@admin.route('/test/vendors')
-def test_vendors():
-    """Ruta temporal para testing sin autenticación"""
-    return render_template('admin/vendors.html', config=ADMIN_CONFIG)
-
-@admin.route('/test/drivers')
-def test_drivers():
-    """Ruta temporal para testing sin autenticación"""
-    return render_template('admin/drivers.html', config=ADMIN_CONFIG)
-
-@admin.route('/test/vehicles')
-def test_vehicles():
-    """Ruta temporal para testing sin autenticación"""
-    return render_template('admin/vehicles.html', config=ADMIN_CONFIG)
-
-@admin.route('/test/wallet')
-def test_wallet():
-    """Ruta temporal para testing sin autenticación"""
-    return render_template('admin/wallet.html', config=ADMIN_CONFIG)
-
-@admin.route('/test/payment-methods')
-def test_payment_methods():
-    """Ruta temporal para testing sin autenticación"""
-    return render_template('admin/payment_methods.html', config=ADMIN_CONFIG)
-
-@admin.route('/test/payroll')
-def test_payroll():
-    """Ruta temporal para testing sin autenticación"""
-    return render_template('admin/payroll.html', config=ADMIN_CONFIG)
-
-@admin.route('/test/alerts')
-def test_alerts():
-    """Ruta temporal para testing sin autenticación"""
-    return render_template('admin/alerts.html', config=ADMIN_CONFIG)
-
-@admin.route('/test/support-chat')
-def test_support_chat():
-    """Ruta temporal para testing sin autenticación"""
+# ===== CHAT DE SOPORTE =====
+@admin.route('/support-chat')
+@require_auth
+def support_chat():
+    """Chat de soporte al cliente"""
     return render_template('admin/support_chat.html', config=ADMIN_CONFIG)
 
-# ===== ÚLTIMA ACTUALIZACIÓN =====
-# Última actualización: Wed Aug 29 17:55:00 CDT 2024
-# Deploy forzado: Fri Aug 29 18:00:30 EDT 2025
+@admin.route('/api/support-chat/conversations')
+@require_auth
+def get_support_conversations():
+    """Obtener conversaciones de soporte"""
+    try:
+        conversations = supabase_service.get_support_conversations()
+        return jsonify(conversations)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/support-chat/conversations/<int:conversation_id>/messages')
+@require_auth
+def get_support_messages(conversation_id):
+    """Obtener mensajes de una conversación"""
+    try:
+        messages = supabase_service.get_support_messages(conversation_id)
+        return jsonify(messages)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/support-chat/conversations/<int:conversation_id>/send', methods=['POST'])
+@require_auth
+def send_support_message(conversation_id):
+    """Enviar mensaje de soporte"""
+    try:
+        data = request.json
+        message = supabase_service.send_support_message(conversation_id, data)
+        return jsonify(message)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== BILLETERA DIGITAL =====
+@admin.route('/wallet')
+@require_auth
+def wallet():
+    """Gestión de billetera digital"""
+    return render_template('admin/wallet.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/wallet/balance')
+@require_auth
+def get_wallet_balance():
+    """Obtener balance de billetera"""
+    try:
+        balance = supabase_service.get_wallet_balance()
+        return jsonify(balance)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/wallet/transactions')
+@require_auth
+def get_wallet_transactions():
+    """Obtener transacciones de billetera"""
+    try:
+        transactions = supabase_service.get_wallet_transactions()
+        return jsonify(transactions)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/wallet/transfer', methods=['POST'])
+@require_auth
+def transfer_wallet():
+    """Transferir entre usuarios"""
+    try:
+        data = request.json
+        transfer = supabase_service.transfer_wallet(data)
+        return jsonify(transfer)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== MÉTODOS DE PAGO =====
+@admin.route('/payment-methods')
+@require_auth
+def payment_methods():
+    """Gestión de métodos de pago"""
+    return render_template('admin/payment_methods.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/payment-settings')
+@require_auth
+def get_payment_settings():
+    """Obtener configuración de pagos"""
+    try:
+        settings = supabase_service.get_payment_settings()
+        return jsonify(settings)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/payment-settings/update', methods=['POST'])
+@require_auth
+def update_payment_settings():
+    """Actualizar configuración de pagos"""
+    try:
+        data = request.json
+        success = supabase_service.update_payment_settings(data)
+        return jsonify({'success': success})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== NÓMINA =====
+@admin.route('/payroll')
+@require_auth
+def payroll():
+    """Gestión de nómina"""
+    return render_template('admin/payroll.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/payroll/vendors')
+@require_auth
+def get_vendor_payroll():
+    """Obtener nómina de vendedores"""
+    try:
+        payroll = supabase_service.get_vendor_payroll()
+        return jsonify(payroll)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/payroll/drivers')
+@require_auth
+def get_driver_payroll():
+    """Obtener nómina de repartidores"""
+    try:
+        payroll = supabase_service.get_driver_payroll()
+        return jsonify(payroll)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/payroll/process', methods=['POST'])
+@require_auth
+def process_payroll():
+    """Procesar nómina"""
+    try:
+        data = request.json
+        success = supabase_service.process_payroll(data)
+        return jsonify({'success': success})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
