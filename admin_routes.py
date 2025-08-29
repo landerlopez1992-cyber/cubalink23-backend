@@ -263,59 +263,6 @@ def update_order_status(order_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ===== GESTIÓN DE VUELOS =====
-@admin.route('/flights')
-@require_auth
-def flights():
-    """Gestión de vuelos y rutas"""
-    return render_template('admin/flights.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/flights')
-@require_auth
-def get_flights():
-    """Obtener vuelos desde Duffel API"""
-    try:
-        # Simular datos de vuelos (en realidad vendrían de Duffel API)
-        flights = [
-            {
-                'id': '1',
-                'origin': 'MIA',
-                'destination': 'HAV',
-                'airline': 'American Airlines',
-                'departure': '2024-01-15T10:00:00Z',
-                'arrival': '2024-01-15T11:30:00Z',
-                'price': 450,
-                'seats': 156
-            },
-            {
-                'id': '2',
-                'origin': 'MVD',
-                'destination': 'MIA',
-                'airline': 'LATAM',
-                'departure': '2024-01-16T14:00:00Z',
-                'arrival': '2024-01-16T18:30:00Z',
-                'price': 380,
-                'seats': 89
-            }
-        ]
-        return jsonify(flights)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/routes')
-@require_auth
-def get_routes():
-    """Obtener rutas populares"""
-    try:
-        routes = [
-            {'route': 'MIA-HAV', 'searches': 156},
-            {'route': 'MVD-MIA', 'searches': 89},
-            {'route': 'LAX-HAV', 'searches': 67}
-        ]
-        return jsonify(routes)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 # ===== CONFIGURACIÓN DEL SISTEMA =====
 @admin.route('/system')
 @require_auth
@@ -343,6 +290,457 @@ def update_config():
         return jsonify(config)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+# ===== GESTIÓN DE VUELOS Y RUTAS =====
+@admin.route('/flights')
+@require_auth
+def flights():
+    """Gestión de vuelos y rutas"""
+    return render_template('admin/flights.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/flights')
+@require_auth
+def get_flights():
+    """Obtener vuelos desde Duffel API"""
+    try:
+        # Simular datos de vuelos (en realidad vendrían de Duffel API)
+        flights = [
+            {
+                'id': '1',
+                'origin': 'MIA',
+                'destination': 'HAV',
+                'airline': 'American Airlines',
+                'departure_time': '2024-01-15 10:30:00',
+                'arrival_time': '2024-01-15 11:45:00',
+                'price': 299.99,
+                'status': 'active'
+            },
+            {
+                'id': '2',
+                'origin': 'MVD',
+                'destination': 'MIA',
+                'airline': 'LATAM',
+                'departure_time': '2024-01-16 14:20:00',
+                'arrival_time': '2024-01-16 18:30:00',
+                'price': 450.00,
+                'status': 'active'
+            }
+        ]
+        return jsonify(flights)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/routes')
+@require_auth
+def get_routes():
+    """Obtener rutas populares"""
+    try:
+        routes = [
+            {'route': 'MIA-HAV', 'searches': 156, 'bookings': 23},
+            {'route': 'MVD-MIA', 'searches': 89, 'bookings': 12},
+            {'route': 'LAX-HAV', 'searches': 67, 'bookings': 8},
+            {'route': 'MIA-MVD', 'searches': 45, 'bookings': 6}
+        ]
+        return jsonify(routes)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== GESTIÓN DE BOLETOS AÉREOS =====
+@admin.route('/bookings')
+@require_auth
+def bookings():
+    """Gestión de boletos aéreos adquiridos"""
+    return render_template('admin/bookings.html', config=ADMIN_CONFIG)
+
+@admin.route('/bookings/<booking_id>')
+@require_auth
+def booking_detail(booking_id):
+    """Detalle de boleto específico"""
+    return render_template('admin/booking_detail.html', config=ADMIN_CONFIG, booking_id=booking_id)
+
+@admin.route('/api/bookings')
+@require_auth
+def get_bookings():
+    """Obtener todos los boletos adquiridos"""
+    try:
+        # Obtener boletos desde Supabase
+        bookings = supabase_service.get_bookings()
+        return jsonify(bookings)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/bookings/<booking_id>')
+@require_auth
+def get_booking_detail(booking_id):
+    """Obtener detalle de boleto específico"""
+    try:
+        # Obtener detalle del boleto desde Supabase
+        booking = supabase_service.get_booking_detail(booking_id)
+        return jsonify(booking)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/bookings/<booking_id>/check-refundable')
+@require_auth
+def check_booking_refundable(booking_id):
+    """Verificar si el boleto es reembolsable via Duffel API"""
+    try:
+        # Obtener información del boleto desde Supabase
+        booking = supabase_service.get_booking_detail(booking_id)
+        
+        if not booking:
+            return jsonify({'error': 'Boleto no encontrado'}), 404
+        
+        # Verificar con Duffel API si el boleto es reembolsable
+        duffel_response = check_duffel_booking_refundable(booking['duffel_booking_id'])
+        
+        return jsonify({
+            'booking_id': booking_id,
+            'is_refundable': duffel_response.get('is_refundable', False),
+            'refund_amount': duffel_response.get('refund_amount', 0),
+            'refund_currency': duffel_response.get('refund_currency', 'USD'),
+            'refund_deadline': duffel_response.get('refund_deadline'),
+            'refund_fees': duffel_response.get('refund_fees', 0),
+            'message': duffel_response.get('message', '')
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/bookings/<booking_id>/check-changeable')
+@require_auth
+def check_booking_changeable(booking_id):
+    """Verificar si el boleto es cambiable via Duffel API"""
+    try:
+        # Obtener información del boleto desde Supabase
+        booking = supabase_service.get_booking_detail(booking_id)
+        
+        if not booking:
+            return jsonify({'error': 'Boleto no encontrado'}), 404
+        
+        # Verificar con Duffel API si el boleto es cambiable
+        duffel_response = check_duffel_booking_changeable(booking['duffel_booking_id'])
+        
+        return jsonify({
+            'booking_id': booking_id,
+            'is_changeable': duffel_response.get('is_changeable', False),
+            'change_fees': duffel_response.get('change_fees', 0),
+            'change_currency': duffel_response.get('change_currency', 'USD'),
+            'change_deadline': duffel_response.get('change_deadline'),
+            'allowed_changes': duffel_response.get('allowed_changes', []),
+            'message': duffel_response.get('message', '')
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/bookings/<booking_id>/change-dates', methods=['POST'])
+@require_auth
+def change_booking_dates(booking_id):
+    """Cambiar fechas de ida y regreso del boleto via Duffel API"""
+    try:
+        data = request.json
+        new_departure_date = data.get('new_departure_date')
+        new_return_date = data.get('new_return_date')
+        
+        # Obtener información del boleto desde Supabase
+        booking = supabase_service.get_booking_detail(booking_id)
+        
+        if not booking:
+            return jsonify({'error': 'Boleto no encontrado'}), 404
+        
+        # Verificar si es cambiable primero
+        changeable_check = check_duffel_booking_changeable(booking['duffel_booking_id'])
+        
+        if not changeable_check.get('is_changeable', False):
+            return jsonify({'error': 'Este boleto no permite cambios de fecha'}), 400
+        
+        # Realizar cambio de fechas via Duffel API
+        duffel_response = change_duffel_booking_dates(
+            booking['duffel_booking_id'],
+            new_departure_date,
+            new_return_date
+        )
+        
+        if duffel_response.get('success'):
+            # Actualizar en Supabase
+            updated_booking = supabase_service.update_booking_dates(
+                booking_id,
+                new_departure_date,
+                new_return_date,
+                duffel_response.get('new_booking_id')
+            )
+            
+            return jsonify({
+                'success': True,
+                'booking_id': booking_id,
+                'new_departure_date': new_departure_date,
+                'new_return_date': new_return_date,
+                'change_fees': duffel_response.get('change_fees', 0),
+                'new_total': duffel_response.get('new_total', 0),
+                'message': 'Fechas cambiadas exitosamente'
+            })
+        else:
+            return jsonify({'error': duffel_response.get('error', 'Error al cambiar fechas')}), 400
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/bookings/<booking_id>/change-seat', methods=['POST'])
+@require_auth
+def change_booking_seat(booking_id):
+    """Cambiar asiento del boleto via Duffel API"""
+    try:
+        data = request.json
+        new_seat = data.get('new_seat')
+        passenger_id = data.get('passenger_id')
+        
+        # Obtener información del boleto desde Supabase
+        booking = supabase_service.get_booking_detail(booking_id)
+        
+        if not booking:
+            return jsonify({'error': 'Boleto no encontrado'}), 404
+        
+        # Verificar si permite cambio de asiento
+        changeable_check = check_duffel_booking_changeable(booking['duffel_booking_id'])
+        
+        if 'seat_change' not in changeable_check.get('allowed_changes', []):
+            return jsonify({'error': 'Este boleto no permite cambios de asiento'}), 400
+        
+        # Realizar cambio de asiento via Duffel API
+        duffel_response = change_duffel_booking_seat(
+            booking['duffel_booking_id'],
+            passenger_id,
+            new_seat
+        )
+        
+        if duffel_response.get('success'):
+            # Actualizar en Supabase
+            updated_booking = supabase_service.update_booking_seat(
+                booking_id,
+                passenger_id,
+                new_seat
+            )
+            
+            return jsonify({
+                'success': True,
+                'booking_id': booking_id,
+                'passenger_id': passenger_id,
+                'new_seat': new_seat,
+                'seat_change_fee': duffel_response.get('seat_change_fee', 0),
+                'message': 'Asiento cambiado exitosamente'
+            })
+        else:
+            return jsonify({'error': duffel_response.get('error', 'Error al cambiar asiento')}), 400
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/bookings/<booking_id>/cancel', methods=['POST'])
+@require_auth
+def cancel_booking(booking_id):
+    """Cancelar boleto via Duffel API"""
+    try:
+        data = request.json
+        cancel_reason = data.get('cancel_reason', 'Solicitud del cliente')
+        
+        # Obtener información del boleto desde Supabase
+        booking = supabase_service.get_booking_detail(booking_id)
+        
+        if not booking:
+            return jsonify({'error': 'Boleto no encontrado'}), 404
+        
+        # Verificar si es reembolsable
+        refundable_check = check_duffel_booking_refundable(booking['duffel_booking_id'])
+        
+        if not refundable_check.get('is_refundable', False):
+            return jsonify({'error': 'Este boleto no es reembolsable'}), 400
+        
+        # Realizar cancelación via Duffel API
+        duffel_response = cancel_duffel_booking(
+            booking['duffel_booking_id'],
+            cancel_reason
+        )
+        
+        if duffel_response.get('success'):
+            # Actualizar en Supabase
+            cancelled_booking = supabase_service.cancel_booking(
+                booking_id,
+                cancel_reason,
+                duffel_response.get('refund_amount', 0),
+                duffel_response.get('refund_currency', 'USD')
+            )
+            
+            return jsonify({
+                'success': True,
+                'booking_id': booking_id,
+                'refund_amount': duffel_response.get('refund_amount', 0),
+                'refund_currency': duffel_response.get('refund_currency', 'USD'),
+                'refund_deadline': duffel_response.get('refund_deadline'),
+                'cancellation_fees': duffel_response.get('cancellation_fees', 0),
+                'message': 'Boleto cancelado exitosamente'
+            })
+        else:
+            return jsonify({'error': duffel_response.get('error', 'Error al cancelar boleto')}), 400
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/bookings/<booking_id>/refund', methods=['POST'])
+@require_auth
+def refund_booking(booking_id):
+    """Procesar reembolso del boleto via Duffel API"""
+    try:
+        data = request.json
+        refund_amount = data.get('refund_amount')
+        refund_method = data.get('refund_method', 'original_payment')
+        
+        # Obtener información del boleto desde Supabase
+        booking = supabase_service.get_booking_detail(booking_id)
+        
+        if not booking:
+            return jsonify({'error': 'Boleto no encontrado'}), 404
+        
+        # Verificar si es reembolsable
+        refundable_check = check_duffel_booking_refundable(booking['duffel_booking_id'])
+        
+        if not refundable_check.get('is_refundable', False):
+            return jsonify({'error': 'Este boleto no es reembolsable'}), 400
+        
+        # Procesar reembolso via Duffel API
+        duffel_response = process_duffel_booking_refund(
+            booking['duffel_booking_id'],
+            refund_amount,
+            refund_method
+        )
+        
+        if duffel_response.get('success'):
+            # Actualizar en Supabase
+            refunded_booking = supabase_service.process_booking_refund(
+                booking_id,
+                refund_amount,
+                refund_method,
+                duffel_response.get('refund_id')
+            )
+            
+            return jsonify({
+                'success': True,
+                'booking_id': booking_id,
+                'refund_id': duffel_response.get('refund_id'),
+                'refund_amount': refund_amount,
+                'refund_currency': duffel_response.get('refund_currency', 'USD'),
+                'refund_status': duffel_response.get('refund_status', 'processing'),
+                'estimated_processing_time': duffel_response.get('estimated_processing_time'),
+                'message': 'Reembolso procesado exitosamente'
+            })
+        else:
+            return jsonify({'error': duffel_response.get('error', 'Error al procesar reembolso')}), 400
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== FUNCIONES AUXILIARES PARA DUFFEL API =====
+def check_duffel_booking_refundable(duffel_booking_id):
+    """Verificar si un boleto es reembolsable via Duffel API"""
+    try:
+        # Aquí iría la llamada real a Duffel API
+        # Por ahora simulamos la respuesta
+        import random
+        
+        is_refundable = random.choice([True, False])
+        
+        if is_refundable:
+            return {
+                'is_refundable': True,
+                'refund_amount': 450.00,
+                'refund_currency': 'USD',
+                'refund_deadline': '2024-12-31T23:59:59Z',
+                'refund_fees': 25.00,
+                'message': 'Boleto reembolsable'
+            }
+        else:
+            return {
+                'is_refundable': False,
+                'refund_amount': 0,
+                'refund_currency': 'USD',
+                'refund_deadline': None,
+                'refund_fees': 0,
+                'message': 'Boleto no reembolsable'
+            }
+    except Exception as e:
+        return {'error': str(e)}
+
+def check_duffel_booking_changeable(duffel_booking_id):
+    """Verificar si un boleto es cambiable via Duffel API"""
+    try:
+        # Aquí iría la llamada real a Duffel API
+        # Por ahora simulamos la respuesta
+        import random
+        
+        is_changeable = random.choice([True, False])
+        
+        if is_changeable:
+            return {
+                'is_changeable': True,
+                'change_fees': 50.00,
+                'change_currency': 'USD',
+                'change_deadline': '2024-12-31T23:59:59Z',
+                'allowed_changes': ['date_change', 'seat_change', 'route_change'],
+                'message': 'Boleto cambiable'
+            }
+        else:
+            return {
+                'is_changeable': False,
+                'change_fees': 0,
+                'change_currency': 'USD',
+                'change_deadline': None,
+                'allowed_changes': [],
+                'message': 'Boleto no cambiable'
+            }
+    except Exception as e:
+        return {'error': str(e)}
+
+def change_duffel_booking_dates(duffel_booking_id, new_departure_date, new_return_date):
+    """Cambiar fechas de boleto via Duffel API"""
+    try:
+        # Aquí iría la llamada real a Duffel API
+        # Por ahora simulamos la respuesta
+        return {
+            'success': True,
+            'new_booking_id': f'new_{duffel_booking_id}',
+            'change_fees': 50.00,
+            'new_total': 500.00,
+            'message': 'Fechas cambiadas exitosamente'
+        }
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
+
+def change_duffel_booking_seat(duffel_booking_id, passenger_id, new_seat):
+    """Cambiar asiento de boleto via Duffel API"""
+    try:
+        # Aquí iría la llamada real a Duffel API
+        # Por ahora simulamos la respuesta
+        return {
+            'success': True,
+            'seat_change_fee': 15.00,
+            'message': 'Asiento cambiado exitosamente'
+        }
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
+
+def cancel_duffel_booking(duffel_booking_id, cancel_reason):
+    """Cancelar boleto via Duffel API"""
+    try:
+        # Aquí iría la llamada real a Duffel API
+        # Por ahora simulamos la respuesta
+        return {
+            'success': True,
+            'refund_amount': 425.00,
+            'refund_currency': 'USD',
+            'refund_deadline': '2024-12-31T23:59:59Z',
+            'cancellation_fees': 25.00,
+            'message': 'Boleto cancelado exitosamente'
+        }
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
 
 # ===== HISTORIAL DE RECARGAS =====
 @admin.route('/api/recharges')
@@ -580,6 +978,22 @@ def update_advanced_config():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+def process_duffel_booking_refund(duffel_booking_id, refund_amount, refund_method):
+    """Procesar reembolso via Duffel API"""
+    try:
+        # Aquí iría la llamada real a Duffel API
+        # Por ahora simulamos la respuesta
+        return {
+            'success': True,
+            'refund_id': f'refund_{duffel_booking_id}',
+            'refund_currency': 'USD',
+            'refund_status': 'processing',
+            'estimated_processing_time': '5-10 business days',
+            'message': 'Reembolso procesado exitosamente'
+        }
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
+
 # ===== RUTAS ORIGINALES QUE FALTAN =====
 
 # ===== GESTIÓN DE USUARIOS =====
@@ -635,87 +1049,6 @@ def update_order_status(order_id):
         status = data.get('status')
         success = supabase_service.update_order_status(order_id, status)
         return jsonify({'success': success})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== GESTIÓN DE VUELOS =====
-@admin.route('/flights')
-@require_auth
-def flights():
-    """Gestión de vuelos y rutas"""
-    return render_template('admin/flights.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/flights')
-@require_auth
-def get_flights():
-    """Obtener vuelos desde Duffel API"""
-    try:
-        # Simular datos de vuelos (en realidad vendrían de Duffel API)
-        flights = [
-            {
-                'id': '1',
-                'origin': 'MIA',
-                'destination': 'HAV',
-                'airline': 'American Airlines',
-                'departure': '2024-01-15T10:00:00Z',
-                'arrival': '2024-01-15T11:30:00Z',
-                'price': 450,
-                'seats': 156
-            },
-            {
-                'id': '2',
-                'origin': 'MVD',
-                'destination': 'MIA',
-                'airline': 'LATAM',
-                'departure': '2024-01-16T14:00:00Z',
-                'arrival': '2024-01-16T18:30:00Z',
-                'price': 380,
-                'seats': 89
-            }
-        ]
-        return jsonify(flights)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/routes')
-@require_auth
-def get_routes():
-    """Obtener rutas populares"""
-    try:
-        routes = [
-            {'route': 'MIA-HAV', 'searches': 156},
-            {'route': 'MVD-MIA', 'searches': 89},
-            {'route': 'LAX-HAV', 'searches': 67}
-        ]
-        return jsonify(routes)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== CONFIGURACIÓN DEL SISTEMA =====
-@admin.route('/system')
-@require_auth
-def system():
-    """Configuración del sistema"""
-    return render_template('admin/system.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/config')
-@require_auth
-def get_config():
-    """Obtener configuración de la app"""
-    try:
-        config = supabase_service.get_app_config()
-        return jsonify(config)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/config', methods=['PUT'])
-@require_auth
-def update_config():
-    """Actualizar configuración de la app"""
-    try:
-        data = request.json
-        config = supabase_service.update_app_config(data)
-        return jsonify(config)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
