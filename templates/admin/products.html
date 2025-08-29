@@ -200,8 +200,16 @@
                             <textarea class="form-control" id="productDescription" rows="3"></textarea>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">URL de Imagen</label>
-                            <input type="url" class="form-control" id="productImage">
+                            <label class="form-label">Imagen del Producto</label>
+                            <input type="file" class="form-control" id="productImage" name="image" accept="image/*" required>
+                            <div class="form-text">Formatos: PNG, JPG, JPEG, GIF, WEBP</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Vista Previa</label>
+                            <div id="imagePreview" class="border rounded p-2 text-center" style="min-height: 150px; background-color: #f8f9fa;">
+                                <i class="fas fa-image fa-3x text-muted"></i>
+                                <p class="text-muted mt-2">Selecciona una imagen para ver la vista previa</p>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -304,22 +312,20 @@
         }
 
         function addProduct() {
-            const formData = {
-                name: document.getElementById('productName').value,
-                category_id: document.getElementById('productCategory').value,
-                price: parseFloat(document.getElementById('productPrice').value),
-                stock: parseInt(document.getElementById('productStock').value),
-                description: document.getElementById('productDescription').value,
-                image_url: document.getElementById('productImage').value,
-                active: true
-            };
+            const form = document.getElementById('addProductForm');
+            const formData = new FormData(form);
+            
+            // Agregar campos adicionales
+            formData.append('name', document.getElementById('productName').value);
+            formData.append('category', document.getElementById('productCategory').value);
+            formData.append('price', document.getElementById('productPrice').value);
+            formData.append('stock', document.getElementById('productStock').value);
+            formData.append('description', document.getElementById('productDescription').value);
+            formData.append('active', 'true');
 
             fetch('/admin/api/products', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
+                body: formData
             })
             .then(response => response.json())
             .then(data => {
