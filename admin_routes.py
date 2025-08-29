@@ -229,7 +229,7 @@ def toggle_user_status(user_id):
     try:
         data = request.json
         blocked = data.get('blocked', False)
-        success = supabase_service.toggle_user_status(user_id, blocked)
+        success = supabase_service.update_user_status(user_id, blocked)
         return jsonify({'success': success})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -344,403 +344,6 @@ def get_routes():
         return jsonify(routes)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-# ===== GESTIÓN DE BOLETOS AÉREOS =====
-@admin.route('/bookings')
-@require_auth
-def bookings():
-    """Gestión de boletos aéreos adquiridos"""
-    return render_template('admin/bookings.html', config=ADMIN_CONFIG)
-
-@admin.route('/bookings/<booking_id>')
-@require_auth
-def booking_detail(booking_id):
-    """Detalle de boleto específico"""
-    return render_template('admin/booking_detail.html', config=ADMIN_CONFIG, booking_id=booking_id)
-
-@admin.route('/api/bookings')
-@require_auth
-def get_bookings():
-    """Obtener todos los boletos adquiridos"""
-    try:
-        # Obtener boletos desde Supabase
-        bookings = supabase_service.get_bookings()
-        return jsonify(bookings)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/bookings/<booking_id>')
-@require_auth
-def get_booking_detail(booking_id):
-    """Obtener detalle de boleto específico"""
-    try:
-        # Obtener detalle del boleto desde Supabase
-        booking = supabase_service.get_booking_detail(booking_id)
-        return jsonify(booking)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/bookings/<booking_id>/check-refundable')
-@require_auth
-def check_booking_refundable(booking_id):
-    """Verificar si el boleto es reembolsable via Duffel API"""
-    try:
-        # Obtener información del boleto desde Supabase
-        booking = supabase_service.get_booking_detail(booking_id)
-        
-        if not booking:
-            return jsonify({'error': 'Boleto no encontrado'}), 404
-        
-        # Verificar con Duffel API si el boleto es reembolsable
-        duffel_response = check_duffel_booking_refundable(booking['duffel_booking_id'])
-        
-        return jsonify({
-            'booking_id': booking_id,
-            'is_refundable': duffel_response.get('is_refundable', False),
-            'refund_amount': duffel_response.get('refund_amount', 0),
-            'refund_currency': duffel_response.get('refund_currency', 'USD'),
-            'refund_deadline': duffel_response.get('refund_deadline'),
-            'refund_fees': duffel_response.get('refund_fees', 0),
-            'message': duffel_response.get('message', '')
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/bookings/<booking_id>/check-changeable')
-@require_auth
-def check_booking_changeable(booking_id):
-    """Verificar si el boleto es cambiable via Duffel API"""
-    try:
-        # Obtener información del boleto desde Supabase
-        booking = supabase_service.get_booking_detail(booking_id)
-        
-        if not booking:
-            return jsonify({'error': 'Boleto no encontrado'}), 404
-        
-        # Verificar con Duffel API si el boleto es cambiable
-        duffel_response = check_duffel_booking_changeable(booking['duffel_booking_id'])
-        
-        return jsonify({
-            'booking_id': booking_id,
-            'is_changeable': duffel_response.get('is_changeable', False),
-            'change_fees': duffel_response.get('change_fees', 0),
-            'change_currency': duffel_response.get('change_currency', 'USD'),
-            'change_deadline': duffel_response.get('change_deadline'),
-            'allowed_changes': duffel_response.get('allowed_changes', []),
-            'message': duffel_response.get('message', '')
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/bookings/<booking_id>/change-dates', methods=['POST'])
-@require_auth
-def change_booking_dates(booking_id):
-    """Cambiar fechas de ida y regreso del boleto via Duffel API"""
-    try:
-        data = request.json
-        new_departure_date = data.get('new_departure_date')
-        new_return_date = data.get('new_return_date')
-        
-        # Obtener información del boleto desde Supabase
-        booking = supabase_service.get_booking_detail(booking_id)
-        
-        if not booking:
-            return jsonify({'error': 'Boleto no encontrado'}), 404
-        
-        # Verificar si es cambiable primero
-        changeable_check = check_duffel_booking_changeable(booking['duffel_booking_id'])
-        
-        if not changeable_check.get('is_changeable', False):
-            return jsonify({'error': 'Este boleto no permite cambios de fecha'}), 400
-        
-        # Realizar cambio de fechas via Duffel API
-        duffel_response = change_duffel_booking_dates(
-            booking['duffel_booking_id'],
-            new_departure_date,
-            new_return_date
-        )
-        
-        if duffel_response.get('success'):
-            # Actualizar en Supabase
-            updated_booking = supabase_service.update_booking_dates(
-                booking_id,
-                new_departure_date,
-                new_return_date,
-                duffel_response.get('new_booking_id')
-            )
-            
-            return jsonify({
-                'success': True,
-                'booking_id': booking_id,
-                'new_departure_date': new_departure_date,
-                'new_return_date': new_return_date,
-                'change_fees': duffel_response.get('change_fees', 0),
-                'new_total': duffel_response.get('new_total', 0),
-                'message': 'Fechas cambiadas exitosamente'
-            })
-        else:
-            return jsonify({'error': duffel_response.get('error', 'Error al cambiar fechas')}), 400
-            
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/bookings/<booking_id>/change-seat', methods=['POST'])
-@require_auth
-def change_booking_seat(booking_id):
-    """Cambiar asiento del boleto via Duffel API"""
-    try:
-        data = request.json
-        new_seat = data.get('new_seat')
-        passenger_id = data.get('passenger_id')
-        
-        # Obtener información del boleto desde Supabase
-        booking = supabase_service.get_booking_detail(booking_id)
-        
-        if not booking:
-            return jsonify({'error': 'Boleto no encontrado'}), 404
-        
-        # Verificar si permite cambio de asiento
-        changeable_check = check_duffel_booking_changeable(booking['duffel_booking_id'])
-        
-        if 'seat_change' not in changeable_check.get('allowed_changes', []):
-            return jsonify({'error': 'Este boleto no permite cambios de asiento'}), 400
-        
-        # Realizar cambio de asiento via Duffel API
-        duffel_response = change_duffel_booking_seat(
-            booking['duffel_booking_id'],
-            passenger_id,
-            new_seat
-        )
-        
-        if duffel_response.get('success'):
-            # Actualizar en Supabase
-            updated_booking = supabase_service.update_booking_seat(
-                booking_id,
-                passenger_id,
-                new_seat
-            )
-            
-            return jsonify({
-                'success': True,
-                'booking_id': booking_id,
-                'passenger_id': passenger_id,
-                'new_seat': new_seat,
-                'seat_change_fee': duffel_response.get('seat_change_fee', 0),
-                'message': 'Asiento cambiado exitosamente'
-            })
-        else:
-            return jsonify({'error': duffel_response.get('error', 'Error al cambiar asiento')}), 400
-            
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/bookings/<booking_id>/cancel', methods=['POST'])
-@require_auth
-def cancel_booking(booking_id):
-    """Cancelar boleto via Duffel API"""
-    try:
-        data = request.json
-        cancel_reason = data.get('cancel_reason', 'Solicitud del cliente')
-        
-        # Obtener información del boleto desde Supabase
-        booking = supabase_service.get_booking_detail(booking_id)
-        
-        if not booking:
-            return jsonify({'error': 'Boleto no encontrado'}), 404
-        
-        # Verificar si es reembolsable
-        refundable_check = check_duffel_booking_refundable(booking['duffel_booking_id'])
-        
-        if not refundable_check.get('is_refundable', False):
-            return jsonify({'error': 'Este boleto no es reembolsable'}), 400
-        
-        # Realizar cancelación via Duffel API
-        duffel_response = cancel_duffel_booking(
-            booking['duffel_booking_id'],
-            cancel_reason
-        )
-        
-        if duffel_response.get('success'):
-            # Actualizar en Supabase
-            cancelled_booking = supabase_service.cancel_booking(
-                booking_id,
-                cancel_reason,
-                duffel_response.get('refund_amount', 0),
-                duffel_response.get('refund_currency', 'USD')
-            )
-            
-            return jsonify({
-                'success': True,
-                'booking_id': booking_id,
-                'refund_amount': duffel_response.get('refund_amount', 0),
-                'refund_currency': duffel_response.get('refund_currency', 'USD'),
-                'refund_deadline': duffel_response.get('refund_deadline'),
-                'cancellation_fees': duffel_response.get('cancellation_fees', 0),
-                'message': 'Boleto cancelado exitosamente'
-            })
-        else:
-            return jsonify({'error': duffel_response.get('error', 'Error al cancelar boleto')}), 400
-            
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/bookings/<booking_id>/refund', methods=['POST'])
-@require_auth
-def refund_booking(booking_id):
-    """Procesar reembolso del boleto via Duffel API"""
-    try:
-        data = request.json
-        refund_amount = data.get('refund_amount')
-        refund_method = data.get('refund_method', 'original_payment')
-        
-        # Obtener información del boleto desde Supabase
-        booking = supabase_service.get_booking_detail(booking_id)
-        
-        if not booking:
-            return jsonify({'error': 'Boleto no encontrado'}), 404
-        
-        # Verificar si es reembolsable
-        refundable_check = check_duffel_booking_refundable(booking['duffel_booking_id'])
-        
-        if not refundable_check.get('is_refundable', False):
-            return jsonify({'error': 'Este boleto no es reembolsable'}), 400
-        
-        # Procesar reembolso via Duffel API
-        duffel_response = process_duffel_booking_refund(
-            booking['duffel_booking_id'],
-            refund_amount,
-            refund_method
-        )
-        
-        if duffel_response.get('success'):
-            # Actualizar en Supabase
-            refunded_booking = supabase_service.process_booking_refund(
-                booking_id,
-                refund_amount,
-                refund_method,
-                duffel_response.get('refund_id')
-            )
-            
-            return jsonify({
-                'success': True,
-                'booking_id': booking_id,
-                'refund_id': duffel_response.get('refund_id'),
-                'refund_amount': refund_amount,
-                'refund_currency': duffel_response.get('refund_currency', 'USD'),
-                'refund_status': duffel_response.get('refund_status', 'processing'),
-                'estimated_processing_time': duffel_response.get('estimated_processing_time'),
-                'message': 'Reembolso procesado exitosamente'
-            })
-        else:
-            return jsonify({'error': duffel_response.get('error', 'Error al procesar reembolso')}), 400
-            
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== FUNCIONES AUXILIARES PARA DUFFEL API =====
-def check_duffel_booking_refundable(duffel_booking_id):
-    """Verificar si un boleto es reembolsable via Duffel API"""
-    try:
-        # Aquí iría la llamada real a Duffel API
-        # Por ahora simulamos la respuesta
-        import random
-        
-        is_refundable = random.choice([True, False])
-        
-        if is_refundable:
-            return {
-                'is_refundable': True,
-                'refund_amount': 450.00,
-                'refund_currency': 'USD',
-                'refund_deadline': '2024-12-31T23:59:59Z',
-                'refund_fees': 25.00,
-                'message': 'Boleto reembolsable'
-            }
-        else:
-            return {
-                'is_refundable': False,
-                'refund_amount': 0,
-                'refund_currency': 'USD',
-                'refund_deadline': None,
-                'refund_fees': 0,
-                'message': 'Boleto no reembolsable'
-            }
-    except Exception as e:
-        return {'error': str(e)}
-
-def check_duffel_booking_changeable(duffel_booking_id):
-    """Verificar si un boleto es cambiable via Duffel API"""
-    try:
-        # Aquí iría la llamada real a Duffel API
-        # Por ahora simulamos la respuesta
-        import random
-        
-        is_changeable = random.choice([True, False])
-        
-        if is_changeable:
-            return {
-                'is_changeable': True,
-                'change_fees': 50.00,
-                'change_currency': 'USD',
-                'change_deadline': '2024-12-31T23:59:59Z',
-                'allowed_changes': ['date_change', 'seat_change', 'route_change'],
-                'message': 'Boleto cambiable'
-            }
-        else:
-            return {
-                'is_changeable': False,
-                'change_fees': 0,
-                'change_currency': 'USD',
-                'change_deadline': None,
-                'allowed_changes': [],
-                'message': 'Boleto no cambiable'
-            }
-    except Exception as e:
-        return {'error': str(e)}
-
-def change_duffel_booking_dates(duffel_booking_id, new_departure_date, new_return_date):
-    """Cambiar fechas de boleto via Duffel API"""
-    try:
-        # Aquí iría la llamada real a Duffel API
-        # Por ahora simulamos la respuesta
-        return {
-            'success': True,
-            'new_booking_id': f'new_{duffel_booking_id}',
-            'change_fees': 50.00,
-            'new_total': 500.00,
-            'message': 'Fechas cambiadas exitosamente'
-        }
-    except Exception as e:
-        return {'success': False, 'error': str(e)}
-
-def change_duffel_booking_seat(duffel_booking_id, passenger_id, new_seat):
-    """Cambiar asiento de boleto via Duffel API"""
-    try:
-        # Aquí iría la llamada real a Duffel API
-        # Por ahora simulamos la respuesta
-        return {
-            'success': True,
-            'seat_change_fee': 15.00,
-            'message': 'Asiento cambiado exitosamente'
-        }
-    except Exception as e:
-        return {'success': False, 'error': str(e)}
-
-def cancel_duffel_booking(duffel_booking_id, cancel_reason):
-    """Cancelar boleto via Duffel API"""
-    try:
-        # Aquí iría la llamada real a Duffel API
-        # Por ahora simulamos la respuesta
-        return {
-            'success': True,
-            'refund_amount': 425.00,
-            'refund_currency': 'USD',
-            'refund_deadline': '2024-12-31T23:59:59Z',
-            'cancellation_fees': 25.00,
-            'message': 'Boleto cancelado exitosamente'
-        }
-    except Exception as e:
-        return {'success': False, 'error': str(e)}
 
 # ===== HISTORIAL DE RECARGAS =====
 @admin.route('/api/recharges')
@@ -978,390 +581,6 @@ def update_advanced_config():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-def process_duffel_booking_refund(duffel_booking_id, refund_amount, refund_method):
-    """Procesar reembolso via Duffel API"""
-    try:
-        # Aquí iría la llamada real a Duffel API
-        # Por ahora simulamos la respuesta
-        return {
-            'success': True,
-            'refund_id': f'refund_{duffel_booking_id}',
-            'refund_currency': 'USD',
-            'refund_status': 'processing',
-            'estimated_processing_time': '5-10 business days',
-            'message': 'Reembolso procesado exitosamente'
-        }
-    except Exception as e:
-        return {'success': False, 'error': str(e)}
-
-# ===== RUTAS ORIGINALES QUE FALTAN =====
-
-# ===== GESTIÓN DE USUARIOS =====
-@admin.route('/users')
-@require_auth
-def users():
-    """Gestión de usuarios"""
-    return render_template('admin/users.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/users', methods=['GET'])
-def get_users():
-    """Obtener usuarios desde Supabase"""
-    try:
-        users = supabase_service.get_users()
-        return jsonify(users)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/users/<user_id>/toggle', methods=['POST'])
-def toggle_user_status(user_id):
-    """Bloquear/desbloquear usuario"""
-    try:
-        data = request.json
-        blocked = data.get('blocked', False)
-        success = supabase_service.toggle_user_status(user_id, blocked)
-        return jsonify({'success': success})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== GESTIÓN DE ÓRDENES =====
-@admin.route('/orders')
-@require_auth
-def orders():
-    """Gestión de órdenes"""
-    return render_template('admin/orders.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/orders')
-@require_auth
-def get_orders():
-    """Obtener órdenes desde Supabase"""
-    try:
-        orders = supabase_service.get_orders()
-        return jsonify(orders)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/orders/<order_id>/status', methods=['PUT'])
-@require_auth
-def update_order_status(order_id):
-    """Actualizar estado de orden"""
-    try:
-        data = request.json
-        status = data.get('status')
-        success = supabase_service.update_order_status(order_id, status)
-        return jsonify({'success': success})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== NUEVAS FUNCIONALIDADES =====
-
-# ===== GESTIÓN DE VENDEDORES =====
-@admin.route('/vendors')
-@require_auth
-def vendors():
-    """Gestión de vendedores"""
-    return render_template('admin/vendors.html', config=ADMIN_CONFIG)
-
-@admin.route('/vendors/pending')
-@require_auth
-def pending_vendors():
-    """Vendedores pendientes de aprobación"""
-    return render_template('admin/pending_vendors.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/vendors/pending')
-@require_auth
-def get_pending_vendors():
-    """Obtener vendedores pendientes"""
-    try:
-        vendors = supabase_service.get_pending_vendors()
-        return jsonify(vendors)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/vendors/<int:vendor_id>/approve', methods=['POST'])
-@require_auth
-def approve_vendor(vendor_id):
-    """Aprobar vendedor"""
-    try:
-        success = supabase_service.approve_vendor(vendor_id)
-        return jsonify({'success': success})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/vendors/<int:vendor_id>/suspend', methods=['POST'])
-@require_auth
-def suspend_vendor(vendor_id):
-    """Suspender vendedor"""
-    try:
-        success = supabase_service.suspend_vendor(vendor_id)
-        return jsonify({'success': success})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/vendors/<int:vendor_id>/block', methods=['POST'])
-@require_auth
-def block_vendor(vendor_id):
-    """Bloquear vendedor"""
-    try:
-        success = supabase_service.block_vendor(vendor_id)
-        return jsonify({'success': success})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== GESTIÓN DE REPARTIDORES =====
-@admin.route('/drivers')
-@require_auth
-def drivers():
-    """Gestión de repartidores"""
-    return render_template('admin/drivers.html', config=ADMIN_CONFIG)
-
-@admin.route('/drivers/active')
-@require_auth
-def active_drivers():
-    """Repartidores activos"""
-    return render_template('admin/active_drivers.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/drivers')
-@require_auth
-def get_drivers():
-    """Obtener repartidores"""
-    try:
-        drivers = supabase_service.get_drivers()
-        return jsonify(drivers)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/drivers/<int:driver_id>/set-payment', methods=['POST'])
-@require_auth
-def set_driver_payment(driver_id):
-    """Configurar método de pago del repartidor"""
-    try:
-        data = request.json
-        payment_method = data.get('payment_method')
-        success = supabase_service.set_driver_payment_method(driver_id, payment_method)
-        return jsonify({'success': success})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== GESTIÓN DE RENTA CAR =====
-@admin.route('/vehicles')
-@require_auth
-def vehicles():
-    """Gestión de vehículos"""
-    return render_template('admin/vehicles.html', config=ADMIN_CONFIG)
-
-@admin.route('/vehicles/add')
-@require_auth
-def add_vehicle():
-    """Agregar vehículo"""
-    return render_template('admin/add_vehicle.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/vehicles')
-@require_auth
-def get_vehicles():
-    """Obtener vehículos"""
-    try:
-        vehicles = supabase_service.get_vehicles()
-        return jsonify(vehicles)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/vehicles', methods=['POST'])
-@require_auth
-def add_vehicle_api():
-    """Agregar vehículo via API"""
-    try:
-        data = request.json
-        vehicle = supabase_service.add_vehicle(data)
-        return jsonify(vehicle)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/rentals')
-@require_auth
-def rentals():
-    """Gestión de alquileres"""
-    return render_template('admin/rentals.html', config=ADMIN_CONFIG)
-
-@admin.route('/rentals/active')
-@require_auth
-def active_rentals():
-    """Alquileres activos"""
-    return render_template('admin/active_rentals.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/rentals')
-@require_auth
-def get_rentals():
-    """Obtener alquileres"""
-    try:
-        rentals = supabase_service.get_rentals()
-        return jsonify(rentals)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== GESTIÓN DE ALERTAS =====
-@admin.route('/alerts')
-@require_auth
-def alerts():
-    """Gestión de alertas"""
-    return render_template('admin/alerts.html', config=ADMIN_CONFIG)
-
-@admin.route('/alerts/dingconnect')
-@require_auth
-def dingconnect_alerts():
-    """Alertas de DingConnect"""
-    return render_template('admin/dingconnect_alerts.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/alerts')
-@require_auth
-def get_alerts():
-    """Obtener alertas"""
-    try:
-        alerts = supabase_service.get_alerts()
-        return jsonify(alerts)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/alerts/<int:alert_id>/resolve', methods=['POST'])
-@require_auth
-def resolve_alert(alert_id):
-    """Resolver alerta"""
-    try:
-        success = supabase_service.resolve_alert(alert_id)
-        return jsonify({'success': success})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== CHAT DE SOPORTE =====
-@admin.route('/support-chat')
-@require_auth
-def support_chat():
-    """Chat de soporte al cliente"""
-    return render_template('admin/support_chat.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/support-chat/conversations')
-@require_auth
-def get_support_conversations():
-    """Obtener conversaciones de soporte"""
-    try:
-        conversations = supabase_service.get_support_conversations()
-        return jsonify(conversations)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/support-chat/conversations/<int:conversation_id>/messages')
-@require_auth
-def get_support_messages(conversation_id):
-    """Obtener mensajes de una conversación"""
-    try:
-        messages = supabase_service.get_support_messages(conversation_id)
-        return jsonify(messages)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/support-chat/conversations/<int:conversation_id>/send', methods=['POST'])
-@require_auth
-def send_support_message(conversation_id):
-    """Enviar mensaje de soporte"""
-    try:
-        data = request.json
-        message = supabase_service.send_support_message(conversation_id, data)
-        return jsonify(message)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== BILLETERA DIGITAL =====
-@admin.route('/wallet')
-@require_auth
-def wallet():
-    """Gestión de billetera digital"""
-    return render_template('admin/wallet.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/wallet/balance')
-@require_auth
-def get_wallet_balance():
-    """Obtener balance de billetera"""
-    try:
-        balance = supabase_service.get_wallet_balance()
-        return jsonify(balance)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/wallet/transactions')
-@require_auth
-def get_wallet_transactions():
-    """Obtener transacciones de billetera"""
-    try:
-        transactions = supabase_service.get_wallet_transactions()
-        return jsonify(transactions)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/wallet/transfer', methods=['POST'])
-@require_auth
-def transfer_wallet():
-    """Transferir entre usuarios"""
-    try:
-        data = request.json
-        transfer = supabase_service.transfer_wallet(data)
-        return jsonify(transfer)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== MÉTODOS DE PAGO =====
-@admin.route('/payment-methods')
-@require_auth
-def payment_methods():
-    """Gestión de métodos de pago"""
-    return render_template('admin/payment_methods.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/payment-settings')
-@require_auth
-def get_payment_settings():
-    """Obtener configuración de pagos"""
-    try:
-        settings = supabase_service.get_payment_settings()
-        return jsonify(settings)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/payment-settings/update', methods=['POST'])
-@require_auth
-def update_payment_settings():
-    """Actualizar configuración de pagos"""
-    try:
-        data = request.json
-        success = supabase_service.update_payment_settings(data)
-        return jsonify({'success': success})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== NÓMINA =====
-@admin.route('/payroll')
-@require_auth
-def payroll():
-    """Gestión de nómina"""
-    return render_template('admin/payroll.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/payroll/vendors')
-@require_auth
-def get_vendor_payroll():
-    """Obtener nómina de vendedores"""
-    try:
-        payroll = supabase_service.get_vendor_payroll()
-        return jsonify(payroll)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/payroll/drivers')
-@require_auth
-def get_driver_payroll():
-    """Obtener nómina de repartidores"""
-    try:
-        payroll = supabase_service.get_driver_payroll()
-        return jsonify(payroll)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 @admin.route('/api/payroll/process', methods=['POST'])
 @require_auth
 def process_payroll():
@@ -1372,4 +591,285 @@ def process_payroll():
         return jsonify({'success': success})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+# ===== SISTEMA DE VERIFICACIÓN MANUAL DE RENTA CAR =====
+
+@admin.route('/rental-verifications')
+@require_auth
+def rental_verifications():
+    """Panel de verificaciones manuales de renta de autos"""
+    return render_template('admin/rental_verifications.html', config=ADMIN_CONFIG)
+
+@admin.route('/rental-verifications/pending')
+@require_auth
+def pending_rental_verifications():
+    """Verificaciones pendientes"""
+    return render_template('admin/pending_rental_verifications.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/rental-verifications')
+@require_auth
+def get_rental_verifications():
+    """Obtener todas las verificaciones de renta"""
+    try:
+        verifications = supabase_service.get_rental_verifications()
+        return jsonify(verifications)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/rental-verifications/pending')
+@require_auth
+def get_pending_rental_verifications():
+    """Obtener verificaciones pendientes"""
+    try:
+        pending = supabase_service.get_pending_rental_verifications()
+        return jsonify(pending)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/rental-verifications/request', methods=['POST'])
+@require_auth
+def request_rental_verification():
+    """Solicitar verificación manual de disponibilidad"""
+    try:
+        data = request.json
+        verification_data = {
+            'car_model': data.get('car_model'),
+            'start_date': data.get('start_date'),
+            'end_date': data.get('end_date'),
+            'province': data.get('province'),
+            'user_id': data.get('user_id'),
+            'user_name': data.get('user_name'),
+            'user_phone': data.get('user_phone'),
+            'user_email': data.get('user_email'),
+            'status': 'pending',
+            'priority': data.get('priority', 'normal'),  # low, normal, high, urgent
+            'notes': data.get('notes', ''),
+            'created_at': datetime.now().isoformat()
+        }
+        
+        # Guardar verificación en Supabase
+        verification = supabase_service.create_rental_verification(verification_data)
+        
+        # Enviar notificación al admin
+        send_verification_notification(verification)
+        
+        return jsonify({
+            'success': True,
+            'verification_id': verification.get('id'),
+            'message': 'Verificación solicitada. El administrador la revisará pronto.',
+            'estimated_time': '2-4 horas'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/rental-verifications/<verification_id>/update', methods=['POST'])
+@require_auth
+def update_rental_verification(verification_id):
+    """Actualizar resultado de verificación manual"""
+    try:
+        data = request.json
+        update_data = {
+            'status': data.get('status'),  # pending, available, not_available, completed
+            'daily_price': data.get('daily_price'),
+            'total_price': data.get('total_price'),
+            'currency': data.get('currency', 'USD'),
+            'availability_notes': data.get('availability_notes'),
+            'admin_notes': data.get('admin_notes'),
+            'checked_at': datetime.now().isoformat(),
+            'checked_by': data.get('admin_id'),
+            'rentcarcuba_url': data.get('rentcarcuba_url'),
+            'commission_amount': data.get('commission_amount', 50.00)  # $50 comisión por alquiler
+        }
+        
+        # Actualizar verificación en Supabase
+        updated_verification = supabase_service.update_rental_verification(verification_id, update_data)
+        
+        # Notificar al usuario del resultado
+        if updated_verification:
+            notify_user_verification_result(verification_id, update_data)
+        
+        return jsonify({
+            'success': True,
+            'verification_id': verification_id,
+            'message': 'Verificación actualizada exitosamente'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/rental-verifications/<verification_id>/complete', methods=['POST'])
+@require_auth
+def complete_rental_verification(verification_id):
+    """Marcar verificación como completada y procesar alquiler"""
+    try:
+        data = request.json
+        completion_data = {
+            'status': 'completed',
+            'rental_confirmed': data.get('rental_confirmed', False),
+            'rental_id': data.get('rental_id'),
+            'payment_status': data.get('payment_status', 'pending'),
+            'commission_paid': data.get('commission_paid', False),
+            'completed_at': datetime.now().isoformat(),
+            'completion_notes': data.get('completion_notes')
+        }
+        
+        # Actualizar verificación
+        updated_verification = supabase_service.update_rental_verification(verification_id, completion_data)
+        
+        # Si se confirmó el alquiler, crear registro de alquiler
+        if data.get('rental_confirmed'):
+            rental_data = {
+                'verification_id': verification_id,
+                'user_id': updated_verification.get('user_id'),
+                'car_model': updated_verification.get('car_model'),
+                'start_date': updated_verification.get('start_date'),
+                'end_date': updated_verification.get('end_date'),
+                'province': updated_verification.get('province'),
+                'daily_price': updated_verification.get('daily_price'),
+                'total_price': updated_verification.get('total_price'),
+                'commission_amount': updated_verification.get('commission_amount'),
+                'status': 'confirmed',
+                'created_at': datetime.now().isoformat()
+            }
+            
+            rental = supabase_service.create_rental(rental_data)
+        
+        return jsonify({
+            'success': True,
+            'verification_id': verification_id,
+            'message': 'Verificación completada exitosamente'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/rental-verifications/<verification_id>/cancel', methods=['POST'])
+@require_auth
+def cancel_rental_verification(verification_id):
+    """Cancelar verificación de renta"""
+    try:
+        data = request.json
+        cancel_data = {
+            'status': 'cancelled',
+            'cancellation_reason': data.get('cancellation_reason'),
+            'cancelled_at': datetime.now().isoformat(),
+            'cancelled_by': data.get('admin_id')
+        }
+        
+        # Actualizar verificación
+        updated_verification = supabase_service.update_rental_verification(verification_id, cancel_data)
+        
+        # Notificar al usuario
+        notify_user_verification_cancelled(verification_id, cancel_data)
+        
+        return jsonify({
+            'success': True,
+            'verification_id': verification_id,
+            'message': 'Verificación cancelada exitosamente'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/rental-verifications/stats')
+@require_auth
+def get_rental_verification_stats():
+    """Obtener estadísticas de verificaciones"""
+    try:
+        stats = supabase_service.get_rental_verification_stats()
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== FUNCIONES AUXILIARES PARA NOTIFICACIONES =====
+
+def send_verification_notification(verification):
+    """Enviar notificación al admin sobre nueva verificación"""
+    try:
+        # Aquí iría la lógica para enviar email/SMS al admin
+        # Por ahora simulamos la notificación
+        
+        notification_data = {
+            'type': 'rental_verification_request',
+            'title': 'Nueva Verificación de Renta de Auto',
+            'message': f"Verificación solicitada: {verification.get('car_model')} en {verification.get('province')}",
+            'verification_id': verification.get('id'),
+            'priority': verification.get('priority'),
+            'created_at': datetime.now().isoformat()
+        }
+        
+        # Guardar notificación en base de datos
+        supabase_service.create_notification(notification_data)
+        
+        # Enviar email al admin (implementar después)
+        # send_admin_email(notification_data)
+        
+        return True
+    except Exception as e:
+        print(f"Error enviando notificación: {e}")
+        return False
+
+def notify_user_verification_result(verification_id, result_data):
+    """Notificar al usuario del resultado de la verificación"""
+    try:
+        # Obtener datos de la verificación
+        verification = supabase_service.get_rental_verification_detail(verification_id)
+        
+        if not verification:
+            return False
+        
+        # Preparar mensaje según el resultado
+        if result_data.get('status') == 'available':
+            message = f"✅ Disponible: {verification.get('car_model')} en {verification.get('province')}\n"
+            message += f"💰 Precio por día: ${result_data.get('daily_price')}\n"
+            message += f"💵 Total: ${result_data.get('total_price')}\n"
+            message += f"📝 Notas: {result_data.get('availability_notes', 'Sin notas adicionales')}"
+        else:
+            message = f"❌ No disponible: {verification.get('car_model')} en {verification.get('province')}\n"
+            message += f"📝 Notas: {result_data.get('availability_notes', 'Sin notas adicionales')}"
+        
+        # Enviar notificación al usuario
+        user_notification = {
+            'user_id': verification.get('user_id'),
+            'type': 'rental_verification_result',
+            'title': 'Resultado de Verificación de Renta',
+            'message': message,
+            'verification_id': verification_id,
+            'created_at': datetime.now().isoformat()
+        }
+        
+        supabase_service.create_user_notification(user_notification)
+        
+        return True
+    except Exception as e:
+        print(f"Error notificando usuario: {e}")
+        return False
+
+def notify_user_verification_cancelled(verification_id, cancel_data):
+    """Notificar al usuario que la verificación fue cancelada"""
+    try:
+        verification = supabase_service.get_rental_verification_detail(verification_id)
+        
+        if not verification:
+            return False
+        
+        message = f"❌ Verificación cancelada: {verification.get('car_model')} en {verification.get('province')}\n"
+        message += f"📝 Razón: {cancel_data.get('cancellation_reason', 'Sin especificar')}"
+        
+        user_notification = {
+            'user_id': verification.get('user_id'),
+            'type': 'rental_verification_cancelled',
+            'title': 'Verificación Cancelada',
+            'message': message,
+            'verification_id': verification_id,
+            'created_at': datetime.now().isoformat()
+        }
+        
+        supabase_service.create_user_notification(user_notification)
+        
+        return True
+    except Exception as e:
+        print(f"Error notificando cancelación: {e}")
+        return False
 
