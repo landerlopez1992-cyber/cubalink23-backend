@@ -892,3 +892,53 @@ def api_support_chats():
 
 # ===== ÚLTIMA ACTUALIZACIÓN =====
 # Última actualización: Wed Aug 29 17:45:00 CDT 2024
+
+
+# ===== RUTA TEMPORAL PARA TESTING =====
+@admin.route('/test')
+def test_dashboard():
+    """Ruta temporal para testing sin autenticación"""
+    return render_template('admin/dashboard.html', config=ADMIN_CONFIG)
+
+@admin.route('/test/vendors')
+def test_vendors():
+    """Ruta temporal para testing sin autenticación"""
+    return render_template('admin/vendors.html', config=ADMIN_CONFIG)
+
+@admin.route('/test/drivers')
+def test_drivers():
+    """Ruta temporal para testing sin autenticación"""
+    return render_template('admin/drivers.html', config=ADMIN_CONFIG)
+
+@admin.route('/test/vehicles')
+def test_vehicles():
+    """Ruta temporal para testing sin autenticación"""
+    return render_template('admin/vehicles.html', config=ADMIN_CONFIG)
+
+@admin.route('/test/wallet')
+def test_wallet():
+    """Ruta temporal para testing sin autenticación"""
+    return render_template('admin/wallet.html', config=ADMIN_CONFIG)
+
+@admin.route('/test/payment-methods')
+def test_payment_methods():
+    """Ruta temporal para testing sin autenticación"""
+    return render_template('admin/payment_methods.html', config=ADMIN_CONFIG)
+
+@admin.route('/test/payroll')
+def test_payroll():
+    """Ruta temporal para testing sin autenticación"""
+    return render_template('admin/payroll.html', config=ADMIN_CONFIG)
+
+@admin.route('/test/alerts')
+def test_alerts():
+    """Ruta temporal para testing sin autenticación"""
+    return render_template('admin/alerts.html', config=ADMIN_CONFIG)
+
+@admin.route('/test/support-chat')
+def test_support_chat():
+    """Ruta temporal para testing sin autenticación"""
+    return render_template('admin/support_chat.html', config=ADMIN_CONFIG)
+
+# ===== ÚLTIMA ACTUALIZACIÓN =====
+# Última actualización: Wed Aug 29 17:55:00 CDT 2024
