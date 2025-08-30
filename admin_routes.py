@@ -211,8 +211,8 @@ def delete_banner(banner_id):
 @admin.route('/users')
 @require_auth
 def users():
-    """Gestión de usuarios"""
-    return render_template('admin/users.html', config=ADMIN_CONFIG)
+    """Gestión de usuarios - Redirigir al dashboard"""
+    return redirect('/admin/')
 
 @admin.route('/api/users', methods=['GET'])
 def get_users():
@@ -238,8 +238,8 @@ def toggle_user_status(user_id):
 @admin.route('/orders')
 @require_auth
 def orders():
-    """Gestión de órdenes"""
-    return render_template('admin/orders.html', config=ADMIN_CONFIG)
+    """Gestión de órdenes - Redirigir al dashboard"""
+    return redirect('/admin/')
 
 @admin.route('/api/orders')
 @require_auth
@@ -267,8 +267,8 @@ def update_order_status(order_id):
 @admin.route('/system')
 @require_auth
 def system():
-    """Configuración del sistema"""
-    return render_template('admin/system.html', config=ADMIN_CONFIG)
+    """Configuración del sistema - Redirigir al dashboard"""
+    return redirect('/admin/')
 
 @admin.route('/api/config')
 @require_auth
@@ -295,8 +295,8 @@ def update_config():
 @admin.route('/flights')
 @require_auth
 def flights():
-    """Gestión de vuelos y rutas"""
-    return render_template('admin/flights.html', config=ADMIN_CONFIG)
+    """Gestión de vuelos - Redirigir al dashboard"""
+    return redirect('/admin/')
 
 @admin.route('/api/flights')
 @require_auth
