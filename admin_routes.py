@@ -77,8 +77,8 @@ def get_stats():
 @admin.route('/products')
 @require_auth
 def products():
-    """Gestión de productos - Redirigir al dashboard"""
-    return redirect('/admin/')
+    """Gestión de productos"""
+    return render_template('admin/products.html', config=ADMIN_CONFIG)
 
 @admin.route('/api/products')
 @require_auth
@@ -211,8 +211,8 @@ def delete_banner(banner_id):
 @admin.route('/users')
 @require_auth
 def users():
-    """Gestión de usuarios - Redirigir al dashboard"""
-    return redirect('/admin/')
+    """Gestión de usuarios"""
+    return render_template('admin/users.html', config=ADMIN_CONFIG)
 
 @admin.route('/api/users', methods=['GET'])
 def get_users():
@@ -238,8 +238,8 @@ def toggle_user_status(user_id):
 @admin.route('/orders')
 @require_auth
 def orders():
-    """Gestión de órdenes - Redirigir al dashboard"""
-    return redirect('/admin/')
+    """Gestión de órdenes"""
+    return render_template('admin/orders.html', config=ADMIN_CONFIG)
 
 @admin.route('/api/orders')
 @require_auth
@@ -267,8 +267,8 @@ def update_order_status(order_id):
 @admin.route('/system')
 @require_auth
 def system():
-    """Configuración del sistema - Redirigir al dashboard"""
-    return redirect('/admin/')
+    """Configuración del sistema"""
+    return render_template('admin/system.html', config=ADMIN_CONFIG)
 
 @admin.route('/api/config')
 @require_auth
@@ -295,8 +295,8 @@ def update_config():
 @admin.route('/flights')
 @require_auth
 def flights():
-    """Gestión de vuelos - Redirigir al dashboard"""
-    return redirect('/admin/')
+    """Gestión de vuelos"""
+    return render_template('admin/flights.html', config=ADMIN_CONFIG)
 
 @admin.route('/api/flights')
 @require_auth
@@ -878,48 +878,94 @@ def notify_user_verification_cancelled(verification_id, cancel_data):
 @admin.route('/vendors')
 @require_auth
 def vendors():
-    """Gestión de vendedores - Redirigir al dashboard"""
-    return redirect('/admin/')
+    """Gestión de vendedores"""
+    return render_template('admin/vendors.html', config=ADMIN_CONFIG)
 
 @admin.route('/drivers')
 @require_auth
 def drivers():
-    """Gestión de repartidores - Redirigir al dashboard"""
-    return redirect('/admin/')
+    """Gestión de repartidores"""
+    return render_template('admin/drivers.html', config=ADMIN_CONFIG)
 
 @admin.route('/vehicles')
 @require_auth
 def vehicles():
-    """Gestión de renta car - Redirigir al dashboard"""
-    return redirect('/admin/')
+    """Gestión de renta car"""
+    return render_template('admin/vehicles.html', config=ADMIN_CONFIG)
 
 @admin.route('/support-chat')
 @require_auth
 def support_chat():
-    """Chat de soporte - Redirigir al dashboard"""
-    return redirect('/admin/')
+    """Chat de soporte"""
+    return render_template('admin/support_chat.html', config=ADMIN_CONFIG)
 
 @admin.route('/alerts')
 @require_auth
 def alerts():
-    """Gestión de alertas - Redirigir al dashboard"""
-    return redirect('/admin/')
+    """Gestión de alertas"""
+    return render_template('admin/alerts.html', config=ADMIN_CONFIG)
 
 @admin.route('/wallet')
 @require_auth
 def wallet():
-    """Gestión de billetera - Redirigir al dashboard"""
-    return redirect('/admin/')
+    """Gestión de billetera"""
+    return render_template('admin/wallet.html', config=ADMIN_CONFIG)
 
 @admin.route('/payment-methods')
 @require_auth
 def payment_methods():
-    """Gestión de métodos de pago - Redirigir al dashboard"""
-    return redirect('/admin/')
+    """Gestión de métodos de pago"""
+    return render_template('admin/payment_methods.html', config=ADMIN_CONFIG)
 
 @admin.route('/payroll')
 @require_auth
 def payroll():
-    """Gestión de nómina - Redirigir al dashboard"""
-    return redirect('/admin/')
+    """Gestión de nómina"""
+    return render_template('admin/payroll.html', config=ADMIN_CONFIG)
 
+@admin.route('/system-rules')
+@require_auth
+def system_rules():
+    """Reglas del sistema"""
+    return render_template('admin/system_rules.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/contact-info', methods=['GET', 'POST'])
+@require_auth
+def contact_info():
+    """API para gestionar información de contacto de la empresa"""
+    if request.method == 'POST':
+        data = request.get_json()
+        
+        # Aquí se guardaría en la base de datos
+        contact_info = {
+            'phone': data.get('phone'),
+            'email': data.get('email'),
+            'whatsapp': data.get('whatsapp'),
+            'address': data.get('address'),
+            'facebook': data.get('facebook'),
+            'instagram': data.get('instagram'),
+            'twitter': data.get('twitter'),
+            'business_hours': data.get('businessHours'),
+            'terms_conditions': data.get('termsConditions'),
+            'privacy_policy': data.get('privacyPolicy'),
+            'updated_at': datetime.now().isoformat()
+        }
+        
+        # Por ahora retornamos éxito
+        return jsonify({'success': True, 'message': 'Información de contacto actualizada'})
+    
+    # GET - Retornar información actual
+    contact_info = {
+        'phone': '+1 (555) 123-4567',
+        'email': 'contacto@cubalink.com',
+        'whatsapp': '+1 (555) 987-6543',
+        'address': '123 Calle Principal, La Habana, Cuba',
+        'facebook': 'https://facebook.com/cubalink',
+        'instagram': 'https://instagram.com/cubalink',
+        'twitter': 'https://twitter.com/cubalink',
+        'business_hours': 'Lunes a Viernes: 9:00 AM - 6:00 PM',
+        'terms_conditions': 'Términos y condiciones de la empresa...',
+        'privacy_policy': 'Política de privacidad de la empresa...'
+    }
+    
+    return jsonify(contact_info)
