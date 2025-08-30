@@ -74,6 +74,16 @@
             background-color: #16213e;
             color: white;
         }
+        .form-control {
+            background-color: #1a1a2e;
+            border-color: #16213e;
+            color: white;
+        }
+        .form-control:focus {
+            background-color: #1a1a2e;
+            border-color: #0f3460;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -82,7 +92,8 @@
             <!-- Sidebar -->
             <div class="col-md-3 col-lg-2 sidebar p-3">
                 <div class="text-center mb-4">
-                    <h4 class="text-white"><i class="fas fa-plane"></i> {{ config.app_name }}</h4>
+                    <img src="/static/img/company-logo.svg" alt="Cubalink23 Logo" style="width: 80px; height: 80px; margin-bottom: 10px;">
+                    <h4 class="text-white">{{ config.app_name }}</h4>
                     <small class="text-white-50">Panel de Administración</small>
                 </div>
                 
@@ -136,9 +147,9 @@
             </div>
 
             <!-- Main Content -->
-            <div class="col-md-9 col-lg-10 p-4" style="background-color: #1a1a2e;">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="text-white"><i class="fas fa-motorcycle"></i> Gestión de Repartidores</h2>
+            <div class="col-md-9 col-lg-10 p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2><i class="fas fa-motorcycle"></i> Gestión de Repartidores</h2>
                     <div class="btn-group">
                         <button class="btn btn-outline-primary" onclick="refreshDrivers()">
                             <i class="fas fa-sync-alt"></i> Actualizar
@@ -154,36 +165,36 @@
                     <div class="col-md-3">
                         <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-motorcycle fa-2x text-white mb-2"></i>
+                                <i class="fas fa-motorcycle fa-2x text-primary mb-2"></i>
                                 <h3 id="total-drivers">-</h3>
-                                <p class="mb-0 text-white">Repartidores Totales</p>
+                                <p class="mb-0">Repartidores Totales</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-clock fa-2x text-white mb-2"></i>
+                                <i class="fas fa-clock fa-2x text-warning mb-2"></i>
                                 <h3 id="pending-approvals">-</h3>
-                                <p class="mb-0 text-white">Pendientes de Aprobación</p>
+                                <p class="mb-0">Pendientes de Aprobación</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-check-circle fa-2x text-white mb-2"></i>
-                                <h3 id="active-drivers" class="text-white">-</h3>
-                                <p class="mb-0 text-white">Repartidores Activos</p>
+                                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                <h3 id="active-drivers">-</h3>
+                                <p class="mb-0">Repartidores Activos</p>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                        <div class="col-md-3">
                         <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-dollar-sign fa-2x text-white mb-2"></i>
+                                <i class="fas fa-dollar-sign fa-2x text-info mb-2"></i>
                                 <h3 id="total-earnings">-</h3>
-                                <p class="mb-0 text-white">Ganancias Totales</p>
+                                <p class="mb-0">Ganancias Totales</p>
                             </div>
                         </div>
                     </div>
@@ -194,7 +205,7 @@
                     <div class="card-header">
                         <h5 class="text-white"><i class="fas fa-bell text-white"></i> Configuración de Notificaciones con Sonido</h5>
                     </div>
-                    <div class="card-body">
+                                <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="alert alert-info" style="background-color: #0f3460; border-color: #0f3460;">
@@ -207,8 +218,8 @@
                                         <li>Alertas del sistema</li>
                                         <li>Recordatorios de entrega</li>
                                     </ul>
-                                </div>
-                            </div>
+                                        </div>
+                                    </div>
                             <div class="col-md-6">
                                 <div class="alert alert-warning" style="background-color: #0f3460; border-color: #0f3460;">
                                     <h6 class="text-white"><i class="fas fa-phone"></i> Configuración de Permisos</h6>
@@ -231,9 +242,9 @@
                                     <i class="fas fa-paper-plane"></i> Enviar Notificación de Prueba
                                 </button>
                             </div>
-                        </div>
-                    </div>
-                </div>
+                                        </div>
+                                        </div>
+                                    </div>
 
                 <!-- Tabs -->
                 <ul class="nav nav-tabs mb-4" id="driverTabs" role="tablist">
@@ -265,7 +276,7 @@
                     <div class="tab-pane fade show active" id="all-drivers" role="tabpanel">
                         <div class="card card-stats">
                             <div class="card-header">
-                                <h5 class="text-white"><i class="fas fa-list"></i> Lista de Repartidores</h5>
+                                <h5><i class="fas fa-list"></i> Lista de Repartidores</h5>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
@@ -284,7 +295,7 @@
                                         </thead>
                                         <tbody id="drivers-table">
                                             <tr>
-                                                <td colspan="8" class="text-center text-white">
+                                                <td colspan="8" class="text-center">
                                                     <div class="spinner-border" role="status">
                                                         <span class="visually-hidden">Cargando...</span>
                                                     </div>
@@ -295,14 +306,14 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                                        </div>
 
                     <!-- Pending Approvals Tab -->
                     <div class="tab-pane fade" id="pending" role="tabpanel">
                         <div class="card card-stats">
                             <div class="card-header">
-                                <h5 class="text-white"><i class="fas fa-clock"></i> Repartidores Pendientes de Aprobación</h5>
-                            </div>
+                                <h5><i class="fas fa-clock"></i> Repartidores Pendientes de Aprobación</h5>
+                                        </div>
                             <div class="card-body">
                                 <div class="table-responsive">
                                     <table class="table table-hover">
@@ -318,7 +329,7 @@
                                         </thead>
                                         <tbody id="pending-drivers-table">
                                             <tr>
-                                                <td colspan="6" class="text-center text-white">No hay repartidores pendientes de aprobación</td>
+                                                <td colspan="6" class="text-center">No hay repartidores pendientes de aprobación</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -332,11 +343,11 @@
                         <div class="alert alert-info mb-3">
                             <h6><i class="fas fa-info-circle me-2"></i>Sistema de Estados de Entrega</h6>
                             <p class="mb-0">Los repartidores pueden gestionar el estado de las órdenes: <strong>Aceptar Orden</strong> → <strong>Orden en Tránsito</strong> → <strong>Orden en Reparto</strong> → <strong>Orden Entregada</strong> (con foto)</p>
-                        </div>
+                                        </div>
                         <div class="card card-stats">
                             <div class="card-header">
-                                <h5 class="text-white"><i class="fas fa-shipping-fast"></i> Gestión de Entregas</h5>
-                            </div>
+                                <h5><i class="fas fa-shipping-fast"></i> Gestión de Entregas</h5>
+                                        </div>
                             <div class="card-body">
                                 <div class="table-responsive">
                                     <table class="table table-hover">
@@ -369,7 +380,7 @@
                                                     <div class="btn-group">
                                                         <button class="btn btn-sm btn-success">En Reparto</button>
                                                         <button class="btn btn-sm btn-primary">Entregada</button>
-                                                    </div>
+                                    </div>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -382,28 +393,28 @@
                     <!-- Earnings Tab -->
                     <div class="tab-pane fade" id="earnings" role="tabpanel">
                         <div class="card card-stats">
-                            <div class="card-header">
-                                <h5 class="text-white"><i class="fas fa-money-bill-wave"></i> Gestión de Ganancias</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>Repartidor</th>
+                        <div class="card-header">
+                                <h5><i class="fas fa-money-bill-wave"></i> Gestión de Ganancias</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Repartidor</th>
                                                 <th>Entregas del Mes</th>
                                                 <th>Ganancia por Entrega</th>
                                                 <th>Ganancia Total</th>
                                                 <th>Estado Pago</th>
-                                                <th>Acciones</th>
-                                            </tr>
-                                        </thead>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
                                         <tbody id="earnings-table">
                                             <tr>
-                                                <td colspan="6" class="text-center text-white">No hay ganancias registradas</td>
+                                                <td colspan="6" class="text-center">No hay ganancias registradas</td>
                                             </tr>
-                                        </tbody>
-                                    </table>
+                                    </tbody>
+                                </table>
                                 </div>
                             </div>
                         </div>
@@ -493,7 +504,7 @@
             
             // Simular tabla vacía
             document.getElementById('drivers-table').innerHTML = 
-                '<tr><td colspan="8" class="text-center text-white"><span class="text-white">No hay repartidores registrados</span></td></tr>';
+                '<tr><td colspan="8" class="text-center">No hay repartidores registrados</td></tr>';
         }
 
         function refreshDrivers() {

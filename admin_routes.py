@@ -1011,3 +1011,112 @@ def upload_logo():
         
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error al subir el logo: {str(e)}'})
+
+@admin.route('/api/upload-banners', methods=['POST'])
+@require_auth
+def upload_banners():
+    """API para subir banners de la app"""
+    try:
+        banners_uploaded = []
+        
+        # Procesar banner principal
+        if 'main_banner' in request.files:
+            file = request.files['main_banner']
+            if file.filename != '':
+                filename = 'main-banner' + os.path.splitext(file.filename)[1]
+                filepath = os.path.join('static', 'img', 'banners', filename)
+                os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                file.save(filepath)
+                banners_uploaded.append('Banner Principal')
+        
+        # Procesar banner secundario
+        if 'secondary_banner' in request.files:
+            file = request.files['secondary_banner']
+            if file.filename != '':
+                filename = 'secondary-banner' + os.path.splitext(file.filename)[1]
+                filepath = os.path.join('static', 'img', 'banners', filename)
+                os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                file.save(filepath)
+                banners_uploaded.append('Banner Secundario')
+        
+        # Procesar banner de promociones
+        if 'promo_banner' in request.files:
+            file = request.files['promo_banner']
+            if file.filename != '':
+                filename = 'promo-banner' + os.path.splitext(file.filename)[1]
+                filepath = os.path.join('static', 'img', 'banners', filename)
+                os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                file.save(filepath)
+                banners_uploaded.append('Banner de Promociones')
+        
+        if banners_uploaded:
+            return jsonify({
+                'success': True,
+                'message': f'Banners actualizados: {", ".join(banners_uploaded)}'
+            })
+        else:
+            return jsonify({'success': False, 'message': 'No se seleccionaron archivos'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error al subir banners: {str(e)}'})
+
+@admin.route('/api/send-push-notification', methods=['POST'])
+@require_auth
+def send_push_notification():
+    """API para enviar notificaciones push"""
+    try:
+        data = request.get_json()
+        
+        # Aquí se integraría con Firebase Cloud Messaging o similar
+        notification_data = {
+            'title': data.get('title'),
+            'message': data.get('message'),
+            'type': data.get('type', 'all'),
+            'urgent': data.get('urgent', False),
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        # Guardar en base de datos
+        # save_notification_to_db(notification_data)
+        
+        # Enviar notificación push real
+        # send_push_to_devices(notification_data)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Notificación enviada correctamente'
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error al enviar notificación: {str(e)}'})
+
+@admin.route('/api/notification-history')
+@require_auth
+def notification_history():
+    """API para obtener historial de notificaciones"""
+    try:
+        # Aquí se obtendría de la base de datos
+        notifications = [
+            {
+                'date': '2024-01-15 10:30:00',
+                'title': 'Nueva Promoción',
+                'message': '¡Descuento del 20% en todos los productos!',
+                'type': 'all',
+                'status': 'Enviada'
+            },
+            {
+                'date': '2024-01-14 15:45:00',
+                'title': 'Mantenimiento Programado',
+                'message': 'El sistema estará en mantenimiento mañana de 2:00 AM a 4:00 AM',
+                'type': 'all',
+                'status': 'Enviada'
+            }
+        ]
+        
+        return jsonify({
+            'success': True,
+            'notifications': notifications
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error al cargar historial: {str(e)}'})

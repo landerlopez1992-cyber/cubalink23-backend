@@ -74,6 +74,16 @@
             background-color: #16213e;
             color: white;
         }
+        .form-control {
+            background-color: #1a1a2e;
+            border-color: #16213e;
+            color: white;
+        }
+        .form-control:focus {
+            background-color: #1a1a2e;
+            border-color: #0f3460;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -82,7 +92,8 @@
             <!-- Sidebar -->
             <div class="col-md-3 col-lg-2 sidebar p-3">
                 <div class="text-center mb-4">
-                    <h4 class="text-white"><i class="fas fa-plane"></i> {{ config.app_name }}</h4>
+                    <img src="/static/img/company-logo.svg" alt="Cubalink23 Logo" style="width: 80px; height: 80px; margin-bottom: 10px;">
+                    <h4 class="text-white">{{ config.app_name }}</h4>
                     <small class="text-white-50">Panel de Administración</small>
                 </div>
                 
@@ -136,9 +147,9 @@
             </div>
 
             <!-- Main Content -->
-            <div class="col-md-9 col-lg-10 p-4" style="background-color: #1a1a2e;">
+            <div class="col-md-9 col-lg-10 p-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="text-white"><i class="fas fa-store"></i> Gestión de Vendedores</h2>
+                    <h2><i class="fas fa-store"></i> Gestión de Vendedores</h2>
                     <div class="btn-group">
                         <button class="btn btn-outline-primary" onclick="refreshVendors()">
                             <i class="fas fa-sync-alt"></i> Actualizar
@@ -154,36 +165,36 @@
                     <div class="col-md-3">
                         <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-store fa-2x text-white mb-2"></i>
+                                <i class="fas fa-store fa-2x text-primary mb-2"></i>
                                 <h3 id="total-vendors">-</h3>
-                                <p class="mb-0 text-white">Vendedores Totales</p>
+                                <p class="mb-0">Vendedores Totales</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-clock fa-2x text-white mb-2"></i>
+                                <i class="fas fa-clock fa-2x text-warning mb-2"></i>
                                 <h3 id="pending-approvals">-</h3>
-                                <p class="mb-0 text-white">Pendientes de Aprobación</p>
+                                <p class="mb-0">Pendientes de Aprobación</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-check-circle fa-2x text-white mb-2"></i>
-                                <h3 id="active-vendors" class="text-white">-</h3>
-                                <p class="mb-0 text-white">Vendedores Activos</p>
+                                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                <h3 id="active-vendors">-</h3>
+                                <p class="mb-0">Vendedores Activos</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-dollar-sign fa-2x text-white mb-2"></i>
+                                <i class="fas fa-dollar-sign fa-2x text-info mb-2"></i>
                                 <h3 id="total-commissions">-</h3>
-                                <p class="mb-0 text-white">Comisiones Totales</p>
+                                <p class="mb-0">Comisiones Totales</p>
                             </div>
                         </div>
                     </div>
@@ -260,7 +271,7 @@
                     <div class="tab-pane fade show active" id="all-vendors" role="tabpanel">
                         <div class="card card-stats">
                             <div class="card-header">
-                                <h5 class="text-white"><i class="fas fa-list"></i> Lista de Vendedores</h5>
+                                <h5><i class="fas fa-list"></i> Lista de Vendedores</h5>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
@@ -280,7 +291,7 @@
                                         </thead>
                                         <tbody id="vendors-table">
                                             <tr>
-                                                <td colspan="9" class="text-center text-white">
+                                                <td colspan="9" class="text-center">
                                                     <div class="spinner-border" role="status">
                                                         <span class="visually-hidden">Cargando...</span>
                                                     </div>
@@ -297,7 +308,7 @@
                     <div class="tab-pane fade" id="pending" role="tabpanel">
                         <div class="card card-stats">
                             <div class="card-header">
-                                <h5 class="text-white"><i class="fas fa-clock"></i> Vendedores Pendientes de Aprobación</h5>
+                                <h5><i class="fas fa-clock"></i> Vendedores Pendientes de Aprobación</h5>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
@@ -314,7 +325,7 @@
                                         </thead>
                                         <tbody id="pending-vendors-table">
                                             <tr>
-                                                <td colspan="6" class="text-center text-white">No hay vendedores pendientes de aprobación</td>
+                                                <td colspan="6" class="text-center">No hay vendedores pendientes de aprobación</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -331,7 +342,7 @@
                         </div>
                         <div class="card card-stats">
                             <div class="card-header">
-                                <h5 class="text-white"><i class="fas fa-percentage"></i> Gestión de Comisiones</h5>
+                                <h5><i class="fas fa-percentage"></i> Gestión de Comisiones</h5>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
@@ -444,7 +455,7 @@
             
             // Simular tabla vacía
             document.getElementById('vendors-table').innerHTML = 
-                '<tr><td colspan="9" class="text-center text-white"><span class="text-white">No hay vendedores registrados</span></td></tr>';
+                '<tr><td colspan="9" class="text-center">No hay vendedores registrados</td></tr>';
         }
 
         function refreshVendors() {
