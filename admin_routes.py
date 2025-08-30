@@ -103,7 +103,7 @@ def add_product():
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                filename = f"{timestamp}_{filename}"
+                filename = "{}_{}".format(timestamp, filename)
                 
                 # Crear directorio si no existe
                 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -111,7 +111,7 @@ def add_product():
                 file.save(file_path)
                 
                 # URL de la imagen
-                data['image_url'] = f'/static/uploads/{filename}'
+                data['image_url'] = '/static/uploads/{}'.format(filename)
         
         # Agregar producto a Supabase
         product = supabase_service.add_product(data)
@@ -170,7 +170,7 @@ def add_banner():
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                filename = f"banner_{timestamp}_{filename}"
+                filename = "banner_{}_{}".format(timestamp, filename)
                 
                 # Crear directorio si no existe
                 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -178,7 +178,7 @@ def add_banner():
                 file.save(file_path)
                 
                 # URL de la imagen
-                data['image_url'] = f'/static/uploads/{filename}'
+                data['image_url'] = '/static/uploads/{}'.format(filename)
         
         # Agregar banner a Supabase
         banner = supabase_service.add_banner(data)
@@ -269,10 +269,6 @@ def update_order_status(order_id):
 def system():
     """Configuración del sistema"""
     return render_template('admin/system.html', config=ADMIN_CONFIG)
-
-    return render_template('admin/users.html', config=ADMIN_CONFIG)
-
-    return render_template('admin/orders.html', config=ADMIN_CONFIG)
 
 @admin.route('/api/config')
 @require_auth
@@ -797,7 +793,7 @@ def send_verification_notification(verification):
         notification_data = {
             'type': 'rental_verification_request',
             'title': 'Nueva Verificación de Renta de Auto',
-            'message': f"Verificación solicitada: {verification.get('car_model')} en {verification.get('province')}",
+            'message': "Verificación solicitada: {} en {}".format(verification.get('car_model'), verification.get('province')),
             'verification_id': verification.get('id'),
             'priority': verification.get('priority'),
             'created_at': datetime.now().isoformat()
@@ -811,7 +807,7 @@ def send_verification_notification(verification):
         
         return True
     except Exception as e:
-        print(f"Error enviando notificación: {e}")
+        print("Error enviando notificación: {}".format(e))
         return False
 
 def notify_user_verification_result(verification_id, result_data):
@@ -825,13 +821,13 @@ def notify_user_verification_result(verification_id, result_data):
         
         # Preparar mensaje según el resultado
         if result_data.get('status') == 'available':
-            message = f"✅ Disponible: {verification.get('car_model')} en {verification.get('province')}\n"
-            message += f"💰 Precio por día: ${result_data.get('daily_price')}\n"
-            message += f"💵 Total: ${result_data.get('total_price')}\n"
-            message += f"📝 Notas: {result_data.get('availability_notes', 'Sin notas adicionales')}"
+            message = "✅ Disponible: {} en {}\n".format(verification.get('car_model'), verification.get('province'))
+            message += "💰 Precio por día: ${}\n".format(result_data.get('daily_price'))
+            message += "💵 Total: ${}\n".format(result_data.get('total_price'))
+            message += "📝 Notas: {}".format(result_data.get('availability_notes', 'Sin notas adicionales'))
         else:
-            message = f"❌ No disponible: {verification.get('car_model')} en {verification.get('province')}\n"
-            message += f"📝 Notas: {result_data.get('availability_notes', 'Sin notas adicionales')}"
+            message = "❌ No disponible: {} en {}\n".format(verification.get('car_model'), verification.get('province'))
+            message += "📝 Notas: {}".format(result_data.get('availability_notes', 'Sin notas adicionales'))
         
         # Enviar notificación al usuario
         user_notification = {
@@ -847,7 +843,7 @@ def notify_user_verification_result(verification_id, result_data):
         
         return True
     except Exception as e:
-        print(f"Error notificando usuario: {e}")
+        print("Error notificando usuario: {}".format(e))
         return False
 
 def notify_user_verification_cancelled(verification_id, cancel_data):
@@ -858,8 +854,8 @@ def notify_user_verification_cancelled(verification_id, cancel_data):
         if not verification:
             return False
         
-        message = f"❌ Verificación cancelada: {verification.get('car_model')} en {verification.get('province')}\n"
-        message += f"📝 Razón: {cancel_data.get('cancellation_reason', 'Sin especificar')}"
+        message = "❌ Verificación cancelada: {} en {}\n".format(verification.get('car_model'), verification.get('province'))
+        message += "📝 Razón: {}".format(cancel_data.get('cancellation_reason', 'Sin especificar'))
         
         user_notification = {
             'user_id': verification.get('user_id'),
@@ -874,6 +870,8 @@ def notify_user_verification_cancelled(verification_id, cancel_data):
         
         return True
     except Exception as e:
-        print(f"Error notificando cancelación: {e}")
+        print("Error notificando cancelación: {}".format(e))
         return False
+
+
 
