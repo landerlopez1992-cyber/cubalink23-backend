@@ -247,6 +247,11 @@
                                     <i class="fas fa-gavel"></i> Términos y Políticas
                                 </button>
                             </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="advertising-tab" data-bs-toggle="tab" data-bs-target="#advertising" type="button" role="tab">
+                                    <i class="fas fa-bullhorn"></i> Publicidad y Notificaciones
+                                </button>
+                            </li>
                         </ul>
                     </div>
                     <div class="card-body">
@@ -517,6 +522,106 @@
                                 </div>
                             </div>
 
+                            <!-- Advertising and Notifications Tab -->
+                            <div class="tab-pane fade" id="advertising" role="tabpanel">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card card-stats mb-4">
+                                            <div class="card-header">
+                                                <h5 class="text-white"><i class="fas fa-image text-white"></i> Gestión de Banners de la App</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label text-white">Banner Principal (Home)</label>
+                                                    <input type="file" class="form-control" id="mainBanner" accept="image/*">
+                                                    <small class="text-white-50">Tamaño recomendado: 1200x300px</small>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label text-white">Banner Secundario</label>
+                                                    <input type="file" class="form-control" id="secondaryBanner" accept="image/*">
+                                                    <small class="text-white-50">Tamaño recomendado: 800x200px</small>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label text-white">Banner de Promociones</label>
+                                                    <input type="file" class="form-control" id="promoBanner" accept="image/*">
+                                                    <small class="text-white-50">Tamaño recomendado: 600x150px</small>
+                                                </div>
+                                                <button class="btn btn-success" onclick="uploadBanners()">
+                                                    <i class="fas fa-upload"></i> Actualizar Banners
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card card-stats mb-4">
+                                            <div class="card-header">
+                                                <h5 class="text-white"><i class="fas fa-bell text-white"></i> Notificaciones Push</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label text-white">Título de la Notificación</label>
+                                                    <input type="text" class="form-control" id="pushTitle" placeholder="Título de la notificación">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label text-white">Mensaje</label>
+                                                    <textarea class="form-control" id="pushMessage" rows="3" placeholder="Mensaje de la notificación"></textarea>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label text-white">Tipo de Notificación</label>
+                                                    <select class="form-select" id="pushType">
+                                                        <option value="all">Todos los usuarios</option>
+                                                        <option value="active">Usuarios activos</option>
+                                                        <option value="vendors">Solo vendedores</option>
+                                                        <option value="drivers">Solo repartidores</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="pushUrgent">
+                                                        <label class="form-check-label text-white" for="pushUrgent">
+                                                            Notificación urgente (aparece con teléfono bloqueado)
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <button class="btn btn-primary" onclick="sendPushNotification()">
+                                                    <i class="fas fa-paper-plane"></i> Enviar Notificación
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="card card-stats">
+                                            <div class="card-header">
+                                                <h5 class="text-white"><i class="fas fa-history text-white"></i> Historial de Notificaciones</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="table-responsive">
+                                                    <table class="table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th class="text-white">Fecha</th>
+                                                                <th class="text-white">Título</th>
+                                                                <th class="text-white">Mensaje</th>
+                                                                <th class="text-white">Tipo</th>
+                                                                <th class="text-white">Estado</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="notificationHistory">
+                                                            <tr>
+                                                                <td colspan="5" class="text-center text-white">No hay notificaciones enviadas</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Legal Documents Tab -->
                             <div class="tab-pane fade" id="legal" role="tabpanel">
                                 <div class="row">
@@ -743,6 +848,115 @@ Para preguntas sobre privacidad, contáctenos.</textarea>
 
         function createBackup() {
             alert('Creando backup de la base de datos...');
+        }
+
+        // Funciones para gestión de banners y notificaciones
+        function uploadBanners() {
+            const mainBanner = document.getElementById('mainBanner').files[0];
+            const secondaryBanner = document.getElementById('secondaryBanner').files[0];
+            const promoBanner = document.getElementById('promoBanner').files[0];
+            
+            if (!mainBanner && !secondaryBanner && !promoBanner) {
+                alert('Por favor seleccione al menos un banner para subir');
+                return;
+            }
+            
+            const formData = new FormData();
+            if (mainBanner) formData.append('main_banner', mainBanner);
+            if (secondaryBanner) formData.append('secondary_banner', secondaryBanner);
+            if (promoBanner) formData.append('promo_banner', promoBanner);
+            
+            fetch('/admin/api/upload-banners', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Banners actualizados correctamente');
+                    // Limpiar campos
+                    document.getElementById('mainBanner').value = '';
+                    document.getElementById('secondaryBanner').value = '';
+                    document.getElementById('promoBanner').value = '';
+                } else {
+                    alert('Error al actualizar banners: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al actualizar banners');
+            });
+        }
+
+        function sendPushNotification() {
+            const title = document.getElementById('pushTitle').value;
+            const message = document.getElementById('pushMessage').value;
+            const type = document.getElementById('pushType').value;
+            const urgent = document.getElementById('pushUrgent').checked;
+            
+            if (!title || !message) {
+                alert('Por favor complete el título y mensaje de la notificación');
+                return;
+            }
+            
+            const notificationData = {
+                title: title,
+                message: message,
+                type: type,
+                urgent: urgent
+            };
+            
+            fetch('/admin/api/send-push-notification', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(notificationData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Notificación enviada correctamente');
+                    // Limpiar campos
+                    document.getElementById('pushTitle').value = '';
+                    document.getElementById('pushMessage').value = '';
+                    document.getElementById('pushUrgent').checked = false;
+                    // Actualizar historial
+                    loadNotificationHistory();
+                } else {
+                    alert('Error al enviar notificación: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al enviar notificación');
+            });
+        }
+
+        function loadNotificationHistory() {
+            fetch('/admin/api/notification-history')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('notificationHistory');
+                if (data.notifications && data.notifications.length > 0) {
+                    tbody.innerHTML = data.notifications.map(notification => `
+                        <tr>
+                            <td class="text-white">${notification.date}</td>
+                            <td class="text-white">${notification.title}</td>
+                            <td class="text-white">${notification.message}</td>
+                            <td class="text-white">${notification.type}</td>
+                            <td class="text-white">
+                                <span class="badge bg-success">Enviada</span>
+                            </td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-white">No hay notificaciones enviadas</td></tr>';
+                }
+            })
+            .catch(error => {
+                console.error('Error cargando historial:', error);
+            });
         }
 
         // Funciones para gestión del logo
