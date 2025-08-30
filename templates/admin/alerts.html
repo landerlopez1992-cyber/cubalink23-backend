@@ -7,22 +7,71 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        body {
+            background-color: #1a1a2e;
+            color: white;
+        }
         .sidebar {
             min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: #16213e;
         }
         .card-stats {
-            border: none;
+            background-color: #16213e;
+            border: 1px solid #0f3460;
             border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            color: white;
         }
         .nav-link {
-            color: rgba(255,255,255,0.8);
+            color: white;
             border-radius: 10px;
             margin: 5px 0;
         }
         .nav-link:hover, .nav-link.active {
-            background: rgba(255,255,255,0.1);
+            background-color: #0f3460;
+            color: white;
+        }
+        .table {
+            background-color: #16213e;
+            color: white;
+        }
+        .table th {
+            background-color: #0f3460;
+            color: white;
+            border-color: #0f3460;
+        }
+        .table td {
+            color: white;
+            border-color: #0f3460;
+        }
+        .btn-outline-primary {
+            color: white;
+            border-color: #0f3460;
+        }
+        .btn-outline-primary:hover {
+            background-color: #0f3460;
+            color: white;
+        }
+        .btn-success {
+            background-color: #0f3460;
+            border-color: #0f3460;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #0f3460;
+            border-color: #0f3460;
+            color: white;
+        }
+        .modal-content {
+            background-color: #16213e;
+            color: white;
+        }
+        .modal-header {
+            background-color: #0f3460;
+            color: white;
+        }
+        .modal-footer {
+            background-color: #16213e;
             color: white;
         }
         .alert-critical {
@@ -96,9 +145,9 @@
             </div>
 
             <!-- Main Content -->
-            <div class="col-md-9 col-lg-10 p-4">
+            <div class="col-md-9 col-lg-10 p-4" style="background-color: #1a1a2e;">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2><i class="fas fa-exclamation-triangle"></i> Gestión de Alertas</h2>
+                    <h2 class="text-white"><i class="fas fa-exclamation-triangle"></i> Gestión de Alertas</h2>
                     <div class="btn-group">
                         <button class="btn btn-outline-primary" onclick="refreshAlerts()">
                             <i class="fas fa-sync-alt"></i> Actualizar
@@ -114,16 +163,16 @@
                     <div class="col-md-3">
                         <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
-                                <h3 id="total-alerts">-</h3>
-                                <p class="mb-0">Alertas Totales</p>
+                                <i class="fas fa-exclamation-triangle fa-2x text-white mb-2"></i>
+                                <h3 id="total-alerts" class="text-white">-</h3>
+                                <p class="mb-0 text-white">Alertas Totales</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-mobile-alt fa-2x text-warning mb-2"></i>
+                                <i class="fas fa-mobile-alt fa-2x text-white mb-2"></i>
                                 <h3 id="dingconnect-alerts">-</h3>
                                 <p class="mb-0">DingConnect API</p>
                             </div>
@@ -132,7 +181,7 @@
                     <div class="col-md-3">
                         <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-clock fa-2x text-info mb-2"></i>
+                                <i class="fas fa-clock fa-2x text-white mb-2"></i>
                                 <h3 id="delayed-orders">-</h3>
                                 <p class="mb-0">Pedidos Atrasados</p>
                             </div>
@@ -141,7 +190,7 @@
                     <div class="col-md-3">
                         <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-store fa-2x text-warning mb-2"></i>
+                                <i class="fas fa-store fa-2x text-white mb-2"></i>
                                 <h3 id="vendor-delays">-</h3>
                                 <p class="mb-0">Demoras Vendedores</p>
                             </div>
@@ -179,7 +228,7 @@
                     <div class="tab-pane fade show active" id="all-alerts" role="tabpanel">
                         <div class="card card-stats">
                             <div class="card-header">
-                                <h5><i class="fas fa-list"></i> Todas las Alertas del Sistema</h5>
+                                <h5 class="text-white"><i class="fas fa-list"></i> Todas las Alertas del Sistema</h5>
                             </div>
                             <div class="card-body">
                                 <div id="alerts-container">
@@ -193,7 +242,7 @@
                     <div class="tab-pane fade" id="dingconnect" role="tabpanel">
                         <div class="card card-stats">
                             <div class="card-header">
-                                <h5><i class="fas fa-mobile-alt"></i> Alertas de DingConnect API</h5>
+                                <h5 class="text-white"><i class="fas fa-mobile-alt"></i> Alertas de DingConnect API</h5>
                                 <small class="text-muted">Saldo insuficiente para recargas - Admin ve alerta completa, usuario solo ve "recarga pendiente en trámite"</small>
                             </div>
                             <div class="card-body">
@@ -213,7 +262,7 @@
                                         </thead>
                                         <tbody id="dingconnect-table">
                                             <tr>
-                                                <td colspan="8" class="text-center">No hay alertas de DingConnect</td>
+                                                <td colspan="8" class="text-center text-white">No hay alertas de DingConnect</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -230,7 +279,7 @@
                         </div>
                         <div class="card card-stats">
                             <div class="card-header">
-                                <h5><i class="fas fa-clock"></i> Pedidos Atrasados (Entregas Demoradas)</h5>
+                                <h5 class="text-white"><i class="fas fa-clock"></i> Pedidos Atrasados (Entregas Demoradas)</h5>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
@@ -277,7 +326,7 @@
                     <div class="tab-pane fade" id="vendor" role="tabpanel">
                         <div class="card card-stats">
                             <div class="card-header">
-                                <h5><i class="fas fa-store"></i> Demoras de Vendedores (Procesamiento Lento)</h5>
+                                <h5 class="text-white"><i class="fas fa-store"></i> Demoras de Vendedores (Procesamiento Lento)</h5>
                                 <small class="text-muted">Vendedores que no han procesado pedidos después de que el usuario compró y pagó</small>
                             </div>
                             <div class="card-body">
@@ -297,7 +346,7 @@
                                         </thead>
                                         <tbody id="vendor-delays-table">
                                             <tr>
-                                                <td colspan="8" class="text-center">No hay demoras de vendedores</td>
+                                                <td colspan="8" class="text-center text-white">No hay demoras de vendedores</td>
                                             </tr>
                                         </tbody>
                                     </table>
