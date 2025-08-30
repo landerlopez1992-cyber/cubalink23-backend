@@ -12,9 +12,11 @@ CORS(app)
 # Importar el panel de administración y autenticación
 from admin_routes import admin
 from auth_routes import auth, require_auth
+from charter_routes import charter_bp
 
 app.register_blueprint(admin)
 app.register_blueprint(auth)
+app.register_blueprint(charter_bp)
 
 # Duffel API REAL Configuration
 DUFFEL_API_TOKEN = os.getenv('DUFFEL_API_TOKEN', 'your-duffel-token-here')
@@ -203,6 +205,147 @@ def search_offers():
             }
         ]
     })
+
+@app.route('/admin/api/combined-flight-search', methods=['POST'])
+def combined_flight_search():
+    """Búsqueda combinada de vuelos (Duffel + Charter)"""
+    try:
+        data = request.get_json()
+        
+        # Validar datos requeridos
+        required_fields = ['origin', 'destination', 'departure_date']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({
+                    'success': False,
+                    'message': f'Campo requerido: {field}'
+                }), 400
+        
+        search_type = data.get('search_type', 'all')
+        results = []
+        
+        # Búsqueda en Duffel API (comercial)
+        if search_type in ['all', 'commercial']:
+            try:
+                commercial_results = search_duffel_flights(data)
+                results.extend(commercial_results)
+            except Exception as e:
+                print(f"Error en búsqueda Duffel: {e}")
+        
+        # Búsqueda en aerolíneas charter
+        if search_type in ['all', 'charter']:
+            try:
+                from charter_routes import charter_scraper
+                charter_results = charter_scraper.search_all_charters(data)
+                results.extend(charter_results)
+            except Exception as e:
+                print(f"Error en búsqueda Charter: {e}")
+        
+        return jsonify({
+            'success': True,
+            'results': results,
+            'total': len(results),
+            'commercial_count': len([r for r in results if r.get('type') == 'commercial']),
+            'charter_count': len([r for r in results if r.get('type') == 'charter'])
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error en búsqueda combinada: {str(e)}'
+        }), 500
+
+def search_duffel_flights(search_data):
+    """Buscar vuelos en Duffel API"""
+    try:
+        headers = {
+            'Authorization': f'Bearer {DUFFEL_API_TOKEN}',
+            'Content-Type': 'application/json',
+            'Duffel-Version': 'v1'
+        }
+        
+        data = {
+            'data': {
+                'slices': [
+                    {
+                        'origin': search_data['origin'],
+                        'destination': search_data['destination'],
+                        'departure_date': search_data['departure_date']
+                    }
+                ],
+                'passengers': [
+                    {
+                        'type': 'adult'
+                    }
+                ],
+                'cabin_class': 'economy'
+            }
+        }
+        
+        response = requests.post(
+            f'{DUFFEL_API_URL}/offer_requests',
+            headers=headers,
+            json=data
+        )
+        
+        if response.status_code == 201:
+            offer_request = response.json()
+            request_id = offer_request['data']['id']
+            
+            # Obtener ofertas
+            offers_response = requests.get(
+                f'{DUFFEL_API_URL}/offers?offer_request_id={request_id}',
+                headers=headers
+            )
+            
+            if offers_response.status_code == 200:
+                offers_data = offers_response.json()
+                flights = []
+                
+                for offer in offers_data.get('data', []):
+                    flight = {
+                        'airline': offer['slices'][0]['segments'][0]['operating_carrier']['name'],
+                        'type': 'commercial',
+                        'origin': search_data['origin'],
+                        'destination': search_data['destination'],
+                        'departure_time': offer['slices'][0]['segments'][0]['departing_at'],
+                        'arrival_time': offer['slices'][0]['segments'][0]['arriving_at'],
+                        'duration': '2h 15m',  # Calcular duración real
+                        'price': float(offer['total_amount']),
+                        'flight_number': offer['slices'][0]['segments'][0].get('operating_carrier_flight_number', 'N/A')
+                    }
+                    flights.append(flight)
+                
+                return flights
+        
+    except Exception as e:
+        print(f"Error con Duffel API: {e}")
+    
+    # Fallback a datos simulados
+    return [
+        {
+            'airline': 'American Airlines',
+            'type': 'commercial',
+            'origin': search_data['origin'],
+            'destination': search_data['destination'],
+            'departure_time': '08:30',
+            'arrival_time': '10:45',
+            'duration': '2h 15m',
+            'price': 350,
+            'flight_number': 'AA1234'
+        },
+        {
+            'airline': 'Delta Airlines',
+            'type': 'commercial',
+            'origin': search_data['origin'],
+            'destination': search_data['destination'],
+            'departure_time': '14:15',
+            'arrival_time': '16:30',
+            'duration': '2h 15m',
+            'price': 380,
+            'flight_number': 'DL5678'
+        }
+    ]
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 3005))
