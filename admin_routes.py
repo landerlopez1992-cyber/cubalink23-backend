@@ -1120,3 +1120,208 @@ def notification_history():
         
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error al cargar historial: {str(e)}'})
+
+# ===== GESTIÓN DE AEROLÍNEAS CHARTER =====
+
+@admin.route('/api/charter-airlines', methods=['GET'])
+@require_auth
+def get_charter_airlines():
+    """Obtener lista de aerolíneas charter"""
+    try:
+        from charter_routes import CHARTER_AIRLINES
+        
+        airlines = []
+        for key, airline in CHARTER_AIRLINES.items():
+            airlines.append({
+                'id': key,
+                'name': airline['name'],
+                'url': airline['url'],
+                'markup': airline['markup'],
+                'active': airline['active'],
+                'routes': airline['routes'],
+                'check_frequency': airline['check_frequency']
+            })
+        
+        return jsonify({
+            'success': True,
+            'airlines': airlines
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }), 500
+
+@admin.route('/api/charter-airlines', methods=['POST'])
+@require_auth
+def save_charter_airline():
+    """Guardar o actualizar aerolínea charter"""
+    try:
+        data = request.get_json()
+        from charter_routes import CHARTER_AIRLINES
+        
+        # En producción, esto se guardaría en la base de datos
+        # Por ahora, actualizamos la configuración en memoria
+        airline_id = data.get('id')
+        if airline_id and airline_id in CHARTER_AIRLINES:
+            CHARTER_AIRLINES[airline_id].update({
+                'name': data.get('name'),
+                'url': data.get('url'),
+                'markup': float(data.get('markup', 0)),
+                'active': data.get('status') == 'active',
+                'routes': data.get('routes', '').split(','),
+                'check_frequency': int(data.get('check_frequency', 30))
+            })
+        
+        return jsonify({
+            'success': True,
+            'message': 'Aerolínea guardada correctamente'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error al guardar: {str(e)}'
+        }), 500
+
+@admin.route('/api/charter-airlines/<airline_id>/toggle', methods=['POST'])
+@require_auth
+def toggle_charter_airline(airline_id):
+    """Activar/desactivar aerolínea charter"""
+    try:
+        from charter_routes import CHARTER_AIRLINES
+        
+        if airline_id in CHARTER_AIRLINES:
+            CHARTER_AIRLINES[airline_id]['active'] = not CHARTER_AIRLINES[airline_id]['active']
+            
+            return jsonify({
+                'success': True,
+                'message': f"Aerolínea {'activada' if CHARTER_AIRLINES[airline_id]['active'] else 'desactivada'} correctamente"
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Aerolínea no encontrada'
+            }), 404
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }), 500
+
+@admin.route('/api/charter-airlines/<airline_id>/test', methods=['POST'])
+@require_auth
+def test_charter_airline(airline_id):
+    """Probar conexión con aerolínea charter"""
+    try:
+        from charter_routes import CHARTER_AIRLINES, charter_scraper
+        from datetime import datetime, timedelta
+        
+        if airline_id not in CHARTER_AIRLINES:
+            return jsonify({
+                'success': False,
+                'message': 'Aerolínea no encontrada'
+            }), 404
+        
+        airline = CHARTER_AIRLINES[airline_id]
+        
+        # Simular prueba de conexión
+        test_data = {
+            'origin': 'Miami',
+            'destination': 'Havana',
+            'departure_date': (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d')
+        }
+        
+        if airline_id == 'xael':
+            flights = charter_scraper.scrape_xael_charter(test_data)
+        elif airline_id == 'cubazul':
+            flights = charter_scraper.scrape_cubazul_charter(test_data)
+        elif airline_id == 'havana_air':
+            flights = charter_scraper.scrape_havana_air_charter(test_data)
+        else:
+            flights = []
+        
+        if flights:
+            return jsonify({
+                'success': True,
+                'message': f'Conexión exitosa. Se encontraron {len(flights)} vuelos de prueba.',
+                'test_flights': flights
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'No se pudieron obtener vuelos de prueba'
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error en prueba: {str(e)}'
+        }), 500
+
+@admin.route('/api/charter-bookings')
+@require_auth
+def get_charter_bookings():
+    """Obtener reservas charter"""
+    try:
+        # En producción, obtener de base de datos
+        bookings = [
+            {
+                'id': 'CH001',
+                'passenger_name': 'Juan Pérez',
+                'origin': 'Miami',
+                'destination': 'Havana',
+                'departure_date': '2024-01-20',
+                'airline': 'Xael Charter',
+                'status': 'PENDIENTE',
+                'total_price': 300,
+                'created_at': '2024-01-15 10:30:00',
+                'can_modify': True,
+                'can_cancel': True
+            },
+            {
+                'id': 'CH002',
+                'passenger_name': 'María García',
+                'origin': 'Miami',
+                'destination': 'Havana',
+                'departure_date': '2024-01-22',
+                'airline': 'Cubazul Air Charter',
+                'status': 'CONFIRMADO',
+                'total_price': 285,
+                'created_at': '2024-01-14 15:45:00',
+                'can_modify': False,
+                'can_cancel': False
+            }
+        ]
+        
+        return jsonify({
+            'success': True,
+            'bookings': bookings
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error al cargar reservas: {str(e)}'
+        }), 500
+
+@admin.route('/api/charter-bookings/<booking_id>/confirm', methods=['POST'])
+@require_auth
+def confirm_charter_booking(booking_id):
+    """Confirmar reserva charter"""
+    try:
+        # En producción, actualizar en base de datos
+        # update_booking_status(booking_id, 'CONFIRMADO')
+        
+        return jsonify({
+            'success': True,
+            'message': 'Reserva confirmada. Tiquete emitido. No se permiten más cambios.'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error al confirmar reserva: {str(e)}'
+        }), 500
