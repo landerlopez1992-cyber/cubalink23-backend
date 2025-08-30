@@ -873,5 +873,53 @@ def notify_user_verification_cancelled(verification_id, cancel_data):
         print("Error notificando cancelación: {}".format(e))
         return False
 
+# ===== RUTAS FALTANTES PARA BOTONES NUEVOS =====
 
+@admin.route('/vendors')
+@require_auth
+def vendors():
+    """Gestión de vendedores - Redirigir al dashboard"""
+    return redirect('/admin/')
+
+@admin.route('/drivers')
+@require_auth
+def drivers():
+    """Gestión de repartidores - Redirigir al dashboard"""
+    return redirect('/admin/')
+
+@admin.route('/vehicles')
+@require_auth
+def vehicles():
+    """Gestión de renta car - Redirigir al dashboard"""
+    return redirect('/admin/')
+
+@admin.route('/support-chat')
+@require_auth
+def support_chat():
+    """Chat de soporte - Redirigir al dashboard"""
+    return redirect('/admin/')
+
+@admin.route('/alerts')
+@require_auth
+def alerts():
+    """Gestión de alertas - Redirigir al dashboard"""
+    return redirect('/admin/')
+
+@admin.route('/wallet')
+@require_auth
+def wallet():
+    """Gestión de billetera - Redirigir al dashboard"""
+    return redirect('/admin/')
+
+@admin.route('/payment-methods')
+@require_auth
+def payment_methods():
+    """Gestión de métodos de pago - Redirigir al dashboard"""
+    return redirect('/admin/')
+
+@admin.route('/payroll')
+@require_auth
+def payroll():
+    """Gestión de nómina - Redirigir al dashboard"""
+    return redirect('/admin/')
 
