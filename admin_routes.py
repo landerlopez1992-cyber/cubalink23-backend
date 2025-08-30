@@ -77,8 +77,8 @@ def get_stats():
 @admin.route('/products')
 @require_auth
 def products():
-    """Gestión de productos con subida de imágenes"""
-    return render_template('admin/products.html', config=ADMIN_CONFIG)
+    """Gestión de productos - Redirigir al dashboard"""
+    return redirect('/admin/')
 
 @admin.route('/api/products')
 @require_auth
@@ -597,14 +597,14 @@ def process_payroll():
 @admin.route('/rental-verifications')
 @require_auth
 def rental_verifications():
-    """Panel de verificaciones manuales de renta de autos"""
-    return render_template('admin/rental_verifications.html', config=ADMIN_CONFIG)
+    """Panel de verificaciones manuales de renta de autos - Redirigir al dashboard"""
+    return redirect('/admin/')
 
 @admin.route('/rental-verifications/pending')
 @require_auth
 def pending_rental_verifications():
-    """Verificaciones pendientes"""
-    return render_template('admin/pending_rental_verifications.html', config=ADMIN_CONFIG)
+    """Verificaciones pendientes - Redirigir al dashboard"""
+    return redirect('/admin/')
 
 @admin.route('/api/rental-verifications')
 @require_auth
