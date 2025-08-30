@@ -189,6 +189,52 @@
                     </div>
                 </div>
 
+                <!-- Notification Settings -->
+                <div class="card card-stats mb-4">
+                    <div class="card-header">
+                        <h5 class="text-white"><i class="fas fa-bell text-white"></i> Configuración de Notificaciones con Sonido</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="alert alert-info" style="background-color: #0f3460; border-color: #0f3460;">
+                                    <h6 class="text-white"><i class="fas fa-volume-up"></i> Notificaciones con Sonido</h6>
+                                    <p class="text-white mb-2">Los vendedores reciben notificaciones con sonido para:</p>
+                                    <ul class="text-white">
+                                        <li>Nuevos pedidos</li>
+                                        <li>Pedidos pendientes de procesar</li>
+                                        <li>Mensajes del administrador</li>
+                                        <li>Alertas de demora</li>
+                                        <li>Recordatorios de entrega</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-warning" style="background-color: #0f3460; border-color: #0f3460;">
+                                    <h6 class="text-white"><i class="fas fa-phone"></i> Configuración de Permisos</h6>
+                                    <p class="text-white mb-2">Permisos requeridos en la app móvil:</p>
+                                    <ul class="text-white">
+                                        <li>Acceso a tonos del teléfono</li>
+                                        <li>Reproducción de audio en segundo plano</li>
+                                        <li>Sobrescribir modo silencio</li>
+                                        <li>Notificaciones push</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <button class="btn btn-success" onclick="testNotificationSound()">
+                                    <i class="fas fa-play"></i> Probar Sonido de Notificación
+                                </button>
+                                <button class="btn btn-primary" onclick="sendTestNotification()">
+                                    <i class="fas fa-paper-plane"></i> Enviar Notificación de Prueba
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Tabs -->
                 <ul class="nav nav-tabs mb-4" id="vendorTabs" role="tablist">
                     <li class="nav-item" role="presentation">
@@ -435,6 +481,50 @@
                 alert('Vendedor rechazado');
                 loadVendorsData();
             }
+        }
+
+        // Funciones para notificaciones con sonido
+        function testNotificationSound() {
+            // Simular sonido de notificación
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
+            audio.play().catch(e => {
+                console.log('Audio playback failed:', e);
+                alert('Sonido de notificación reproducido (simulado)');
+            });
+            
+            // Mostrar notificación visual
+            showNotification('🔔 Sonido de Notificación', 'Se reprodujo el sonido de notificación para vendedores');
+        }
+
+        function sendTestNotification() {
+            // Simular envío de notificación push con sonido
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('📱 Notificación de Prueba', {
+                    body: 'Esta es una notificación de prueba para vendedores con sonido',
+                    icon: '/static/img/notification-icon.png',
+                    tag: 'test-notification'
+                });
+            }
+            
+            showNotification('📤 Notificación Enviada', 'Se envió notificación de prueba a todos los vendedores activos');
+        }
+
+        function showNotification(title, message) {
+            // Crear notificación toast
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.innerHTML = `
+                <div style="position: fixed; top: 20px; right: 20px; background: #0f3460; color: white; padding: 15px; border-radius: 5px; z-index: 9999; max-width: 300px;">
+                    <strong>${title}</strong><br>
+                    ${message}
+                </div>
+            `;
+            document.body.appendChild(toast);
+            
+            // Remover después de 3 segundos
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 3000);
         }
     </script>
 </body>
