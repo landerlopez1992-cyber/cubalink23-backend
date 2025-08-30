@@ -935,7 +935,7 @@
                             <div class="rule-item rule-card">
                                 <div class="rule-title">Restricciones de Tiempo</div>
                                 <div class="rule-description">
-                                    Anticipación mínima: 2 días. Tiempo máximo de alquiler: 1 mes. Sistema valida automáticamente estas restricciones.
+                                    Anticipación mínima: 4 días (no se puede rentar para recoger mañana). Tiempo máximo de alquiler: 1 mes. Sistema valida automáticamente estas restricciones.
                                 </div>
                             </div>
 
@@ -943,6 +943,20 @@
                                 <div class="rule-title">Flujo de Alquiler</div>
                                 <div class="rule-description">
                                     Usuario elige vehículo y fechas → Sistema crea pedido pendiente → Admin verifica disponibilidad → Admin acepta → Usuario paga → Se crea reserva.
+                                </div>
+                            </div>
+
+                            <div class="rule-item rule-card">
+                                <div class="rule-title">Sistema de Pago con Contador</div>
+                                <div class="rule-description">
+                                    Usuario debe pagar rápidamente. Contador de 30 minutos en pedidos pendientes. Si llega a 0 sin pago, se cancela automáticamente y otro usuario puede rentar ese auto.
+                                </div>
+                            </div>
+
+                            <div class="rule-item rule-card">
+                                <div class="rule-title">Métodos de Pago de la App</div>
+                                <div class="rule-description">
+                                    Usuarios pueden pagar con: tarjetas de crédito/débito, Zelle, saldo de billetera digital. Todos los métodos están integrados en la app.
                                 </div>
                             </div>
 
@@ -968,9 +982,23 @@
                             </div>
 
                             <div class="rule-item rule-card">
+                                <div class="rule-title">Competencia por Vehículos</div>
+                                <div class="rule-description">
+                                    Si un usuario demora en pagar, otro usuario puede rentar el mismo auto si hace el pedido y paga primero. Sistema prioriza pagos completados.
+                                </div>
+                            </div>
+
+                            <div class="rule-item rule-card">
+                                <div class="rule-title">Contador de Tiempo en App Usuario</div>
+                                <div class="rule-description">
+                                    En la app del usuario, al lado del pedido pendiente aparece un contador de 30 minutos. Si llega a 0 sin pago, el pedido se cancela automáticamente.
+                                </div>
+                            </div>
+
+                            <div class="rule-item rule-card">
                                 <div class="rule-title">Notificaciones Automáticas</div>
                                 <div class="rule-description">
-                                    Sistema envía notificaciones y correos automáticamente: confirmación de disponibilidad, recordatorio de pago, confirmación de reserva.
+                                    Sistema envía notificaciones y correos automáticamente: confirmación de disponibilidad, recordatorio de pago, confirmación de reserva, alertas de tiempo límite.
                                 </div>
                             </div>
                         </div>
