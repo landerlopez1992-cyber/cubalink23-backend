@@ -270,22 +270,8 @@ def system():
     """Configuración del sistema"""
     return render_template('admin/system.html', config=ADMIN_CONFIG)
 
-@admin.route('/users')
-@require_auth
-def users():
-    """Gestión de usuarios"""
     return render_template('admin/users.html', config=ADMIN_CONFIG)
 
-@admin.route('/products')
-@require_auth
-def products():
-    """Gestión de productos"""
-    return render_template('admin/products.html', config=ADMIN_CONFIG)
-
-@admin.route('/orders')
-@require_auth
-def orders():
-    """Gestión de órdenes"""
     return render_template('admin/orders.html', config=ADMIN_CONFIG)
 
 @admin.route('/api/config')
