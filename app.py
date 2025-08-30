@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import requests
 import json
@@ -36,13 +36,8 @@ def after_request(response):
 
 @app.route('/')
 def home():
-    """Página principal"""
-    return jsonify({
-        'message': 'Cubalink23 API Backend',
-        'status': 'online',
-        'version': '1.0.0',
-        'admin_panel': '/auth/login'
-    })
+    """Página principal - Website profesional"""
+    return render_template('index.html')
 
 @app.route('/api/duffel/airports')
 def search_airports():
