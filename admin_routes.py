@@ -969,3 +969,45 @@ def contact_info():
     }
     
     return jsonify(contact_info)
+
+@admin.route('/api/upload-logo', methods=['POST'])
+@require_auth
+def upload_logo():
+    """API para subir y actualizar el logo de la empresa"""
+    try:
+        if 'logo' not in request.files:
+            return jsonify({'success': False, 'message': 'No se seleccionó ningún archivo'})
+        
+        file = request.files['logo']
+        if file.filename == '':
+            return jsonify({'success': False, 'message': 'No se seleccionó ningún archivo'})
+        
+        # Validar tipo de archivo
+        allowed_extensions = {'svg', 'png', 'jpg', 'jpeg'}
+        if not file.filename.lower().endswith(tuple('.' + ext for ext in allowed_extensions)):
+            return jsonify({'success': False, 'message': 'Formato de archivo no soportado'})
+        
+        # Validar tamaño (2MB máximo)
+        if len(file.read()) > 2 * 1024 * 1024:
+            file.seek(0)  # Reset file pointer
+            return jsonify({'success': False, 'message': 'El archivo es demasiado grande'})
+        
+        file.seek(0)  # Reset file pointer
+        
+        # Guardar el archivo
+        filename = 'company-logo' + os.path.splitext(file.filename)[1]
+        filepath = os.path.join('static', 'img', filename)
+        
+        # Asegurar que el directorio existe
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        
+        file.save(filepath)
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Logo actualizado correctamente',
+            'filename': filename
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error al subir el logo: {str(e)}'})

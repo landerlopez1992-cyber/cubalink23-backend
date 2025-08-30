@@ -160,9 +160,9 @@
             </div>
 
             <!-- Main Content -->
-            <div class="col-md-9 col-lg-10 p-4" style="background-color: #1a1a2e;">
+            <div class="col-md-9 col-lg-10 p-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="text-white"><i class="fas fa-cog"></i> Configuración del Sistema</h2>
+                    <h2><i class="fas fa-cog"></i> Configuración del Sistema</h2>
                     <div class="btn-group">
                         <button class="btn btn-outline-primary" onclick="refreshSystem()">
                             <i class="fas fa-sync-alt"></i> Actualizar
@@ -178,7 +178,7 @@
                     <div class="col-md-3">
                         <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-server fa-2x text-white mb-2"></i>
+                                <i class="fas fa-server fa-2x text-primary mb-2"></i>
                                 <h3 id="system-status">Online</h3>
                                 <p class="mb-0">Estado del Sistema</p>
                             </div>
@@ -187,7 +187,7 @@
                     <div class="col-md-3">
                         <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-database fa-2x text-white mb-2"></i>
+                                <i class="fas fa-database fa-2x text-success mb-2"></i>
                                 <h3 id="db-status">Conectado</h3>
                                 <p class="mb-0">Base de Datos</p>
                             </div>
@@ -196,7 +196,7 @@
                     <div class="col-md-3">
                         <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-wifi fa-2x text-white mb-2"></i>
+                                <i class="fas fa-wifi fa-2x text-info mb-2"></i>
                                 <h3 id="api-status">Activo</h3>
                                 <p class="mb-0">APIs Externas</p>
                             </div>
@@ -205,7 +205,7 @@
                     <div class="col-md-3">
                         <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-shield-alt fa-2x text-white mb-2"></i>
+                                <i class="fas fa-shield-alt fa-2x text-warning mb-2"></i>
                                 <h3 id="security-status">Seguro</h3>
                                 <p class="mb-0">Seguridad</p>
                             </div>
@@ -305,7 +305,7 @@
                             <div class="tab-pane fade" id="apis" role="tabpanel">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <h5 class="text-white"><i class="fas fa-plane"></i> Duffel API</h5>
+                                        <h5><i class="fas fa-plane"></i> Duffel API</h5>
                                         <div class="mb-3">
                                             <label class="form-label">API Token</label>
                                             <input type="password" class="form-control" id="duffel-token" placeholder="••••••••••••••••">
@@ -321,7 +321,7 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <h5 class="text-white"><i class="fas fa-mobile-alt"></i> DingConnect API</h5>
+                                        <h5><i class="fas fa-mobile-alt"></i> DingConnect API</h5>
                                         <div class="mb-3">
                                             <label class="form-label">API Key</label>
                                             <input type="password" class="form-control" id="dingconnect-key" placeholder="••••••••••••••••">
@@ -343,7 +343,7 @@
                             <div class="tab-pane fade" id="security" role="tabpanel">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <h5 class="text-white"><i class="fas fa-lock"></i> Configuración de Seguridad</h5>
+                                        <h5><i class="fas fa-lock"></i> Configuración de Seguridad</h5>
                                         <div class="mb-3">
                                             <label class="form-label">Tiempo de Sesión (minutos)</label>
                                             <input type="number" class="form-control" id="session-timeout" value="30">
@@ -362,7 +362,7 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <h5 class="text-white"><i class="fas fa-key"></i> Cambiar Contraseña</h5>
+                                        <h5><i class="fas fa-key"></i> Cambiar Contraseña</h5>
                                         <div class="mb-3">
                                             <label class="form-label">Contraseña Actual</label>
                                             <input type="password" class="form-control" id="current-password">
@@ -388,7 +388,7 @@
                             <div class="tab-pane fade" id="backup" role="tabpanel">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <h5 class="text-white"><i class="fas fa-download"></i> Backup de Base de Datos</h5>
+                                        <h5><i class="fas fa-download"></i> Backup de Base de Datos</h5>
                                         <div class="mb-3">
                                             <button class="btn btn-primary" onclick="createBackup()">
                                                 <i class="fas fa-download"></i> Crear Backup
@@ -413,7 +413,7 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <h5 class="text-white"><i class="fas fa-history"></i> Historial de Backups</h5>
+                                        <h5><i class="fas fa-history"></i> Historial de Backups</h5>
                                         <div class="table-responsive">
                                             <table class="table table-sm">
                                                 <thead>
@@ -425,7 +425,7 @@
                                                 </thead>
                                                 <tbody id="backup-history">
                                                     <tr>
-                                                        <td colspan="3" class="text-center text-white">No hay backups disponibles</td>
+                                                        <td colspan="3" class="text-center">No hay backups disponibles</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
@@ -436,9 +436,40 @@
 
                             <!-- Contact Information Tab -->
                             <div class="tab-pane fade" id="contact" role="tabpanel">
+                                
+                                <!-- Logo Management Section -->
+                                <div class="card card-stats mb-4">
+                                    <div class="card-header">
+                                        <h5 class="text-white"><i class="fas fa-image text-white"></i> Gestión del Logo de la Empresa</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="text-center mb-3">
+                                                    <h6 class="text-white">Logo Actual</h6>
+                                                    <img src="/static/img/company-logo.svg" alt="Logo Actual" style="width: 100px; height: 100px; border: 2px solid #0f3460; border-radius: 10px;">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label text-white">Subir Nuevo Logo</label>
+                                                    <input type="file" class="form-control" id="newLogo" accept="image/*,.svg">
+                                                    <small class="text-white-50">Formatos soportados: SVG, PNG, JPG. Tamaño máximo: 2MB</small>
+                                                </div>
+                                                <button class="btn btn-success" onclick="uploadLogo()">
+                                                    <i class="fas fa-upload"></i> Actualizar Logo
+                                                </button>
+                                                <button class="btn btn-outline-primary" onclick="previewLogo()">
+                                                    <i class="fas fa-eye"></i> Vista Previa
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <h5 class="text-white"><i class="fas fa-phone"></i> Información de Contacto</h5>
+                                        <h5><i class="fas fa-phone"></i> Información de Contacto</h5>
                                         <div class="mb-3">
                                             <label class="form-label">Teléfono de Contacto</label>
                                             <input type="tel" class="form-control" id="contact-phone" value="+1 (555) 123-4567" placeholder="+1 (555) 123-4567">
@@ -457,7 +488,7 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <h5 class="text-white"><i class="fas fa-share-alt"></i> Redes Sociales</h5>
+                                        <h5><i class="fas fa-share-alt"></i> Redes Sociales</h5>
                                         <div class="mb-3">
                                             <label class="form-label">Facebook</label>
                                             <input type="url" class="form-control" id="social-facebook" value="https://facebook.com/cubalink" placeholder="https://facebook.com/cubalink">
@@ -490,7 +521,7 @@
                             <div class="tab-pane fade" id="legal" role="tabpanel">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <h5 class="text-white"><i class="fas fa-file-contract"></i> Términos y Condiciones</h5>
+                                        <h5><i class="fas fa-file-contract"></i> Términos y Condiciones</h5>
                                         <div class="mb-3">
                                             <label class="form-label">Términos y Condiciones</label>
                                             <textarea class="form-control" id="terms-conditions" rows="15" placeholder="Ingrese los términos y condiciones de la empresa">Al usar nuestros servicios, usted acepta los siguientes términos y condiciones:
@@ -533,7 +564,7 @@ Para consultas, contáctenos a través de los canales oficiales.</textarea>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <h5 class="text-white"><i class="fas fa-user-shield"></i> Política de Privacidad</h5>
+                                        <h5><i class="fas fa-user-shield"></i> Política de Privacidad</h5>
                                         <div class="mb-3">
                                             <label class="form-label">Política de Privacidad</label>
                                             <textarea class="form-control" id="privacy-policy" rows="15" placeholder="Ingrese la política de privacidad">POLÍTICA DE PRIVACIDAD
@@ -712,6 +743,96 @@ Para preguntas sobre privacidad, contáctenos.</textarea>
 
         function createBackup() {
             alert('Creando backup de la base de datos...');
+        }
+
+        // Funciones para gestión del logo
+        function uploadLogo() {
+            const fileInput = document.getElementById('newLogo');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Por favor seleccione un archivo de logo');
+                return;
+            }
+            
+            // Validar tipo de archivo
+            const allowedTypes = ['image/svg+xml', 'image/png', 'image/jpeg', 'image/jpg'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Formato de archivo no soportado. Use SVG, PNG o JPG');
+                return;
+            }
+            
+            // Validar tamaño (2MB máximo)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('El archivo es demasiado grande. Máximo 2MB');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('logo', file);
+            
+            fetch('/admin/api/upload-logo', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Logo actualizado correctamente');
+                    // Recargar la página para mostrar el nuevo logo
+                    location.reload();
+                } else {
+                    alert('Error al actualizar el logo: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al actualizar el logo');
+            });
+        }
+
+        function previewLogo() {
+            const fileInput = document.getElementById('newLogo');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Por favor seleccione un archivo de logo');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Crear modal de vista previa
+                const modal = document.createElement('div');
+                modal.className = 'modal fade';
+                modal.innerHTML = `
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content" style="background-color: #16213e; color: white;">
+                            <div class="modal-header" style="background-color: #0f3460;">
+                                <h5 class="modal-title">Vista Previa del Logo</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                <img src="${e.target.result}" alt="Vista Previa" style="max-width: 100%; max-height: 400px;">
+                                <p class="mt-3">¿Desea aplicar este logo?</p>
+                            </div>
+                            <div class="modal-footer" style="background-color: #16213e;">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-success" onclick="uploadLogo()">Aplicar Logo</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                new bootstrap.Modal(modal).show();
+                
+                // Limpiar modal después de cerrar
+                modal.addEventListener('hidden.bs.modal', function() {
+                    document.body.removeChild(modal);
+                });
+            };
+            reader.readAsDataURL(file);
         }
     </script>
 </body>
