@@ -11,27 +11,39 @@ import time
 import random
 import string
 from datetime import datetime, timedelta
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import os
 import re
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import smtplib
 
+# Importar Selenium solo si está disponible (no en Render.com)
+try:
+    from selenium import webdriver
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+    from selenium.webdriver.chrome.options import Options
+    from selenium.common.exceptions import TimeoutException, NoSuchElementException
+    SELENIUM_AVAILABLE = True
+except ImportError:
+    SELENIUM_AVAILABLE = False
+    print("⚠️ Selenium no disponible - usando modo simulación")
+
 class CubaTransturAutomation:
     def __init__(self):
         self.base_url = "https://www.cubatranstur.com"
         self.driver = None
         self.wait = None
-        self.setup_driver()
+        if SELENIUM_AVAILABLE:
+            self.setup_driver()
         
     def setup_driver(self):
         """Configurar el navegador Chrome para automatización"""
+        if not SELENIUM_AVAILABLE:
+            print("⚠️ Selenium no disponible - usando modo simulación")
+            return
+            
         try:
             from webdriver_manager.chrome import ChromeDriverManager
             from selenium.webdriver.chrome.service import Service
@@ -52,7 +64,7 @@ class CubaTransturAutomation:
             print(f"❌ Error configurando navegador: {e}")
             raise
     
-    def generate_temp_email(self, client_name, reservation_id):
+    def generate_temp_email(self, client_name="", reservation_id=""):
         """Generar email temporal real y funcional"""
         try:
             from real_temp_email_service import create_real_temp_email
@@ -61,9 +73,9 @@ class CubaTransturAutomation:
             print(f"❌ Error con email temporal real: {e}")
             # Fallback a email temporal simple
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            clean_name = re.sub(r'[^a-zA-Z0-9]', '', client_name.lower())
+            clean_name = re.sub(r'[^a-zA-Z0-9]', '', client_name.lower()) if client_name else "cliente"
             random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=4))
-            return f"reserva_{reservation_id}_{clean_name}_{timestamp}_{random_suffix}@cubalink.com"
+            return f"reserva_{timestamp}_{clean_name}_{random_suffix}@cubalink.com"
     
     def navigate_to_booking_page(self):
         """Navegar a la página de reservas de Cuba Transtur"""
@@ -544,9 +556,11 @@ def create_real_selenium_booking(booking_data):
     
     def close_driver(self):
         """Cerrar navegador"""
-        if self.driver:
+        if self.driver and SELENIUM_AVAILABLE:
             self.driver.quit()
             print("🔒 Navegador cerrado")
+        else:
+            print("🔒 Modo simulación - no hay navegador que cerrar")
 
 # Sistema de gestión de reservas
 class CubaTransturManager:
