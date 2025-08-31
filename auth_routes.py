@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
 import hashlib
 import os
