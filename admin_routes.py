@@ -1657,12 +1657,6 @@ def get_cuba_transtur_statistics():
 
 # ===== FUNCIONES BÁSICAS DE VEHÍCULOS =====
 
-@admin.route('/vehicles')
-@require_auth
-def vehicles():
-    """Gestión de vehículos de renta car"""
-    return render_template('admin/vehicles.html', config=ADMIN_CONFIG)
-
 @admin.route('/api/vehicles/add', methods=['POST'])
 @require_auth
 def add_vehicle():
