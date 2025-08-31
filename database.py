@@ -135,6 +135,9 @@ class LocalDatabase:
         
         conn.commit()
         conn.close()
+        
+        # Inicializar tabla de recargas telefónicas
+        self.init_phone_recharges_table()
     
     def get_products(self):
         """Obtener todos los productos"""
@@ -915,6 +918,229 @@ class LocalDatabase:
         conn.close()
         
         return success
+    
+    def add_vehicle(self, vehicle_data):
+        """Agregar nuevo vehículo"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO vehicles (
+                name, category, daily_price, transmission, passenger_capacity,
+                air_conditioning, description, features, photos, active
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            vehicle_data['name'],
+            vehicle_data['category'],
+            vehicle_data['daily_price'],
+            vehicle_data.get('transmission', ''),
+            vehicle_data.get('passenger_capacity', 0),
+            vehicle_data.get('air_conditioning', ''),
+            vehicle_data.get('description', ''),
+            json.dumps(vehicle_data.get('features', [])),
+            json.dumps(vehicle_data.get('photos', [])),
+            vehicle_data.get('active', True)
+        ))
+        
+        vehicle_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return vehicle_id
+    
+    # ===== SISTEMA DE RECARGAS TELEFÓNICAS =====
+    
+    def init_phone_recharges_table(self):
+        """Inicializar tabla de recargas telefónicas"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS phone_recharges (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                user_name TEXT NOT NULL,
+                user_phone TEXT NOT NULL,
+                user_email TEXT,
+                phone_number TEXT NOT NULL,
+                operator TEXT NOT NULL,
+                amount REAL NOT NULL,
+                status TEXT DEFAULT 'pending',
+                dingconnect_id TEXT,
+                error_message TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        conn.commit()
+        conn.close()
+    
+    def add_phone_recharge(self, recharge_data):
+        """Agregar nueva recarga telefónica"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO phone_recharges (
+                user_id, user_name, user_phone, user_email, phone_number,
+                operator, amount, status, dingconnect_id, error_message
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            recharge_data['user_id'],
+            recharge_data['user_name'],
+            recharge_data['user_phone'],
+            recharge_data.get('user_email', ''),
+            recharge_data['phone_number'],
+            recharge_data['operator'],
+            recharge_data['amount'],
+            recharge_data.get('status', 'pending'),
+            recharge_data.get('dingconnect_id', ''),
+            recharge_data.get('error_message', '')
+        ))
+        
+        recharge_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return recharge_id
+    
+    def get_phone_recharges(self):
+        """Obtener todas las recargas telefónicas"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT * FROM phone_recharges 
+            ORDER BY created_at DESC
+        ''')
+        
+        recharges = []
+        for row in cursor.fetchall():
+            recharges.append({
+                'id': row[0],
+                'user_id': row[1],
+                'user_name': row[2],
+                'user_phone': row[3],
+                'user_email': row[4],
+                'phone_number': row[5],
+                'operator': row[6],
+                'amount': row[7],
+                'status': row[8],
+                'dingconnect_id': row[9],
+                'error_message': row[10],
+                'created_at': row[11],
+                'updated_at': row[12]
+            })
+        
+        conn.close()
+        return recharges
+    
+    def search_phone_recharges(self, search_params):
+        """Buscar recargas por parámetros"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        query = '''
+            SELECT * FROM phone_recharges 
+            WHERE 1=1
+        '''
+        params = []
+        
+        if search_params.get('user_name'):
+            query += ' AND user_name LIKE ?'
+            params.append('%' + search_params['user_name'] + '%')
+        
+        if search_params.get('user_phone'):
+            query += ' AND user_phone LIKE ?'
+            params.append('%' + search_params['user_phone'] + '%')
+        
+        if search_params.get('user_email'):
+            query += ' AND user_email LIKE ?'
+            params.append('%' + search_params['user_email'] + '%')
+        
+        if search_params.get('status'):
+            query += ' AND status = ?'
+            params.append(search_params['status'])
+        
+        if search_params.get('date_from'):
+            query += ' AND DATE(created_at) >= ?'
+            params.append(search_params['date_from'])
+        
+        if search_params.get('date_to'):
+            query += ' AND DATE(created_at) <= ?'
+            params.append(search_params['date_to'])
+        
+        query += ' ORDER BY created_at DESC'
+        
+        cursor.execute(query, params)
+        
+        recharges = []
+        for row in cursor.fetchall():
+            recharges.append({
+                'id': row[0],
+                'user_id': row[1],
+                'user_name': row[2],
+                'user_phone': row[3],
+                'user_email': row[4],
+                'phone_number': row[5],
+                'operator': row[6],
+                'amount': row[7],
+                'status': row[8],
+                'dingconnect_id': row[9],
+                'error_message': row[10],
+                'created_at': row[11],
+                'updated_at': row[12]
+            })
+        
+        conn.close()
+        return recharges
+    
+    def update_recharge_status(self, recharge_id, new_status):
+        """Actualizar estado de recarga"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE phone_recharges 
+            SET status = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (new_status, recharge_id))
+        
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        
+        return success
+    
+    def reprocess_recharge(self, recharge_id):
+        """Reprocesar recarga fallida"""
+        # Aquí se integraría con la API de DingConnect
+        # Por ahora solo actualizamos el estado
+        return self.update_recharge_status(recharge_id, 'pending')
+    
+    def delete_recharge(self, recharge_id):
+        """Eliminar recarga"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('DELETE FROM phone_recharges WHERE id = ?', (recharge_id,))
+        
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        
+        return success
+    
+    def get_dingconnect_balance(self):
+        """Obtener saldo de DingConnect (simulado)"""
+        # Aquí se integraría con la API real de DingConnect
+        return 100.00  # Saldo simulado
+    
+    def add_dingconnect_balance(self, amount):
+        """Agregar saldo a DingConnect (simulado)"""
+        # Aquí se integraría con la API real de DingConnect
+        return True  # Simulado
 
 # Instancia global de la base de datos
 local_db = LocalDatabase()
