@@ -112,6 +112,25 @@ class LocalDatabase:
             )
         ''')
         
+        # Tabla de vehículos
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS vehicles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                category TEXT NOT NULL,
+                daily_price REAL NOT NULL,
+                transmission TEXT,
+                passenger_capacity INTEGER,
+                air_conditioning TEXT,
+                description TEXT,
+                features TEXT,
+                photos TEXT,
+                active BOOLEAN DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
         conn.commit()
         conn.close()
     
@@ -758,6 +777,142 @@ class LocalDatabase:
             }
         
         return None
+    
+    # ===== FUNCIONES CRUD PARA VEHÍCULOS =====
+    
+    def add_vehicle(self, vehicle_data):
+        """Agregar nuevo vehículo"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO vehicles (name, category, daily_price, transmission, passenger_capacity, 
+                                air_conditioning, description, features, photos, active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            vehicle_data['name'],
+            vehicle_data['category'],
+            vehicle_data['daily_price'],
+            vehicle_data.get('transmission', ''),
+            vehicle_data.get('passenger_capacity', 0),
+            vehicle_data.get('air_conditioning', ''),
+            vehicle_data.get('description', ''),
+            json.dumps(vehicle_data.get('features', [])),
+            json.dumps(vehicle_data.get('photos', [])),
+            vehicle_data.get('active', True)
+        ))
+        
+        vehicle_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return vehicle_id
+    
+    def get_vehicles(self):
+        """Obtener todos los vehículos"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT * FROM vehicles 
+            ORDER BY created_at DESC
+        ''')
+        
+        vehicles = []
+        for row in cursor.fetchall():
+            vehicles.append({
+                'id': row[0],
+                'name': row[1],
+                'category': row[2],
+                'daily_price': row[3],
+                'transmission': row[4],
+                'passenger_capacity': row[5],
+                'air_conditioning': row[6],
+                'description': row[7],
+                'features': json.loads(row[8]) if row[8] else [],
+                'photos': json.loads(row[9]) if row[9] else [],
+                'active': bool(row[10]),
+                'created_at': row[11],
+                'updated_at': row[12]
+            })
+        
+        conn.close()
+        return vehicles
+    
+    def get_vehicle_by_id(self, vehicle_id):
+        """Obtener vehículo por ID"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT * FROM vehicles WHERE id = ?
+        ''', (vehicle_id,))
+        
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            return {
+                'id': row[0],
+                'name': row[1],
+                'category': row[2],
+                'daily_price': row[3],
+                'transmission': row[4],
+                'passenger_capacity': row[5],
+                'air_conditioning': row[6],
+                'description': row[7],
+                'features': json.loads(row[8]) if row[8] else [],
+                'photos': json.loads(row[9]) if row[9] else [],
+                'active': bool(row[10]),
+                'created_at': row[11],
+                'updated_at': row[12]
+            }
+        
+        return None
+    
+    def update_vehicle(self, vehicle_id, vehicle_data):
+        """Actualizar vehículo"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE vehicles 
+            SET name = ?, category = ?, daily_price = ?, transmission = ?, 
+                passenger_capacity = ?, air_conditioning = ?, description = ?, 
+                features = ?, photos = ?, active = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (
+            vehicle_data['name'],
+            vehicle_data['category'],
+            vehicle_data['daily_price'],
+            vehicle_data.get('transmission', ''),
+            vehicle_data.get('passenger_capacity', 0),
+            vehicle_data.get('air_conditioning', ''),
+            vehicle_data.get('description', ''),
+            json.dumps(vehicle_data.get('features', [])),
+            json.dumps(vehicle_data.get('photos', [])),
+            vehicle_data.get('active', True),
+            vehicle_id
+        ))
+        
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        
+        return success
+    
+    def delete_vehicle(self, vehicle_id):
+        """Eliminar vehículo"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('DELETE FROM vehicles WHERE id = ?', (vehicle_id,))
+        
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        
+        return success
 
 # Instancia global de la base de datos
 local_db = LocalDatabase()
