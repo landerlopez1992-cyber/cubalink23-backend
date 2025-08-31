@@ -50,3 +50,4 @@ echo ""
 
 echo "🎯 ¡LISTO PARA DESPLEGAR!"
 echo "Tu backend estará disponible en: https://tu-app.onrender.com"
+

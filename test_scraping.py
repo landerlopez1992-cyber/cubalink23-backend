@@ -163,3 +163,4 @@ if __name__ == "__main__":
         print("❌ Error en las pruebas")
         print("❌ Revisar configuración")
         print("❌ Verificar dependencias")
+

@@ -100,3 +100,4 @@ python3 app.py
 - Las reservas se guardan en SQLite
 - El sistema incluye markup configurable
 - CORS está habilitado para Flutter
+

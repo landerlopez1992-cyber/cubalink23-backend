@@ -1494,41 +1494,350 @@ def confirm_charter_booking(booking_id):
             'message': f'Error al confirmar reserva: {str(e)}'
         }), 500
 
-# ==================== AUTOMATIZACIÓN CUBA TRANSTUR ====================
+# ==================== RUTAS PARA SUBIR IMÁGENES DE VEHÍCULOS ====================
 
-@admin.route('/cuba-transtur')
+@admin.route('/api/vehicles/upload-images', methods=['POST'])
 @require_auth
-def cuba_transtur_dashboard():
-    """Panel de automatización de Cuba Transtur"""
-    return render_template('admin/cuba_transtur.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/cuba-transtur/bookings')
-@require_auth
-def get_cuba_transtur_bookings():
-    """Obtener historial de reservas automatizadas"""
+def upload_vehicle_images():
+    """Subir imágenes de vehículos"""
     try:
-        from cuba_transtur_automation import get_booking_history
-        bookings = get_booking_history()
+        if 'images' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': 'No se encontraron archivos de imagen'
+            }), 400
+        
+        files = request.files.getlist('images')
+        vehicle_id = request.form.get('vehicle_id')
+        
+        if not vehicle_id:
+            return jsonify({
+                'success': False,
+                'error': 'ID del vehículo requerido'
+            }), 400
+        
+        uploaded_images = []
+        
+        for file in files:
+            if file and file.filename:
+                # Verificar tipo de archivo
+                if not file.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
+                    return jsonify({
+                        'success': False,
+                        'error': 'Solo se permiten archivos de imagen (PNG, JPG, JPEG, GIF, WEBP)'
+                    }), 400
+                
+                # Generar nombre único para el archivo
+                import os
+                import uuid
+                from werkzeug.utils import secure_filename
+                
+                filename = secure_filename(file.filename)
+                file_extension = filename.rsplit('.', 1)[1].lower()
+                unique_filename = f"vehicle_{vehicle_id}_{uuid.uuid4().hex[:8]}.{file_extension}"
+                
+                # Crear directorio si no existe
+                upload_folder = os.path.join('static', 'img', 'vehicles')
+                os.makedirs(upload_folder, exist_ok=True)
+                
+                # Guardar archivo
+                file_path = os.path.join(upload_folder, unique_filename)
+                file.save(file_path)
+                
+                # URL relativa para la base de datos
+                image_url = f"/static/img/vehicles/{unique_filename}"
+                uploaded_images.append(image_url)
+        
+        # Actualizar vehículo con las nuevas imágenes
+        if uploaded_images:
+            # Obtener imágenes existentes
+            try:
+                vehicle = supabase_service.get_vehicle_by_id(int(vehicle_id))
+                if vehicle:
+                    existing_images = vehicle.get('images', '[]')
+                    if isinstance(existing_images, str):
+                        import json
+                        existing_images = json.loads(existing_images)
+                    else:
+                        existing_images = existing_images or []
+                    
+                    # Agregar nuevas imágenes
+                    all_images = existing_images + uploaded_images
+                    
+                    # Actualizar en Supabase
+                    try:
+                        supabase_service.update_vehicle(int(vehicle_id), {'images': json.dumps(all_images)})
+                    except:
+                        pass
+                    
+                    # Actualizar en base de datos local
+                    local_db.update_vehicle(int(vehicle_id), {'images': json.dumps(all_images)})
+            except:
+                pass
+        
         return jsonify({
             'success': True,
-            'bookings': bookings
+            'message': f'{len(uploaded_images)} imágenes subidas exitosamente',
+            'images': uploaded_images
         })
+        
     except Exception as e:
         return jsonify({
             'success': False,
             'error': str(e)
         }), 500
 
-@admin.route('/api/cuba-transtur/bookings', methods=['POST'])
+@admin.route('/api/vehicles/<int:vehicle_id>/images', methods=['DELETE'])
 @require_auth
-def create_cuba_transtur_booking():
-    """Crear reserva automatizada en Cuba Transtur"""
+def delete_vehicle_image(vehicle_id):
+    """Eliminar imagen específica de un vehículo"""
+    try:
+        data = request.get_json()
+        image_url = data.get('image_url')
+        
+        if not image_url:
+            return jsonify({
+                'success': False,
+                'error': 'URL de imagen requerida'
+            }), 400
+        
+        # Obtener vehículo
+        try:
+            vehicle = supabase_service.get_vehicle_by_id(vehicle_id)
+            if vehicle:
+                existing_images = vehicle.get('images', '[]')
+                if isinstance(existing_images, str):
+                    import json
+                    existing_images = json.loads(existing_images)
+                else:
+                    existing_images = existing_images or []
+                
+                # Remover imagen
+                if image_url in existing_images:
+                    existing_images.remove(image_url)
+                    
+                    # Actualizar en Supabase
+                    try:
+                        supabase_service.update_vehicle(vehicle_id, {'images': json.dumps(existing_images)})
+                    except:
+                        pass
+                    
+                    # Actualizar en base de datos local
+                    local_db.update_vehicle(vehicle_id, {'images': json.dumps(existing_images)})
+                    
+                    # Eliminar archivo físico
+                    import os
+                    file_path = image_url.replace('/static/', 'static/')
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                    
+                    return jsonify({
+                        'success': True,
+                        'message': 'Imagen eliminada exitosamente'
+                    })
+                else:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Imagen no encontrada'
+                    }), 404
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'Vehículo no encontrado'
+                }), 404
+        except:
+            # Si falla Supabase, intentar con base de datos local
+            vehicle = local_db.get_vehicle_by_id(vehicle_id)
+            if vehicle:
+                existing_images = vehicle.get('images', '[]')
+                if isinstance(existing_images, str):
+                    import json
+                    existing_images = json.loads(existing_images)
+                else:
+                    existing_images = existing_images or []
+                
+                # Remover imagen
+                if image_url in existing_images:
+                    existing_images.remove(image_url)
+                    
+                    # Actualizar en base de datos local
+                    local_db.update_vehicle(vehicle_id, {'images': json.dumps(existing_images)})
+                    
+                    # Eliminar archivo físico
+                    import os
+                    file_path = image_url.replace('/static/', 'static/')
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                    
+                    return jsonify({
+                        'success': True,
+                        'message': 'Imagen eliminada exitosamente'
+                    })
+                else:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Imagen no encontrada'
+                    }), 404
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'Vehículo no encontrado'
+                }), 404
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# ==================== RUTAS PARA CATEGORÍAS DE VEHÍCULOS ====================
+
+@admin.route('/api/vehicles/categories')
+@require_auth
+def get_vehicle_categories():
+    """Obtener categorías de vehículos disponibles"""
+    try:
+        # Categorías basadas en Rent Cuba Car
+        categories = [
+            {
+                'id': 'economico_mecanico',
+                'name': 'Económico Mecánico',
+                'description': 'Vehículos compactos con transmisión manual, ideales para desplazamientos urbanos y viajes cortos',
+                'examples': ['Peugeot 208', 'Renault Sandero', 'Hyundai i10'],
+                'daily_rate_range': '25-35 USD',
+                'seats': '4-5',
+                'features': ['Transmisión manual', 'Económico en combustible', 'Fácil de manejar']
+            },
+            {
+                'id': 'economico_automatico',
+                'name': 'Económico Automático',
+                'description': 'Vehículos compactos con transmisión automática, mayor comodidad en la conducción',
+                'examples': ['Toyota Yaris', 'Honda Fit', 'Nissan March'],
+                'daily_rate_range': '30-40 USD',
+                'seats': '4-5',
+                'features': ['Transmisión automática', 'Económico en combustible', 'Fácil de estacionar']
+            },
+            {
+                'id': 'medio_mecanico',
+                'name': 'Medio Mecánico',
+                'description': 'Vehículos de tamaño mediano con transmisión manual, ideales para viajes más largos',
+                'examples': ['Peugeot 301', 'Renault Logan', 'Hyundai Accent'],
+                'daily_rate_range': '35-45 USD',
+                'seats': '5',
+                'features': ['Transmisión manual', 'Más espacio interior', 'Ideal para viajes']
+            },
+            {
+                'id': 'medio_automatico',
+                'name': 'Medio Automático',
+                'description': 'Vehículos de tamaño mediano con transmisión automática, combinando espacio y confort',
+                'examples': ['Toyota Corolla', 'Honda Civic', 'Nissan Sentra'],
+                'daily_rate_range': '40-50 USD',
+                'seats': '5',
+                'features': ['Transmisión automática', 'Espacio amplio', 'Confort superior']
+            },
+            {
+                'id': 'alto_estandar',
+                'name': 'Alto Estándar',
+                'description': 'Vehículos de gama alta con características avanzadas y mayor espacio interior',
+                'examples': ['Toyota Camry', 'Honda Accord', 'Nissan Altima'],
+                'daily_rate_range': '50-70 USD',
+                'seats': '5',
+                'features': ['Características avanzadas', 'Espacio premium', 'Tecnología superior']
+            },
+            {
+                'id': 'premium',
+                'name': 'Premium',
+                'description': 'Vehículos de lujo con prestaciones superiores y equipamiento de alta calidad',
+                'examples': ['Mercedes-Benz C-Class', 'BMW 3 Series', 'Audi A4'],
+                'daily_rate_range': '80-120 USD',
+                'seats': '5',
+                'features': ['Lujo superior', 'Tecnología avanzada', 'Confort máximo']
+            },
+            {
+                'id': 'jeep',
+                'name': 'Jeep',
+                'description': 'Vehículos todoterreno adecuados para rutas fuera de carretera o terrenos difíciles',
+                'examples': ['Jeep Wrangler', 'Toyota 4Runner', 'Nissan X-Trail'],
+                'daily_rate_range': '60-90 USD',
+                'seats': '5-7',
+                'features': ['Tracción 4x4', 'Todoterreno', 'Ideal para aventuras']
+            },
+            {
+                'id': 'minivan',
+                'name': 'Minivan',
+                'description': 'Vehículos con capacidad para más pasajeros, ideales para grupos o familias numerosas',
+                'examples': ['Toyota Hiace', 'Ford Transit', 'Mercedes-Benz Sprinter'],
+                'daily_rate_range': '70-100 USD',
+                'seats': '8-15',
+                'features': ['Gran capacidad', 'Ideal para grupos', 'Espacio de carga']
+            }
+        ]
+        
+        return jsonify({
+            'success': True,
+            'categories': categories
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@admin.route('/api/vehicles/categories/<category_id>')
+@require_auth
+def get_vehicle_category(category_id):
+    """Obtener información específica de una categoría"""
+    try:
+        # Obtener todas las categorías
+        import requests
+        response = requests.get(f"{BASE_URL}/admin/api/vehicles/categories")
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('success'):
+                categories = data.get('categories', [])
+                category = next((cat for cat in categories if cat['id'] == category_id), None)
+                
+                if category:
+                    return jsonify({
+                        'success': True,
+                        'category': category
+                    })
+                else:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Categoría no encontrada'
+                    }), 404
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'Error al obtener categorías'
+                }), 500
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Error HTTP'
+            }), 500
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# ==================== RUTA PARA CREAR VEHÍCULO CON CATEGORÍA ====================
+
+@admin.route('/api/vehicles/create-with-category', methods=['POST'])
+@require_auth
+def create_vehicle_with_category():
+    """Crear vehículo con categoría específica"""
     try:
         data = request.get_json()
         
         # Validaciones básicas
-        required_fields = ['name', 'phone', 'pickup_date', 'return_date', 
-                          'pickup_location', 'vehicle_type']
+        required_fields = ['license_plate', 'brand', 'model', 'year', 'color', 
+                          'vehicle_type', 'transmission', 'fuel_type', 'seats', 
+                          'daily_rate', 'location', 'category_id']
         
         for field in required_fields:
             if not data.get(field):
@@ -1537,364 +1846,49 @@ def create_cuba_transtur_booking():
                     'error': f'Campo requerido: {field}'
                 }), 400
         
-        # Importar función de automatización
-        from cuba_transtur_automation import create_automated_booking
-        
-        # Crear reserva automatizada
-        result = create_automated_booking(data)
-        
-        if result.get('automation_success'):
-            return jsonify({
-                'success': True,
-                'booking': result,
-                'message': 'Reserva automatizada creada exitosamente'
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': result.get('message', 'Error en automatización')
-            }), 500
-            
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-@admin.route('/api/cuba-transtur/bookings/<reservation_id>')
-@require_auth
-def get_cuba_transtur_booking_status(reservation_id):
-    """Obtener estado de una reserva específica"""
-    try:
-        from cuba_transtur_automation import check_booking_status
-        booking = check_booking_status(reservation_id)
-        
-        if booking:
-            return jsonify({
-                'success': True,
-                'booking': booking
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': 'Reserva no encontrada'
-            }), 404
-            
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-@admin.route('/api/cuba-transtur/test-connection')
-@require_auth
-def test_cuba_transtur_connection():
-    """Probar conexión con Cuba Transtur"""
-    try:
-        from cuba_transtur_automation import CubaTransturAutomation
-        
-        # Crear instancia de prueba
-        automation = CubaTransturAutomation()
-        
-        # Probar navegación
-        success = automation.navigate_to_booking_page()
-        
-        # Cerrar navegador
-        automation.close_driver()
-        
-        if success:
-            return jsonify({
-                'success': True,
-                'message': 'Conexión exitosa con Cuba Transtur'
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': 'No se pudo conectar con Cuba Transtur'
-            }), 500
-            
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-@admin.route('/api/cuba-transtur/statistics')
-@require_auth
-def get_cuba_transtur_statistics():
-    """Obtener estadísticas de reservas automatizadas"""
-    try:
-        from cuba_transtur_automation import get_booking_history
-        bookings = get_booking_history()
-        
-        # Calcular estadísticas
-        total_bookings = len(bookings)
-        confirmed_bookings = len([b for b in bookings if b.get('status') == 'confirmed'])
-        pending_bookings = len([b for b in bookings if b.get('status') == 'pending'])
-        error_bookings = len([b for b in bookings if b.get('status') == 'error'])
-        
-        # Ingresos estimados (ejemplo)
-        total_income = sum(b.get('estimated_cost', 0) for b in bookings if b.get('status') == 'confirmed')
-        
-        stats = {
-            'total_bookings': total_bookings,
-            'confirmed_bookings': confirmed_bookings,
-            'pending_bookings': pending_bookings,
-            'error_bookings': error_bookings,
-            'success_rate': (confirmed_bookings / total_bookings * 100) if total_bookings > 0 else 0,
-            'total_income': total_income,
-            'average_booking_value': total_income / confirmed_bookings if confirmed_bookings > 0 else 0
-        }
-        
-        return jsonify({
-            'success': True,
-            'statistics': stats
-        })
-        
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-# ===== GESTIÓN DE VEHÍCULOS =====
-@admin.route('/vehicles')
-@require_auth
-def vehicles():
-    """Gestión de vehículos de renta car"""
-    return render_template('admin/vehicles.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/vehicles/add', methods=['POST'])
-@require_auth
-def add_vehicle():
-    """Agregar nuevo vehículo con fotos"""
-    try:
-        # Verificar si hay archivos
-        if 'photos' not in request.files:
-            return jsonify({'success': False, 'error': 'No se seleccionaron fotos'}), 400
-        
-        files = request.files.getlist('photos')
-        if not files or files[0].filename == '':
-            return jsonify({'success': False, 'error': 'No se seleccionaron fotos válidas'}), 400
-        
-        # Obtener datos del formulario
-        vehicle_data = {
-            'name': request.form.get('name'),
-            'category': request.form.get('category'),
-            'daily_price': float(request.form.get('daily_price', 0)),
-            'transmission': request.form.get('transmission'),
-            'passenger_capacity': int(request.form.get('passenger_capacity', 0)),
-            'air_conditioning': request.form.get('air_conditioning'),
-            'description': request.form.get('description'),
-            'features': json.loads(request.form.get('features', '[]')),
-            'created_at': datetime.now().isoformat()
-        }
-        
-        # Validar datos requeridos
-        if not vehicle_data['name'] or not vehicle_data['category'] or vehicle_data['daily_price'] <= 0:
-            return jsonify({'success': False, 'error': 'Datos incompletos o inválidos'}), 400
-        
-        # Crear directorio para fotos si no existe
-        vehicle_photos_dir = os.path.join(current_app.static_folder, 'uploads', 'vehicles')
-        os.makedirs(vehicle_photos_dir, exist_ok=True)
-        
-        # Guardar fotos
-        photo_paths = []
-        for i, file in enumerate(files):
-            if file and allowed_file(file.filename):
-                filename = secure_filename(f"{vehicle_data['name']}_{i}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg")
-                filepath = os.path.join(vehicle_photos_dir, filename)
-                file.save(filepath)
-                photo_paths.append(f"/static/uploads/vehicles/{filename}")
-        
-        if not photo_paths:
-            return jsonify({'success': False, 'error': 'No se pudieron guardar las fotos'}), 400
-        
-        # Agregar rutas de fotos a los datos del vehículo
-        vehicle_data['photos'] = photo_paths
-        
-        # Guardar en base de datos
+        # Validar que la categoría existe
+        category_id = data.get('category_id')
         try:
-            # Intentar guardar en Supabase primero
-            vehicle_id = supabase_service.add_vehicle(vehicle_data)
+            import requests
+            response = requests.get(f"{BASE_URL}/admin/api/vehicles/categories/{category_id}")
+            if response.status_code != 200:
+                return jsonify({
+                    'success': False,
+                    'error': 'Categoría no válida'
+                }), 400
         except:
-            # Si falla Supabase, usar base de datos local
-            vehicle_id = local_db.add_vehicle(vehicle_data)
+            return jsonify({
+                'success': False,
+                'error': 'Error al validar categoría'
+            }), 400
+        
+        # Agregar información de categoría al vehículo
+        vehicle_data = data.copy()
+        vehicle_data['category_id'] = category_id
+        
+        # Intentar agregar en Supabase
+        try:
+            vehicle_id = supabase_service.add_vehicle(vehicle_data)
+            if vehicle_id:
+                return jsonify({
+                    'success': True,
+                    'vehicle_id': vehicle_id,
+                    'message': 'Vehículo creado exitosamente con categoría'
+                })
+        except:
+            pass
+        
+        # Si falla Supabase, agregar en base de datos local
+        vehicle_id = local_db.add_vehicle(vehicle_data)
         
         return jsonify({
             'success': True,
             'vehicle_id': vehicle_id,
-            'message': 'Vehículo agregado exitosamente'
+            'message': 'Vehículo creado exitosamente con categoría'
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@admin.route('/api/vehicles')
-@require_auth
-def get_vehicles():
-    """Obtener lista de vehículos"""
-    try:
-        # Intentar obtener desde Supabase primero
-        try:
-            vehicles = supabase_service.get_vehicles()
-            if vehicles:
-                return jsonify(vehicles)
-        except:
-            pass
-        
-        # Si falla Supabase, usar base de datos local
-        vehicles = local_db.get_vehicles()
-        return jsonify(vehicles)
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@admin.route('/api/vehicles/<int:vehicle_id>', methods=['DELETE'])
-@require_auth
-def delete_vehicle(vehicle_id):
-    """Eliminar vehículo"""
-    try:
-        # Intentar eliminar desde Supabase primero
-        try:
-            success = supabase_service.delete_vehicle(vehicle_id)
-            if success:
-                return jsonify({'success': True, 'message': 'Vehículo eliminado exitosamente'})
-        except:
-            pass
-        
-        # Si falla Supabase, usar base de datos local
-        success = local_db.delete_vehicle(vehicle_id)
-        if success:
-            return jsonify({'success': True, 'message': 'Vehículo eliminado exitosamente'})
-        else:
-            return jsonify({'success': False, 'error': 'No se pudo eliminar el vehículo'}), 400
-            
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-# ===== RESERVA POR TELÉFONO - AUTOMATIZACIÓN CUBA TRANSTUR =====
-@admin.route('/phone-booking')
-@require_auth
-def phone_booking():
-    """Panel de reserva por teléfono"""
-    return render_template('admin/phone_booking.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/phone-booking/create', methods=['POST'])
-@require_auth
-def create_phone_booking():
-    """Crear reserva automatizada por teléfono"""
-    try:
-        data = request.get_json()
-        
-        # Validar datos requeridos
-        required_fields = ['client_name', 'client_phone', 'vehicle_type', 'pickup_date', 'return_date', 'pickup_location']
-        for field in required_fields:
-            if not data.get(field):
-                return jsonify({'success': False, 'error': f'Campo requerido: {field}'}), 400
-        
-        # Ejecutar automatización
-        from cuba_transtur_automation import create_automated_booking
-        result = create_automated_booking(data)
-        
-        if result['success']:
-            return jsonify({
-                'success': True,
-                'booking': result['booking'],
-                'message': 'Reserva automatizada creada exitosamente'
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': result['error']
-            }), 500
-            
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@admin.route('/api/phone-booking/check-availability', methods=['POST'])
-@require_auth
-def check_vehicle_availability():
-    """Verificar disponibilidad de vehículos"""
-    try:
-        data = request.get_json()
-        
-        # Simular verificación de disponibilidad (en producción sería real)
-        vehicle_type = data.get('vehicle_type', '')
-        pickup_date = data.get('pickup_date', '')
-        return_date = data.get('return_date', '')
-        
-        # Calcular días
-        from datetime import datetime
-        start = datetime.strptime(pickup_date, '%Y-%m-%d')
-        end = datetime.strptime(return_date, '%Y-%m-%d')
-        days = (end - start).days
-        
-        # Precios base por tipo de vehículo
-        base_prices = {
-            'Económico Automático': 45,
-            'Económico Manual': 40,
-            'Intermedio Automático': 55,
-            'Intermedio Manual': 50,
-            'SUV': 75,
-            'Van': 85
-        }
-        
-        daily_price = base_prices.get(vehicle_type, 50)
-        total_price = daily_price * days
-        
         return jsonify({
-            'success': True,
-            'availability': {
-                'available': True,
-                'daily_price': daily_price,
-                'total_price': total_price,
-                'days': days
-            }
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@admin.route('/api/phone-booking/history')
-@require_auth
-def get_phone_booking_history():
-    """Obtener historial de reservas por teléfono"""
-    try:
-        # Intentar obtener desde Supabase primero
-        try:
-            bookings = supabase_service.get_phone_bookings()
-            if bookings:
-                return jsonify(bookings)
-        except:
-            pass
-        
-        # Si falla Supabase, usar base de datos local
-        bookings = local_db.get_phone_bookings()
-        return jsonify(bookings)
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@admin.route('/api/phone-booking/<booking_id>/status')
-@require_auth
-def get_phone_booking_status(booking_id):
-    """Obtener estado de una reserva específica"""
-    try:
-        # Intentar obtener desde Supabase primero
-        try:
-            booking = supabase_service.get_phone_booking_by_id(booking_id)
-            if booking:
-                return jsonify(booking)
-        except:
-            pass
-        
-        # Si falla Supabase, usar base de datos local
-        booking = local_db.get_phone_booking_by_id(booking_id)
-        if booking:
-            return jsonify(booking)
-        else:
-            return jsonify({'success': False, 'error': 'Reserva no encontrada'}), 404
-            
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+            'success': False,
+            'error': str(e)
+        }), 500
