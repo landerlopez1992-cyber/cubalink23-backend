@@ -44,6 +44,12 @@ def dashboard():
     """Panel principal de administración"""
     return render_template('admin/dashboard.html', config=ADMIN_CONFIG)
 
+@admin.route('/dashboard')
+@require_auth
+def dashboard_alt():
+    """Panel principal de administración (ruta alternativa)"""
+    return render_template('admin/dashboard.html', config=ADMIN_CONFIG)
+
 @admin.route('/stats')
 @require_auth
 def get_stats():

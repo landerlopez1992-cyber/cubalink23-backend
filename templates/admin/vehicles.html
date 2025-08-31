@@ -9,22 +9,21 @@
     <style>
         body {
             background-color: #1a1a2e;
-            color: #e0e0e0;
+            color: white;
         }
         .sidebar {
             min-height: 100vh;
             background-color: #16213e;
-            color: #e0e0e0;
         }
         .card-stats {
-            border: none;
+            background-color: #16213e;
+            border: 1px solid #0f3460;
             border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            background-color: #0f3460;
-            color: #e0e0e0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            color: white;
         }
         .nav-link {
-            color: #e0e0e0;
+            color: white;
             border-radius: 10px;
             margin: 5px 0;
         }
@@ -33,68 +32,72 @@
             color: white;
         }
         .table {
-            color: #e0e0e0;
+            background-color: #16213e;
+            color: white;
         }
         .table th {
-            background-color: #16213e;
-            border-color: #1a1a2e;
+            background-color: #0f3460;
+            color: white;
+            border-color: #0f3460;
         }
         .table td {
-            background-color: #0f3460;
-            border-color: #1a1a2e;
-        }
-        .btn-primary {
-            background-color: #e94560;
-            border-color: #e94560;
-        }
-        .btn-primary:hover {
-            background-color: #b83f54;
-            border-color: #b83f54;
-        }
-        .btn-success {
-            background-color: #28a745;
-            border-color: #28a745;
-        }
-        .btn-warning {
-            background-color: #ffc107;
-            border-color: #ffc107;
-            color: #000;
+            color: white;
+            border-color: #0f3460;
         }
         .btn-outline-primary {
-            color: #e94560;
-            border-color: #e94560;
+            color: white;
+            border-color: #0f3460;
         }
         .btn-outline-primary:hover {
-            background-color: #e94560;
-            border-color: #e94560;
+            background-color: #0f3460;
+            color: white;
+        }
+        .btn-success {
+            background-color: #0f3460;
+            border-color: #0f3460;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #0f3460;
+            border-color: #0f3460;
+            color: white;
+        }
+        .btn-primary {
+            background-color: #0f3460;
+            border-color: #0f3460;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0f3460;
+            border-color: #0f3460;
+            color: white;
         }
         .modal-content {
-            background-color: #0f3460;
-            color: #e0e0e0;
+            background-color: #16213e;
+            color: white;
         }
         .modal-header {
-            background-color: #16213e;
-            border-bottom: 1px solid #1a1a2e;
+            background-color: #0f3460;
+            color: white;
         }
         .modal-footer {
             background-color: #16213e;
-            border-top: 1px solid #1a1a2e;
+            color: white;
         }
         .form-control {
             background-color: #1a1a2e;
             border-color: #16213e;
-            color: #e0e0e0;
+            color: white;
         }
         .form-control:focus {
             background-color: #1a1a2e;
-            border-color: #e94560;
-            color: #e0e0e0;
-            box-shadow: 0 0 0 0.2rem rgba(233, 69, 96, 0.25);
+            border-color: #0f3460;
+            color: white;
         }
         .form-select {
             background-color: #1a1a2e;
             border-color: #16213e;
-            color: #e0e0e0;
+            color: white;
         }
         .vehicle-image {
             width: 80px;
@@ -102,32 +105,23 @@
             object-fit: cover;
             border-radius: 8px;
         }
-        .stats-card {
-            background-color: #0f3460;
-            color: #e0e0e0;
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
         }
-        .card {
-            background-color: #0f3460;
-            color: #e0e0e0;
-            border: none;
-        }
-        .card-header {
-            background-color: #16213e;
-            border-bottom: 1px solid #1a1a2e;
-        }
-        .alert-info {
-            background-color: #1a1a2e;
-            border-color: #16213e;
-            color: #e0e0e0;
-        }
-        .nav-tabs .nav-link {
-            color: #e0e0e0;
-            border-color: #1a1a2e;
-        }
-        .nav-tabs .nav-link.active {
-            background-color: #0f3460;
-            border-color: #e94560;
+        .status-active {
+            background-color: #28a745;
             color: white;
+        }
+        .status-inactive {
+            background-color: #dc3545;
+            color: white;
+        }
+        .status-pending {
+            background-color: #ffc107;
+            color: black;
         }
     </style>
 </head>
@@ -135,37 +129,71 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 sidebar p-0">
-                <div class="p-3">
-                    <h5 class="text-white mb-4"><i class="fas fa-car"></i> Cubalink23</h5>
-                    <p class="text-white-50 small">Panel de Administración</p>
+            <div class="col-md-3 col-lg-2 sidebar p-3">
+                <div class="text-center mb-4">
+                    <img src="/static/img/company-logo.svg" alt="Cubalink23 Logo" style="width: 80px; height: 80px; margin-bottom: 10px;">
+                    <h4 class="text-white">{{ config.app_name }}</h4>
+                    <small class="text-white-50">Panel de Administración</small>
                 </div>
+                
                 <nav class="nav flex-column">
-                    <a class="nav-link" href="/admin/"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                    <a class="nav-link" href="/admin/users"><i class="fas fa-users"></i> Usuarios</a>
-                    <a class="nav-link" href="/admin/products"><i class="fas fa-box"></i> Productos</a>
-                    <a class="nav-link" href="/admin/orders"><i class="fas fa-shopping-cart"></i> Órdenes</a>
-                    <a class="nav-link" href="/admin/flights"><i class="fas fa-plane"></i> Vuelos</a>
-                    <a class="nav-link" href="/admin/system"><i class="fas fa-cog"></i> Sistema</a>
-                    <a class="nav-link" href="/admin/vendors"><i class="fas fa-store"></i> Vendedores</a>
-                    <a class="nav-link" href="/admin/deliverers"><i class="fas fa-truck"></i> Repartidores</a>
-                    <a class="nav-link active" href="/admin/vehicles"><i class="fas fa-car"></i> Renta Car</a>
-                    <a class="nav-link" href="/admin/support"><i class="fas fa-headset"></i> Chat de Soporte</a>
-                    <a class="nav-link" href="/admin/alerts"><i class="fas fa-bell"></i> Alertas</a>
-                    <a class="nav-link" href="/admin/wallet"><i class="fas fa-wallet"></i> Billetera</a>
+                    <a class="nav-link" href="/admin/">
+                        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                    </a>
+                    <a class="nav-link" href="/admin/users">
+                        <i class="fas fa-users me-2"></i> Usuarios
+                    </a>
+                    <a class="nav-link" href="/admin/products">
+                        <i class="fas fa-box me-2"></i> Productos
+                    </a>
+                    <a class="nav-link" href="/admin/orders">
+                        <i class="fas fa-shopping-cart me-2"></i> Órdenes
+                    </a>
+                    <a class="nav-link" href="/admin/flights">
+                        <i class="fas fa-plane me-2"></i> Vuelos
+                    </a>
+                    <a class="nav-link" href="/admin/system">
+                        <i class="fas fa-cog me-2"></i> Sistema
+                    </a>
+                    <a class="nav-link" href="/admin/vendors">
+                        <i class="fas fa-store me-2"></i> Vendedores
+                    </a>
+                    <a class="nav-link" href="/admin/drivers">
+                        <i class="fas fa-motorcycle me-2"></i> Repartidores
+                    </a>
+                    <a class="nav-link active" href="/admin/vehicles">
+                        <i class="fas fa-car me-2"></i> Renta Car
+                    </a>
+                    <a class="nav-link" href="/admin/support-chat">
+                        <i class="fas fa-headset me-2"></i> Chat de Soporte
+                    </a>
+                    <a class="nav-link" href="/admin/alerts">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Alertas
+                    </a>
+                    <a class="nav-link" href="/admin/wallet">
+                        <i class="fas fa-wallet me-2"></i> Billetera
+                    </a>
+                    <a class="nav-link" href="/admin/payment-methods">
+                        <i class="fas fa-credit-card me-2"></i> Métodos de Pago
+                    </a>
+                    <a class="nav-link" href="/admin/payroll">
+                        <i class="fas fa-money-bill-wave me-2"></i> Nómina
+                    </a>
+                    <a class="nav-link mt-4" href="/auth/logout">
+                        <i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión
+                    </a>
                 </nav>
             </div>
 
             <!-- Main Content -->
             <div class="col-md-9 col-lg-10 p-4">
-                <!-- Header -->
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2><i class="fas fa-car"></i> Gestión de Renta Car</h2>
-                    <div>
-                        <button class="btn btn-warning me-2" onclick="refreshData()">
+                    <div class="btn-group">
+                        <button class="btn btn-outline-primary" onclick="refreshVehicles()">
                             <i class="fas fa-sync-alt"></i> Actualizar
                         </button>
-                        <button class="btn btn-success me-2" onclick="showAddVehicleModal()">
+                        <button class="btn btn-success" onclick="showAddVehicleModal()">
                             <i class="fas fa-plus"></i> Agregar Vehículo
                         </button>
                         <button class="btn btn-primary" onclick="showPhoneBookingModal()">
@@ -177,176 +205,65 @@
                 <!-- Stats Cards -->
                 <div class="row mb-4">
                     <div class="col-md-3">
-                        <div class="card stats-card">
+                        <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-car fa-2x mb-2"></i>
-                                <h4 id="availableVehicles">5</h4>
-                                <p class="mb-0">Vehículos Disponibles</p>
+                                <i class="fas fa-car fa-2x text-primary mb-2"></i>
+                                <h3 id="total-vehicles">-</h3>
+                                <p class="mb-0">Vehículos Totales</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card stats-card">
+                        <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-clock fa-2x mb-2"></i>
-                                <h4 id="pendingRentals">3</h4>
-                                <p class="mb-0">Alquileres Pendientes</p>
+                                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                <h3 id="available-vehicles">-</h3>
+                                <p class="mb-0">Disponibles</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card stats-card">
+                        <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-check-circle fa-2x mb-2"></i>
-                                <h4 id="completedRentals">12</h4>
-                                <p class="mb-0">Alquileres Completados</p>
+                                <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                                <h3 id="pending-bookings">-</h3>
+                                <p class="mb-0">Reservas Pendientes</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card stats-card">
+                        <div class="card card-stats">
                             <div class="card-body text-center">
-                                <i class="fas fa-dollar-sign fa-2x mb-2"></i>
-                                <h4 id="totalCommissions">$600</h4>
-                                <p class="mb-0">Comisiones ($50 c/u)</p>
+                                <i class="fas fa-dollar-sign fa-2x text-info mb-2"></i>
+                                <h3 id="total-revenue">-</h3>
+                                <p class="mb-0">Ingresos Totales</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Navigation Tabs -->
-                <ul class="nav nav-tabs mb-4" id="rentalTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="vehicles-tab" data-bs-toggle="tab" data-bs-target="#vehicles" type="button" role="tab">
-                            <i class="fas fa-car"></i> Vehículos
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="rentals-tab" data-bs-toggle="tab" data-bs-target="#rentals" type="button" role="tab">
-                            <i class="fas fa-list"></i> Alquileres
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">
-                            <i class="fas fa-clock"></i> Pendientes de Aprobación
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">
-                            <i class="fas fa-chart-bar"></i> Reportes
-                        </button>
-                    </li>
-                </ul>
-
-                <!-- Tab Content -->
-                <div class="tab-content" id="rentalTabContent">
-                    <!-- Vehicles Tab -->
-                    <div class="tab-pane fade show active" id="vehicles" role="tabpanel">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0"><i class="fas fa-car"></i> Gestión de Vehículos</h5>
-                                <p class="mb-0">Vehículos disponibles para alquiler con fotos, precios y políticas</p>
-                            </div>
-                            <div class="card-body">
-                                <div class="alert alert-info">
-                                    <strong>Información Importante:</strong> Los precios mostrados son de primera mano de rentcarcuba.com. 
-                                    Nuestra ganancia es solo $50 por reserva. Incluye: tanque lleno, seguro, cambio de lugar de entrega, chofer adicional, etc.
-                                </div>
-                                
-                                <div class="row" id="vehiclesList">
-                                    <!-- Vehicles will be loaded here -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Rentals Tab -->
-                    <div class="tab-pane fade" id="rentals" role="tabpanel">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0"><i class="fas fa-list"></i> Historial de Alquileres</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table">
-                                        <thead>
-                                            <tr>
-                                                <th>ID</th>
-                                                <th>Cliente</th>
-                                                <th>Vehículo</th>
-                                                <th>Fechas</th>
-                                                <th>Precio</th>
-                                                <th>Estado</th>
-                                                <th>Acciones</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td colspan="7" class="text-center">No hay alquileres registrados</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Pending Tab -->
-                    <div class="tab-pane fade" id="pending" role="tabpanel">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0"><i class="fas fa-clock"></i> Pendientes de Aprobación</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table">
-                                        <thead>
-                                            <tr>
-                                                <th>ID</th>
-                                                <th>Cliente</th>
-                                                <th>Vehículo</th>
-                                                <th>Fechas</th>
-                                                <th>Precio</th>
-                                                <th>Acciones</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td colspan="6" class="text-center">No hay solicitudes pendientes</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Reports Tab -->
-                    <div class="tab-pane fade" id="reports" role="tabpanel">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Reportes y Estadísticas</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <h6>Vehículos más Rentados</h6>
-                                        <ul class="list-group">
-                                            <li class="list-group-item bg-transparent text-light">SUV - 15 alquileres</li>
-                                            <li class="list-group-item bg-transparent text-light">Económico - 12 alquileres</li>
-                                            <li class="list-group-item bg-transparent text-light">Intermedio - 8 alquileres</li>
-                                        </ul>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <h6>Ingresos por Mes</h6>
-                                        <ul class="list-group">
-                                            <li class="list-group-item bg-transparent text-light">Agosto - $2,500</li>
-                                            <li class="list-group-item bg-transparent text-light">Julio - $1,800</li>
-                                            <li class="list-group-item bg-transparent text-light">Junio - $1,200</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
+                <!-- Vehicles Table -->
+                <div class="card card-stats">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Vehículos Registrados</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Imagen</th>
+                                        <th>Nombre</th>
+                                        <th>Categoría</th>
+                                        <th>Precio/Día</th>
+                                        <th>Transmisión</th>
+                                        <th>Capacidad</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="vehicles-table-body">
+                                    <!-- Los vehículos se cargarán aquí dinámicamente -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -354,111 +271,69 @@
         </div>
     </div>
 
-    <!-- Modal de Reserva por Teléfono -->
-    <div class="modal fade" id="phoneBookingModal" tabindex="-1">
+    <!-- Add Vehicle Modal -->
+    <div class="modal fade" id="addVehicleModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-phone"></i> Reserva por Teléfono - AUTOMATIZACIÓN REAL
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title">Agregar Nuevo Vehículo</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="phoneBookingForm">
+                    <form id="addVehicleForm" enctype="multipart/form-data">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">Nombre del Cliente *</label>
-                                    <input type="text" class="form-control" id="clientName" required>
+                                    <label class="form-label">Nombre del Vehículo</label>
+                                    <input type="text" class="form-control" name="name" required>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">Teléfono *</label>
-                                    <input type="tel" class="form-control" id="clientPhone" required>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Email (opcional)</label>
-                                    <input type="email" class="form-control" id="clientEmail">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Tipo de Vehículo *</label>
-                                    <select class="form-control" id="vehicleType" required>
-                                        <option value="">Seleccionar vehículo</option>
-                                        <option value="Económico Automático">Económico Automático</option>
-                                        <option value="Económico Manual">Económico Manual</option>
-                                        <option value="Intermedio Automático">Intermedio Automático</option>
-                                        <option value="Intermedio Manual">Intermedio Manual</option>
+                                    <label class="form-label">Categoría</label>
+                                    <select class="form-select" name="category" required>
+                                        <option value="">Seleccionar categoría</option>
+                                        <option value="Económico">Económico</option>
+                                        <option value="Compacto">Compacto</option>
+                                        <option value="Mediano">Mediano</option>
+                                        <option value="Grande">Grande</option>
                                         <option value="SUV">SUV</option>
+                                        <option value="Lujo">Lujo</option>
                                         <option value="Van">Van</option>
                                     </select>
                                 </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">Fecha de Recogida *</label>
-                                    <input type="date" class="form-control" id="pickupDate" required>
+                                    <label class="form-label">Precio por Día (USD)</label>
+                                    <input type="number" class="form-control" name="daily_price" step="0.01" required>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">Fecha de Devolución *</label>
-                                    <input type="date" class="form-control" id="returnDate" required>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Lugar de Recogida *</label>
-                                    <select class="form-control" id="pickupLocation" required>
-                                        <option value="">Seleccionar lugar</option>
-                                        <option value="Aeropuerto José Martí">Aeropuerto José Martí</option>
-                                        <option value="Hotel Habana Libre">Hotel Habana Libre</option>
-                                        <option value="Hotel Nacional">Hotel Nacional</option>
-                                        <option value="Centro Habana">Centro Habana</option>
-                                        <option value="Vedado">Vedado</option>
+                                    <label class="form-label">Transmisión</label>
+                                    <select class="form-select" name="transmission" required>
+                                        <option value="">Seleccionar transmisión</option>
+                                        <option value="Manual">Manual</option>
+                                        <option value="Automático">Automático</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">Lugar de Devolución</label>
-                                    <select class="form-control" id="returnLocation">
-                                        <option value="">Mismo lugar de recogida</option>
-                                        <option value="Aeropuerto José Martí">Aeropuerto José Martí</option>
-                                        <option value="Hotel Habana Libre">Hotel Habana Libre</option>
-                                        <option value="Hotel Nacional">Hotel Nacional</option>
-                                        <option value="Centro Habana">Centro Habana</option>
-                                        <option value="Vedado">Vedado</option>
+                                    <label class="form-label">Capacidad de Pasajeros</label>
+                                    <input type="number" class="form-control" name="passenger_capacity" min="1" max="15" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Aire Acondicionado</label>
+                                    <select class="form-select" name="air_conditioning" required>
+                                        <option value="">Seleccionar</option>
+                                        <option value="Sí">Sí</option>
+                                        <option value="No">No</option>
                                     </select>
                                 </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">Precio por Día</label>
-                                    <input type="number" class="form-control" id="dailyPrice" readonly>
+                                    <label class="form-label">Descripción</label>
+                                    <textarea class="form-control" name="description" rows="3"></textarea>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">Precio Total</label>
-                                    <input type="number" class="form-control" id="totalPrice" readonly>
+                                    <label class="form-label">Fotos del Vehículo</label>
+                                    <input type="file" class="form-control" name="photos" multiple accept="image/*" required>
+                                    <small class="form-text text-muted">Puedes seleccionar múltiples fotos</small>
                                 </div>
                             </div>
                         </div>
@@ -466,12 +341,95 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-warning" onclick="checkAvailability()">
-                        <i class="fas fa-search"></i> Verificar Disponibilidad
-                    </button>
-                    <button type="button" class="btn btn-success" onclick="createPhoneBooking()">
-                        <i class="fas fa-rocket"></i> Crear Reserva Automatizada
-                    </button>
+                    <button type="button" class="btn btn-success" onclick="saveVehicle()">Guardar Vehículo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phone Booking Modal -->
+    <div class="modal fade" id="phoneBookingModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reserva por Teléfono</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="phoneBookingForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Nombre del Cliente</label>
+                                    <input type="text" class="form-control" name="client_name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Teléfono del Cliente</label>
+                                    <input type="tel" class="form-control" name="client_phone" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Tipo de Vehículo</label>
+                                    <select class="form-select" name="vehicle_type" required>
+                                        <option value="">Seleccionar tipo</option>
+                                        <option value="Económico">Económico</option>
+                                        <option value="Compacto">Compacto</option>
+                                        <option value="Mediano">Mediano</option>
+                                        <option value="Grande">Grande</option>
+                                        <option value="SUV">SUV</option>
+                                        <option value="Lujo">Lujo</option>
+                                        <option value="Van">Van</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Fecha de Recogida</label>
+                                    <input type="date" class="form-control" name="pickup_date" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Fecha de Devolución</label>
+                                    <input type="date" class="form-control" name="return_date" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Ubicación de Recogida</label>
+                                    <select class="form-select" name="pickup_location" required>
+                                        <option value="">Seleccionar ubicación</option>
+                                        <option value="Aeropuerto José Martí">Aeropuerto José Martí</option>
+                                        <option value="Centro de La Habana">Centro de La Habana</option>
+                                        <option value="Varadero">Varadero</option>
+                                        <option value="Santiago de Cuba">Santiago de Cuba</option>
+                                        <option value="Holguín">Holguín</option>
+                                        <option value="Camagüey">Camagüey</option>
+                                        <option value="Cienfuegos">Cienfuegos</option>
+                                        <option value="Santa Clara">Santa Clara</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label class="form-label">Ubicación de Devolución</label>
+                                    <select class="form-select" name="return_location">
+                                        <option value="">Misma ubicación de recogida</option>
+                                        <option value="Aeropuerto José Martí">Aeropuerto José Martí</option>
+                                        <option value="Centro de La Habana">Centro de La Habana</option>
+                                        <option value="Varadero">Varadero</option>
+                                        <option value="Santiago de Cuba">Santiago de Cuba</option>
+                                        <option value="Holguín">Holguín</option>
+                                        <option value="Camagüey">Camagüey</option>
+                                        <option value="Cienfuegos">Cienfuegos</option>
+                                        <option value="Santa Clara">Santa Clara</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="checkAvailability()">Verificar Disponibilidad</button>
+                    <button type="button" class="btn btn-success" onclick="createPhoneBooking()">Crear Reserva</button>
                 </div>
             </div>
         </div>
@@ -480,305 +438,218 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Variables globales
-        let currentBookingData = {};
-        
-        // Mostrar modal de reserva por teléfono
-        function showPhoneBookingModal() {
-            const modal = new bootstrap.Modal(document.getElementById('phoneBookingModal'));
-            modal.show();
-        }
-        
-        // Verificar disponibilidad real
-        async function checkAvailability() {
-            const formData = getFormData();
-            if (!formData) return;
-            
-            try {
-                const response = await fetch('/admin/api/phone-booking/check-availability', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
+        let currentBookingData = null;
+        let vehicles = [];
+
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadVehicles();
+            loadStats();
+        });
+
+        // Función para cargar vehículos
+        function loadVehicles() {
+            fetch('/admin/api/vehicles')
+                .then(response => response.json())
+                .then(data => {
+                    vehicles = data;
+                    displayVehicles(data);
+                })
+                .catch(error => {
+                    console.error('Error loading vehicles:', error);
+                    showAlert('Error al cargar vehículos', 'danger');
                 });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    // Actualizar precios
-                    document.getElementById('dailyPrice').value = result.availability.daily_price;
-                    document.getElementById('totalPrice').value = result.availability.total_price;
-                    
-                    // Guardar datos para la reserva
-                    currentBookingData = { ...formData, ...result.availability };
-                    
-                    alert('✅ Disponibilidad verificada exitosamente');
-                } else {
-                    alert('❌ Error: ' + result.error);
-                }
-            } catch (error) {
-                alert('❌ Error de conexión: ' + error.message);
-            }
         }
-        
-        // Crear reserva por teléfono REAL
-        async function createPhoneBooking() {
-            if (!currentBookingData.client_name) {
-                alert('❌ Primero verifica la disponibilidad');
-                return;
-            }
-            
-            if (!confirm('🚀 ¿Confirmar creación de reserva automatizada REAL?\n\nEsto ejecutará la automatización completa en Cuba Transtur.')) {
-                return;
-            }
-            
-            try {
-                const response = await fetch('/admin/api/phone-booking/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(currentBookingData)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert(`✅ RESERVA AUTOMATIZADA CREADA EXITOSAMENTE!\n\n📋 ID: ${result.booking.reservation_id}\n👤 Cliente: ${result.booking.client_name}\n🚙 Vehículo: ${result.booking.vehicle_type}\n📅 Fechas: ${result.booking.pickup_date} - ${result.booking.return_date}\n💰 Precio: $${result.booking.total_price}\n📧 Email temporal: ${result.booking.temp_email}\n\nLa automatización se ejecutó completamente en Cuba Transtur.`);
-                    
-                    // Cerrar modal
-                    bootstrap.Modal.getInstance(document.getElementById('phoneBookingModal')).hide();
-                    
-                    // Recargar datos
-                    refreshData();
-                } else {
-                    alert('❌ Error: ' + result.error);
-                }
-            } catch (error) {
-                alert('❌ Error de conexión: ' + error.message);
-            }
+
+        // Función para mostrar vehículos en la tabla
+        function displayVehicles(vehicles) {
+            const tbody = document.getElementById('vehicles-table-body');
+            tbody.innerHTML = '';
+
+            vehicles.forEach(vehicle => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <img src="${vehicle.photos ? vehicle.photos.split(',')[0] : '/static/img/default-car.jpg'}" 
+                             alt="${vehicle.name}" class="vehicle-image">
+                    </td>
+                    <td>${vehicle.name}</td>
+                    <td>${vehicle.category}</td>
+                    <td>$${vehicle.daily_price}</td>
+                    <td>${vehicle.transmission}</td>
+                    <td>${vehicle.passenger_capacity} personas</td>
+                    <td>
+                        <span class="status-badge ${vehicle.active ? 'status-active' : 'status-inactive'}">
+                            ${vehicle.active ? 'Activo' : 'Inactivo'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="editVehicle(${vehicle.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteVehicle(${vehicle.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
         }
-        
-        // Obtener datos del formulario
-        function getFormData() {
-            const clientName = document.getElementById('clientName').value.trim();
-            const clientPhone = document.getElementById('clientPhone').value.trim();
-            const clientEmail = document.getElementById('clientEmail').value.trim();
-            const vehicleType = document.getElementById('vehicleType').value;
-            const pickupDate = document.getElementById('pickupDate').value;
-            const returnDate = document.getElementById('returnDate').value;
-            const pickupLocation = document.getElementById('pickupLocation').value;
-            const returnLocation = document.getElementById('returnLocation').value;
-            
-            if (!clientName || !clientPhone || !vehicleType || !pickupDate || !returnDate || !pickupLocation) {
-                alert('❌ Por favor completa todos los campos requeridos');
-                return null;
-            }
-            
-            return {
-                client_name: clientName,
-                client_phone: clientPhone,
-                client_email: clientEmail,
-                vehicle_type: vehicleType,
-                pickup_date: pickupDate,
-                return_date: returnDate,
-                pickup_location: pickupLocation,
-                return_location: returnLocation || pickupLocation
-            };
+
+        // Función para cargar estadísticas
+        function loadStats() {
+            // Simular estadísticas
+            document.getElementById('total-vehicles').textContent = vehicles.length;
+            document.getElementById('available-vehicles').textContent = vehicles.filter(v => v.active).length;
+            document.getElementById('pending-bookings').textContent = '0';
+            document.getElementById('total-revenue').textContent = '$0';
         }
-        
-        // Recargar datos
-        function refreshData() {
-            // Implementar recarga de datos
-            console.log('Recargando datos...');
-        }
-        
-        // Mostrar modal de agregar vehículo
+
+        // Función para mostrar modal de agregar vehículo
         function showAddVehicleModal() {
-            // Crear modal dinámicamente
-            const modalHtml = `
-                <div class="modal fade" id="addVehicleModal" tabindex="-1">
-                    <div class="modal-dialog modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title"><i class="fas fa-plus"></i> Agregar Nuevo Vehículo</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <form id="addVehicleForm" enctype="multipart/form-data">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Nombre del Vehículo *</label>
-                                                <input type="text" class="form-control" id="vehicleName" required>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Categoría *</label>
-                                                <select class="form-control" id="vehicleCategory" required>
-                                                    <option value="">Seleccionar categoría</option>
-                                                    <option value="Económico">Económico</option>
-                                                    <option value="Intermedio">Intermedio</option>
-                                                    <option value="SUV">SUV</option>
-                                                    <option value="Van">Van</option>
-                                                    <option value="Lujo">Lujo</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Precio por Día ($) *</label>
-                                                <input type="number" class="form-control" id="dailyPrice" required>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Transmisión</label>
-                                                <select class="form-control" id="transmission">
-                                                    <option value="Automático">Automático</option>
-                                                    <option value="Manual">Manual</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Capacidad de Pasajeros</label>
-                                                <input type="number" class="form-control" id="passengerCapacity" min="1" max="15">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Aire Acondicionado</label>
-                                                <select class="form-control" id="airConditioning">
-                                                    <option value="Sí">Sí</option>
-                                                    <option value="No">No</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label class="form-label">Descripción</label>
-                                        <textarea class="form-control" id="vehicleDescription" rows="3"></textarea>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label class="form-label">Fotos del Vehículo *</label>
-                                        <input type="file" class="form-control" id="vehiclePhotos" multiple accept="image/*" required>
-                                        <small class="text-muted">Puedes seleccionar múltiples fotos</small>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label class="form-label">Características</label>
-                                        <div class="row">
-                                            <div class="col-md-4">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="gps">
-                                                    <label class="form-check-label" for="gps">GPS</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="bluetooth">
-                                                    <label class="form-check-label" for="bluetooth">Bluetooth</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="backupCamera">
-                                                    <label class="form-check-label" for="backupCamera">Cámara de Reversa</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                <button type="button" class="btn btn-success" onclick="saveVehicle()">
-                                    <i class="fas fa-save"></i> Guardar Vehículo
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            document.getElementById('addVehicleForm').reset();
+            new bootstrap.Modal(document.getElementById('addVehicleModal')).show();
+        }
+
+        // Función para guardar vehículo
+        function saveVehicle() {
+            const form = document.getElementById('addVehicleForm');
+            const formData = new FormData(form);
+
+            fetch('/admin/api/vehicles/add', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Vehículo agregado exitosamente', 'success');
+                    new bootstrap.Modal(document.getElementById('addVehicleModal')).hide();
+                    loadVehicles();
+                    loadStats();
+                } else {
+                    showAlert(data.error || 'Error al agregar vehículo', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Error al agregar vehículo', 'danger');
+            });
+        }
+
+        // Función para mostrar modal de reserva por teléfono
+        function showPhoneBookingModal() {
+            document.getElementById('phoneBookingForm').reset();
+            new bootstrap.Modal(document.getElementById('phoneBookingModal')).show();
+        }
+
+        // Función para verificar disponibilidad
+        function checkAvailability() {
+            const form = document.getElementById('phoneBookingForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+
+            fetch('/admin/api/phone-booking/check-availability', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.available) {
+                    showAlert('Vehículos disponibles para las fechas seleccionadas', 'success');
+                    currentBookingData = data;
+                } else {
+                    showAlert('No hay vehículos disponibles para las fechas seleccionadas', 'warning');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Error al verificar disponibilidad', 'danger');
+            });
+        }
+
+        // Función para crear reserva por teléfono
+        function createPhoneBooking() {
+            const form = document.getElementById('phoneBookingForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+
+            fetch('/admin/api/phone-booking/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Reserva creada exitosamente', 'success');
+                    new bootstrap.Modal(document.getElementById('phoneBookingModal')).hide();
+                    loadStats();
+                } else {
+                    showAlert(data.error || 'Error al crear reserva', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Error al crear reserva', 'danger');
+            });
+        }
+
+        // Función para actualizar datos
+        function refreshVehicles() {
+            loadVehicles();
+            loadStats();
+            showAlert('Datos actualizados', 'info');
+        }
+
+        // Función para mostrar alertas
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
             
-            // Agregar modal al DOM
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            const container = document.querySelector('.col-md-9.col-lg-10');
+            container.insertBefore(alertDiv, container.firstChild);
             
-            // Mostrar modal
-            const modal = new bootstrap.Modal(document.getElementById('addVehicleModal'));
-            modal.show();
-            
-            // Limpiar modal cuando se cierre
-            document.getElementById('addVehicleModal').addEventListener('hidden.bs.modal', function() {
-                this.remove();
-            });
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
         }
-        
-        // Guardar vehículo
-        async function saveVehicle() {
-            const formData = new FormData();
-            
-            // Obtener datos del formulario
-            formData.append('name', document.getElementById('vehicleName').value);
-            formData.append('category', document.getElementById('vehicleCategory').value);
-            formData.append('daily_price', document.getElementById('dailyPrice').value);
-            formData.append('transmission', document.getElementById('transmission').value);
-            formData.append('passenger_capacity', document.getElementById('passengerCapacity').value);
-            formData.append('air_conditioning', document.getElementById('airConditioning').value);
-            formData.append('description', document.getElementById('vehicleDescription').value);
-            
-            // Características
-            const features = [];
-            if (document.getElementById('gps').checked) features.push('GPS');
-            if (document.getElementById('bluetooth').checked) features.push('Bluetooth');
-            if (document.getElementById('backupCamera').checked) features.push('Cámara de Reversa');
-            formData.append('features', JSON.stringify(features));
-            
-            // Fotos
-            const photos = document.getElementById('vehiclePhotos').files;
-            for (let i = 0; i < photos.length; i++) {
-                formData.append('photos', photos[i]);
-            }
-            
-            try {
-                const response = await fetch('/admin/api/vehicles/add', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert('✅ Vehículo agregado exitosamente');
-                    bootstrap.Modal.getInstance(document.getElementById('addVehicleModal')).hide();
-                    refreshData();
-                } else {
-                    alert('❌ Error: ' + result.error);
-                }
-            } catch (error) {
-                alert('❌ Error de conexión: ' + error.message);
-            }
-        }
-        
-        // Inicialización
-        document.addEventListener('DOMContentLoaded', function() {
-            // Configurar fechas mínimas
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('pickupDate').min = today;
-            document.getElementById('returnDate').min = today;
-            
-            // Evento para calcular fechas
-            document.getElementById('pickupDate').addEventListener('change', function() {
-                document.getElementById('returnDate').min = this.value;
-            });
-        });
-    </script>
 
+        // Funciones para editar y eliminar vehículos
+        function editVehicle(id) {
+            showAlert('Función de edición en desarrollo', 'info');
+        }
+
+        function deleteVehicle(id) {
+            if (confirm('¿Estás seguro de que quieres eliminar este vehículo?')) {
+                fetch(`/admin/api/vehicles/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('Vehículo eliminado exitosamente', 'success');
+                        loadVehicles();
+                        loadStats();
+                    } else {
+                        showAlert(data.error || 'Error al eliminar vehículo', 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('Error al eliminar vehículo', 'danger');
+                });
+            }
+        }
+    </script>
 </body>
 </html>
