@@ -1664,12 +1664,26 @@ def add_vehicle():
             return jsonify({'success': False, 'error': 'No se seleccionaron fotos válidas'}), 400
         
         # Obtener datos del formulario
+        daily_price_str = request.form.get('daily_price', '0')
+        passenger_capacity_str = request.form.get('passenger_capacity', '0')
+        
+        # Validar y convertir valores numéricos
+        try:
+            daily_price = float(daily_price_str) if daily_price_str else 0
+        except ValueError:
+            daily_price = 0
+            
+        try:
+            passenger_capacity = int(passenger_capacity_str) if passenger_capacity_str else 0
+        except ValueError:
+            passenger_capacity = 0
+        
         vehicle_data = {
             'name': request.form.get('name'),
             'category': request.form.get('category'),
-            'daily_price': float(request.form.get('daily_price', 0)),
+            'daily_price': daily_price,
             'transmission': request.form.get('transmission'),
-            'passenger_capacity': int(request.form.get('passenger_capacity', 0)),
+            'passenger_capacity': passenger_capacity,
             'air_conditioning': request.form.get('air_conditioning'),
             'description': request.form.get('description'),
             'features': json.loads(request.form.get('features', '[]')),
