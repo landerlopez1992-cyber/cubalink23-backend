@@ -6,6 +6,7 @@ import sqlite3
 from supabase_service import supabase_service
 from auth_routes import require_auth
 from werkzeug.utils import secure_filename
+from database import local_db
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -83,9 +84,18 @@ def products():
 @admin.route('/api/products')
 @require_auth
 def get_products():
-    """Obtener productos desde Supabase"""
+    """Obtener productos desde base de datos local"""
     try:
-        products = supabase_service.get_products()
+        # Intentar obtener desde Supabase primero
+        try:
+            products = supabase_service.get_products()
+            if products:
+                return jsonify(products)
+        except:
+            pass
+        
+        # Si falla Supabase, usar base de datos local
+        products = local_db.get_products()
         return jsonify(products)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -113,9 +123,18 @@ def add_product():
                 # URL de la imagen
                 data['image_url'] = '/static/uploads/{}'.format(filename)
         
-        # Agregar producto a Supabase
-        product = supabase_service.add_product(data)
-        return jsonify(product)
+        # Validar datos requeridos
+        if not data.get('name') or not data.get('price'):
+            return jsonify({'error': 'Nombre y precio son requeridos'}), 400
+        
+        # Intentar agregar a Supabase primero
+        try:
+            product = supabase_service.add_product(data)
+            return jsonify(product)
+        except:
+            # Si falla Supabase, usar base de datos local
+            product = local_db.add_product(data)
+            return jsonify(product)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -125,8 +144,19 @@ def update_product(product_id):
     """Actualizar producto"""
     try:
         data = request.json
-        product = supabase_service.update_product(product_id, data)
-        return jsonify(product)
+        
+        # Validar datos requeridos
+        if not data.get('name') or not data.get('price'):
+            return jsonify({'error': 'Nombre y precio son requeridos'}), 400
+        
+        # Intentar actualizar en Supabase primero
+        try:
+            product = supabase_service.update_product(product_id, data)
+            return jsonify(product)
+        except:
+            # Si falla Supabase, usar base de datos local
+            product = local_db.update_product(product_id, data)
+            return jsonify(product)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -135,8 +165,27 @@ def update_product(product_id):
 def delete_product(product_id):
     """Eliminar producto"""
     try:
-        supabase_service.delete_product(product_id)
-        return jsonify({'success': True})
+        # Intentar eliminar en Supabase primero
+        try:
+            supabase_service.delete_product(product_id)
+            return jsonify({'success': True})
+        except:
+            # Si falla Supabase, usar base de datos local
+            success = local_db.delete_product(product_id)
+            if success:
+                return jsonify({'success': True})
+            else:
+                return jsonify({'error': 'Producto no encontrado'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/categories')
+@require_auth
+def get_product_categories():
+    """Obtener categorías de productos"""
+    try:
+        categories = local_db.get_categories()
+        return jsonify(categories)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -150,9 +199,36 @@ def banners():
 @admin.route('/api/banners')
 @require_auth
 def get_banners():
-    """Obtener banners desde Supabase"""
+    """Obtener banners desde base de datos local"""
     try:
-        banners = supabase_service.get_banners()
+        # Intentar obtener desde Supabase primero
+        try:
+            banners = supabase_service.get_banners()
+            if banners:
+                return jsonify(banners)
+        except:
+            pass
+        
+        # Si falla Supabase, usar base de datos local
+        banners = local_db.get_banners()
+        return jsonify(banners)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/banners/active')
+def get_active_banners():
+    """Obtener solo banners activos (público)"""
+    try:
+        # Intentar obtener desde Supabase primero
+        try:
+            banners = supabase_service.get_active_banners()
+            if banners:
+                return jsonify(banners)
+        except:
+            pass
+        
+        # Si falla Supabase, usar base de datos local
+        banners = local_db.get_active_banners()
         return jsonify(banners)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -215,22 +291,114 @@ def users():
     return render_template('admin/users.html', config=ADMIN_CONFIG)
 
 @admin.route('/api/users', methods=['GET'])
+@require_auth
 def get_users():
-    """Obtener usuarios desde Supabase"""
+    """Obtener usuarios desde base de datos local"""
     try:
-        users = supabase_service.get_users()
+        # Intentar obtener desde Supabase primero
+        try:
+            users = supabase_service.get_users()
+            if users:
+                return jsonify(users)
+        except:
+            pass
+        
+        # Si falla Supabase, usar base de datos local
+        users = local_db.get_users()
         return jsonify(users)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@admin.route('/api/users', methods=['POST'])
+@require_auth
+def add_user():
+    """Agregar nuevo usuario"""
+    try:
+        data = request.json
+        
+        # Validar datos requeridos
+        if not data.get('email') or not data.get('name'):
+            return jsonify({'error': 'Email y nombre son requeridos'}), 400
+        
+        # Intentar agregar a Supabase primero
+        try:
+            user = supabase_service.add_user(data)
+            return jsonify(user)
+        except:
+            # Si falla Supabase, usar base de datos local
+            user = local_db.add_user(data)
+            return jsonify(user)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/users/<user_id>', methods=['PUT'])
+@require_auth
+def update_user(user_id):
+    """Actualizar usuario"""
+    try:
+        data = request.json
+        
+        # Validar datos requeridos
+        if not data.get('email') or not data.get('name'):
+            return jsonify({'error': 'Email y nombre son requeridos'}), 400
+        
+        # Intentar actualizar en Supabase primero
+        try:
+            user = supabase_service.update_user(user_id, data)
+            return jsonify(user)
+        except:
+            # Si falla Supabase, usar base de datos local
+            user = local_db.update_user(user_id, data)
+            return jsonify(user)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/users/<user_id>', methods=['DELETE'])
+@require_auth
+def delete_user(user_id):
+    """Eliminar usuario"""
+    try:
+        # Intentar eliminar en Supabase primero
+        try:
+            success = supabase_service.delete_user(user_id)
+            return jsonify({'success': success})
+        except:
+            # Si falla Supabase, usar base de datos local
+            success = local_db.delete_user(user_id)
+            if success:
+                return jsonify({'success': True})
+            else:
+                return jsonify({'error': 'Usuario no encontrado'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @admin.route('/api/users/<user_id>/toggle', methods=['POST'])
+@require_auth
 def toggle_user_status(user_id):
     """Bloquear/desbloquear usuario"""
     try:
         data = request.json
         blocked = data.get('blocked', False)
-        success = supabase_service.update_user_status(user_id, blocked)
-        return jsonify({'success': success})
+        
+        # Intentar actualizar en Supabase primero
+        try:
+            success = supabase_service.update_user_status(user_id, blocked)
+            return jsonify({'success': success})
+        except:
+            # Si falla Supabase, usar base de datos local
+            success = local_db.block_user(user_id, blocked)
+            return jsonify({'success': success})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/users/<user_id>/activity', methods=['POST'])
+@require_auth
+def update_user_activity(user_id):
+    """Actualizar actividad del usuario"""
+    try:
+        # Actualizar actividad en base de datos local
+        local_db.update_user_activity(user_id)
+        return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -1324,4 +1492,167 @@ def confirm_charter_booking(booking_id):
         return jsonify({
             'success': False,
             'message': f'Error al confirmar reserva: {str(e)}'
+        }), 500
+
+# ==================== AUTOMATIZACIÓN CUBA TRANSTUR ====================
+
+@admin.route('/cuba-transtur')
+@require_auth
+def cuba_transtur_dashboard():
+    """Panel de automatización de Cuba Transtur"""
+    return render_template('admin/cuba_transtur.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/cuba-transtur/bookings')
+@require_auth
+def get_cuba_transtur_bookings():
+    """Obtener historial de reservas automatizadas"""
+    try:
+        from cuba_transtur_automation import get_booking_history
+        bookings = get_booking_history()
+        return jsonify({
+            'success': True,
+            'bookings': bookings
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@admin.route('/api/cuba-transtur/bookings', methods=['POST'])
+@require_auth
+def create_cuba_transtur_booking():
+    """Crear reserva automatizada en Cuba Transtur"""
+    try:
+        data = request.get_json()
+        
+        # Validaciones básicas
+        required_fields = ['name', 'phone', 'pickup_date', 'return_date', 
+                          'pickup_location', 'vehicle_type']
+        
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({
+                    'success': False,
+                    'error': f'Campo requerido: {field}'
+                }), 400
+        
+        # Importar función de automatización
+        from cuba_transtur_automation import create_automated_booking
+        
+        # Crear reserva automatizada
+        result = create_automated_booking(data)
+        
+        if result.get('automation_success'):
+            return jsonify({
+                'success': True,
+                'booking': result,
+                'message': 'Reserva automatizada creada exitosamente'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('message', 'Error en automatización')
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@admin.route('/api/cuba-transtur/bookings/<reservation_id>')
+@require_auth
+def get_cuba_transtur_booking_status(reservation_id):
+    """Obtener estado de una reserva específica"""
+    try:
+        from cuba_transtur_automation import check_booking_status
+        booking = check_booking_status(reservation_id)
+        
+        if booking:
+            return jsonify({
+                'success': True,
+                'booking': booking
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Reserva no encontrada'
+            }), 404
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@admin.route('/api/cuba-transtur/test-connection')
+@require_auth
+def test_cuba_transtur_connection():
+    """Probar conexión con Cuba Transtur"""
+    try:
+        from cuba_transtur_automation import CubaTransturAutomation
+        
+        # Crear instancia de prueba
+        automation = CubaTransturAutomation()
+        
+        # Probar navegación
+        success = automation.navigate_to_booking_page()
+        
+        # Cerrar navegador
+        automation.close_driver()
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Conexión exitosa con Cuba Transtur'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'No se pudo conectar con Cuba Transtur'
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@admin.route('/api/cuba-transtur/statistics')
+@require_auth
+def get_cuba_transtur_statistics():
+    """Obtener estadísticas de reservas automatizadas"""
+    try:
+        from cuba_transtur_automation import get_booking_history
+        bookings = get_booking_history()
+        
+        # Calcular estadísticas
+        total_bookings = len(bookings)
+        confirmed_bookings = len([b for b in bookings if b.get('status') == 'confirmed'])
+        pending_bookings = len([b for b in bookings if b.get('status') == 'pending'])
+        error_bookings = len([b for b in bookings if b.get('status') == 'error'])
+        
+        # Ingresos estimados (ejemplo)
+        total_income = sum(b.get('estimated_cost', 0) for b in bookings if b.get('status') == 'confirmed')
+        
+        stats = {
+            'total_bookings': total_bookings,
+            'confirmed_bookings': confirmed_bookings,
+            'pending_bookings': pending_bookings,
+            'error_bookings': error_bookings,
+            'success_rate': (confirmed_bookings / total_bookings * 100) if total_bookings > 0 else 0,
+            'total_income': total_income,
+            'average_booking_value': total_income / confirmed_bookings if confirmed_bookings > 0 else 0
+        }
+        
+        return jsonify({
+            'success': True,
+            'statistics': stats
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
         }), 500

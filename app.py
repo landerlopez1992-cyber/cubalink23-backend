@@ -2,9 +2,23 @@ from flask import Flask, render_template, jsonify
 from flask_cors import CORS
 import os
 from datetime import datetime
+from admin_routes import admin
+from auth_routes import auth
+from dotenv import load_dotenv
+
+# Cargar variables de entorno
+load_dotenv('config.env')
 
 app = Flask(__name__)
 CORS(app)
+
+# Configuración de la aplicación
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'tu-clave-secreta-aqui')
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+
+# Registrar los blueprints
+app.register_blueprint(admin)
+app.register_blueprint(auth)
 
 @app.route('/')
 def home():
