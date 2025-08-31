@@ -559,5 +559,138 @@
             });
         });
     </script>
+
+    <!-- Phone Booking Modal -->
+    <div class="modal fade" id="phoneBookingModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-phone"></i> Reserva por Teléfono - AUTOMATIZACIÓN REAL</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <strong>🚀 AUTOMATIZACIÓN REAL:</strong> Este sistema automáticamente:
+                        <ul class="mb-0 mt-2">
+                            <li>✅ Verifica disponibilidad en Cuba Transtur</li>
+                            <li>✅ Genera email temporal automáticamente</li>
+                            <li>✅ Rellena formulario en Cuba Transtur</li>
+                            <li>✅ Captura confirmación automáticamente</li>
+                            <li>✅ Envía notificaciones al cliente</li>
+                        </ul>
+                    </div>
+                    
+                    <form id="phoneBookingForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Nombre del Cliente *</label>
+                                    <input type="text" class="form-control" id="clientName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Teléfono *</label>
+                                    <input type="tel" class="form-control" id="clientPhone" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Email (opcional)</label>
+                                    <input type="email" class="form-control" id="clientEmail">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Tipo de Vehículo *</label>
+                                    <select class="form-control" id="vehicleType" required>
+                                        <option value="">Seleccionar vehículo</option>
+                                        <option value="Económico Automático">Económico Automático</option>
+                                        <option value="Económico Manual">Económico Manual</option>
+                                        <option value="Intermedio Automático">Intermedio Automático</option>
+                                        <option value="Intermedio Manual">Intermedio Manual</option>
+                                        <option value="SUV">SUV</option>
+                                        <option value="Van">Van</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Fecha de Recogida *</label>
+                                    <input type="date" class="form-control" id="pickupDate" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Fecha de Devolución *</label>
+                                    <input type="date" class="form-control" id="returnDate" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Lugar de Recogida *</label>
+                                    <select class="form-control" id="pickupLocation" required>
+                                        <option value="">Seleccionar lugar</option>
+                                        <option value="Aeropuerto José Martí">Aeropuerto José Martí</option>
+                                        <option value="Hotel Habana Libre">Hotel Habana Libre</option>
+                                        <option value="Hotel Nacional">Hotel Nacional</option>
+                                        <option value="Centro Habana">Centro Habana</option>
+                                        <option value="Vedado">Vedado</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Lugar de Devolución</label>
+                                    <select class="form-control" id="returnLocation">
+                                        <option value="">Mismo lugar de recogida</option>
+                                        <option value="Aeropuerto José Martí">Aeropuerto José Martí</option>
+                                        <option value="Hotel Habana Libre">Hotel Habana Libre</option>
+                                        <option value="Hotel Nacional">Hotel Nacional</option>
+                                        <option value="Centro Habana">Centro Habana</option>
+                                        <option value="Vedado">Vedado</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Precio por Día</label>
+                                    <input type="number" class="form-control" id="dailyPrice" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Precio Total</label>
+                                    <input type="number" class="form-control" id="totalPrice" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning" onclick="checkAvailability()">
+                        <i class="fas fa-search"></i> Verificar Disponibilidad
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="createPhoneBooking()">
+                        <i class="fas fa-rocket"></i> Crear Reserva Automatizada
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
