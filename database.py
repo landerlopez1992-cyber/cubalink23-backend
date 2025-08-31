@@ -5,232 +5,622 @@ Módulo de base de datos simple para el backend
 import sqlite3
 import json
 from datetime import datetime
+import os
 
-def get_db_connection():
-    """Obtener conexión a la base de datos SQLite"""
-    conn = sqlite3.connect('charter_flights.db')
-    conn.row_factory = sqlite3.Row
-    return conn
-
-def init_database():
-    """Inicializar la base de datos con las tablas necesarias"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
+class LocalDatabase:
+    def __init__(self, db_path='products.db'):
+        self.db_path = db_path
+        self.init_database()
     
-    # Tabla de aerolíneas charter
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS charter_airlines (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            url TEXT NOT NULL,
-            markup REAL DEFAULT 0,
-            active BOOLEAN DEFAULT 1,
-            routes TEXT,
-            check_frequency INTEGER DEFAULT 30,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
-    # Tabla de reservas charter
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS charter_bookings (
-            id TEXT PRIMARY KEY,
-            flight_data TEXT NOT NULL,
-            passenger_info TEXT NOT NULL,
-            payment_info TEXT NOT NULL,
-            status TEXT DEFAULT 'PENDIENTE',
-            total_amount REAL NOT NULL,
-            markup_amount REAL DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            confirmed_at TIMESTAMP,
-            ticket_number TEXT
-        )
-    ''')
-    
-    # Tabla de logs de scraping
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS scraping_logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            airline_id TEXT NOT NULL,
-            search_data TEXT NOT NULL,
-            results_count INTEGER DEFAULT 0,
-            success BOOLEAN DEFAULT 1,
-            error_message TEXT,
-            execution_time REAL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
-    conn.commit()
-    conn.close()
-
-def save_charter_airline(airline_data):
-    """Guardar o actualizar aerolínea charter"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('''
-        INSERT OR REPLACE INTO charter_airlines 
-        (id, name, url, markup, active, routes, check_frequency, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (
-        airline_data['id'],
-        airline_data['name'],
-        airline_data['url'],
-        airline_data['markup'],
-        airline_data['active'],
-        json.dumps(airline_data.get('routes', [])),
-        airline_data.get('check_frequency', 30),
-        datetime.now()
-    ))
-    
-    conn.commit()
-    conn.close()
-
-def get_charter_airlines():
-    """Obtener todas las aerolíneas charter"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('SELECT * FROM charter_airlines')
-    airlines = cursor.fetchall()
-    
-    conn.close()
-    
-    result = []
-    for airline in airlines:
-        result.append({
-            'id': airline['id'],
-            'name': airline['name'],
-            'url': airline['url'],
-            'markup': airline['markup'],
-            'active': bool(airline['active']),
-            'routes': json.loads(airline['routes']) if airline['routes'] else [],
-            'check_frequency': airline['check_frequency']
-        })
-    
-    return result
-
-def save_charter_booking(booking_data):
-    """Guardar reserva charter"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('''
-        INSERT INTO charter_bookings 
-        (id, flight_data, passenger_info, payment_info, total_amount, markup_amount)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (
-        booking_data['id'],
-        json.dumps(booking_data['flight_data']),
-        json.dumps(booking_data['passenger_info']),
-        json.dumps(booking_data['payment_info']),
-        booking_data['total_amount'],
-        booking_data.get('markup_amount', 0)
-    ))
-    
-    conn.commit()
-    conn.close()
-
-def get_charter_booking(booking_id):
-    """Obtener reserva charter por ID"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('SELECT * FROM charter_bookings WHERE id = ?', (booking_id,))
-    booking = cursor.fetchone()
-    
-    conn.close()
-    
-    if booking:
-        return {
-            'id': booking['id'],
-            'flight_data': json.loads(booking['flight_data']),
-            'passenger_info': json.loads(booking['passenger_info']),
-            'payment_info': json.loads(booking['payment_info']),
-            'status': booking['status'],
-            'total_amount': booking['total_amount'],
-            'markup_amount': booking['markup_amount'],
-            'created_at': booking['created_at'],
-            'updated_at': booking['updated_at'],
-            'confirmed_at': booking['confirmed_at'],
-            'ticket_number': booking['ticket_number']
-        }
-    
-    return None
-
-def update_charter_booking_status(booking_id, status, ticket_number=None):
-    """Actualizar estado de reserva charter"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    if status == 'CONFIRMADO':
+    def init_database(self):
+        """Inicializar la base de datos local"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # Tabla de productos
         cursor.execute('''
-            UPDATE charter_bookings 
-            SET status = ?, confirmed_at = ?, ticket_number = ?, updated_at = ?
-            WHERE id = ?
-        ''', (status, datetime.now(), ticket_number, datetime.now(), booking_id))
-    else:
+            CREATE TABLE IF NOT EXISTS products (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                description TEXT,
+                price REAL NOT NULL,
+                category TEXT,
+                image_url TEXT,
+                stock INTEGER DEFAULT 0,
+                active BOOLEAN DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Tabla de categorías
         cursor.execute('''
-            UPDATE charter_bookings 
-            SET status = ?, updated_at = ?
+            CREATE TABLE IF NOT EXISTS categories (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                description TEXT,
+                active BOOLEAN DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Tabla de banners
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS banners (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                description TEXT,
+                image_url TEXT,
+                link_url TEXT,
+                active BOOLEAN DEFAULT 1,
+                position INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Tabla de usuarios
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT UNIQUE,
+                email TEXT,
+                name TEXT,
+                searches INTEGER DEFAULT 0,
+                last_seen TIMESTAMP,
+                blocked BOOLEAN DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Insertar categorías por defecto
+        default_categories = [
+            ('Vuelos', 'Servicios de vuelos y aerolíneas'),
+            ('Hoteles', 'Reservas de hoteles y alojamiento'),
+            ('Paquetes', 'Paquetes turísticos completos'),
+            ('Transporte', 'Servicios de transporte terrestre'),
+            ('Actividades', 'Tours y actividades turísticas')
+        ]
+        
+        for category in default_categories:
+            cursor.execute('''
+                INSERT OR IGNORE INTO categories (name, description)
+                VALUES (?, ?)
+            ''', category)
+        
+        conn.commit()
+        conn.close()
+    
+    def get_products(self):
+        """Obtener todos los productos"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT p.*, c.name as category_name 
+            FROM products p 
+            LEFT JOIN categories c ON p.category = c.id
+            ORDER BY p.created_at DESC
+        ''')
+        
+        products = []
+        for row in cursor.fetchall():
+            products.append({
+                'id': row[0],
+                'name': row[1],
+                'description': row[2],
+                'price': row[3],
+                'category': row[4],
+                'category_name': row[9],
+                'image_url': row[5],
+                'stock': row[6],
+                'active': bool(row[7]),
+                'created_at': row[8],
+                'updated_at': row[9]
+            })
+        
+        conn.close()
+        return products
+    
+    def get_product_by_id(self, product_id):
+        """Obtener producto por ID"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT p.*, c.name as category_name 
+            FROM products p 
+            LEFT JOIN categories c ON p.category = c.id
+            WHERE p.id = ?
+        ''', (product_id,))
+        
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            return {
+                'id': row[0],
+                'name': row[1],
+                'description': row[2],
+                'price': row[3],
+                'category': row[4],
+                'category_name': row[9],
+                'image_url': row[5],
+                'stock': row[6],
+                'active': bool(row[7]),
+                'created_at': row[8],
+                'updated_at': row[9]
+            }
+        return None
+    
+    def add_product(self, data):
+        """Agregar nuevo producto"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO products (name, description, price, category, image_url, stock, active)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            data.get('name'),
+            data.get('description'),
+            data.get('price'),
+            data.get('category'),
+            data.get('image_url'),
+            data.get('stock', 0),
+            data.get('active', True)
+        ))
+        
+        product_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return self.get_product_by_id(product_id)
+    
+    def update_product(self, product_id, data):
+        """Actualizar producto"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE products 
+            SET name = ?, description = ?, price = ?, category = ?, 
+                image_url = ?, stock = ?, active = ?, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
-        ''', (status, datetime.now(), booking_id))
+        ''', (
+            data.get('name'),
+            data.get('description'),
+            data.get('price'),
+            data.get('category'),
+            data.get('image_url'),
+            data.get('stock'),
+            data.get('active'),
+            product_id
+        ))
+        
+        conn.commit()
+        conn.close()
+        
+        return self.get_product_by_id(product_id)
     
-    conn.commit()
-    conn.close()
+    def delete_product(self, product_id):
+        """Eliminar producto"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('DELETE FROM products WHERE id = ?', (product_id,))
+        success = cursor.rowcount > 0
+        
+        conn.commit()
+        conn.close()
+        
+        return success
+    
+    def get_categories(self):
+        """Obtener todas las categorías"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT * FROM categories WHERE active = 1 ORDER BY name')
+        categories = []
+        
+        for row in cursor.fetchall():
+            categories.append({
+                'id': row[0],
+                'name': row[1],
+                'description': row[2],
+                'active': bool(row[3]),
+                'created_at': row[4]
+            })
+        
+        conn.close()
+        return categories
+    
+    # ===== GESTIÓN DE USUARIOS =====
+    def get_users(self):
+        """Obtener todos los usuarios"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT * FROM users 
+            ORDER BY created_at DESC
+        ''')
+        
+        users = []
+        for row in cursor.fetchall():
+            users.append({
+                'id': row[0],
+                'user_id': row[1],
+                'email': row[2],
+                'name': row[3],
+                'searches': row[4],
+                'last_seen': row[5],
+                'blocked': bool(row[6]),
+                'created_at': row[7]
+            })
+        
+        conn.close()
+        return users
+    
+    def get_user_by_id(self, user_id):
+        """Obtener usuario por ID"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT * FROM users WHERE id = ? OR user_id = ?', (user_id, user_id))
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            return {
+                'id': row[0],
+                'user_id': row[1],
+                'email': row[2],
+                'name': row[3],
+                'searches': row[4],
+                'last_seen': row[5],
+                'blocked': bool(row[6]),
+                'created_at': row[7]
+            }
+        return None
+    
+    def add_user(self, data):
+        """Agregar nuevo usuario"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO users (user_id, email, name, searches, last_seen, blocked)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            data.get('user_id'),
+            data.get('email'),
+            data.get('name'),
+            data.get('searches', 0),
+            data.get('last_seen', datetime.now().isoformat()),
+            data.get('blocked', False)
+        ))
+        
+        user_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return self.get_user_by_id(user_id)
+    
+    def update_user(self, user_id, data):
+        """Actualizar usuario"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE users 
+            SET email = ?, name = ?, searches = ?, last_seen = ?, blocked = ?
+            WHERE id = ? OR user_id = ?
+        ''', (
+            data.get('email'),
+            data.get('name'),
+            data.get('searches'),
+            data.get('last_seen'),
+            data.get('blocked'),
+            user_id,
+            user_id
+        ))
+        
+        conn.commit()
+        conn.close()
+        
+        return self.get_user_by_id(user_id)
+    
+    def delete_user(self, user_id):
+        """Eliminar usuario"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('DELETE FROM users WHERE id = ? OR user_id = ?', (user_id, user_id))
+        success = cursor.rowcount > 0
+        
+        conn.commit()
+        conn.close()
+        
+        return success
+    
+    def block_user(self, user_id, blocked=True):
+        """Bloquear/desbloquear usuario"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE users 
+            SET blocked = ?
+            WHERE id = ? OR user_id = ?
+        ''', (blocked, user_id, user_id))
+        
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        
+        return success
+    
+    def update_user_activity(self, user_id):
+        """Actualizar actividad del usuario"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE users 
+            SET last_seen = ?, searches = searches + 1
+            WHERE id = ? OR user_id = ?
+        ''', (datetime.now().isoformat(), user_id, user_id))
+        
+        conn.commit()
+        conn.close()
+    
+    # ===== GESTIÓN DE BANNERS =====
+    def get_banners(self):
+        """Obtener todos los banners"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT * FROM banners 
+            ORDER BY position ASC, created_at DESC
+        ''')
+        
+        banners = []
+        for row in cursor.fetchall():
+            banners.append({
+                'id': row[0],
+                'title': row[1],
+                'description': row[2],
+                'image_url': row[3],
+                'link_url': row[4],
+                'active': bool(row[5]),
+                'position': row[6],
+                'created_at': row[7]
+            })
+        
+        conn.close()
+        return banners
+    
+    def get_banner_by_id(self, banner_id):
+        """Obtener banner por ID"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT * FROM banners WHERE id = ?', (banner_id,))
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            return {
+                'id': row[0],
+                'title': row[1],
+                'description': row[2],
+                'image_url': row[3],
+                'link_url': row[4],
+                'active': bool(row[5]),
+                'position': row[6],
+                'created_at': row[7]
+            }
+        return None
+    
+    def add_banner(self, data):
+        """Agregar nuevo banner"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO banners (title, description, image_url, link_url, active, position)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            data.get('title'),
+            data.get('description'),
+            data.get('image_url'),
+            data.get('link_url'),
+            data.get('active', True),
+            data.get('position', 0)
+        ))
+        
+        banner_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return self.get_banner_by_id(banner_id)
+    
+    def update_banner(self, banner_id, data):
+        """Actualizar banner"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE banners 
+            SET title = ?, description = ?, image_url = ?, link_url = ?, 
+                active = ?, position = ?
+            WHERE id = ?
+        ''', (
+            data.get('title'),
+            data.get('description'),
+            data.get('image_url'),
+            data.get('link_url'),
+            data.get('active'),
+            data.get('position'),
+            banner_id
+        ))
+        
+        conn.commit()
+        conn.close()
+        
+        return self.get_banner_by_id(banner_id)
+    
+    def delete_banner(self, banner_id):
+        """Eliminar banner"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('DELETE FROM banners WHERE id = ?', (banner_id,))
+        success = cursor.rowcount > 0
+        
+        conn.commit()
+        conn.close()
+        
+        return success
+    
+    def toggle_banner_status(self, banner_id, active=True):
+        """Activar/desactivar banner"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE banners 
+            SET active = ?
+            WHERE id = ?
+        ''', (active, banner_id))
+        
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        
+        return success
+    
+    def update_banner_position(self, banner_id, position):
+        """Actualizar posición del banner"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE banners 
+            SET position = ?
+            WHERE id = ?
+        ''', (position, banner_id))
+        
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        
+        return success
+    
+    def get_active_banners(self):
+        """Obtener solo banners activos"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT * FROM banners 
+            WHERE active = 1
+            ORDER BY position ASC, created_at DESC
+        ''')
+        
+        banners = []
+        for row in cursor.fetchall():
+            banners.append({
+                'id': row[0],
+                'title': row[1],
+                'description': row[2],
+                'image_url': row[3],
+                'link_url': row[4],
+                'active': bool(row[5]),
+                'position': row[6],
+                'created_at': row[7]
+            })
+        
+        conn.close()
+        return banners
 
-def get_user_charter_bookings(user_id=None, limit=50):
-    """Obtener reservas charter de un usuario (simulado)"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    # ==================== FUNCIONES DE IMÁGENES DE VEHÍCULOS ====================
     
-    cursor.execute('''
-        SELECT * FROM charter_bookings 
-        ORDER BY created_at DESC 
-        LIMIT ?
-    ''', (limit,))
+    def update_vehicle_images(self, vehicle_id, images):
+        """Actualizar imágenes de un vehículo en base de datos local"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # Obtener imágenes existentes
+            cursor.execute('SELECT images FROM vehicles WHERE id = ?', (vehicle_id,))
+            result = cursor.fetchone()
+            
+            if result:
+                existing_images = result[0]
+                if existing_images:
+                    try:
+                        existing_images = json.loads(existing_images)
+                    except:
+                        existing_images = []
+                else:
+                    existing_images = []
+                
+                # Agregar nuevas imágenes
+                all_images = existing_images + images
+                
+                # Actualizar vehículo
+                cursor.execute('UPDATE vehicles SET images = ? WHERE id = ?', 
+                             (json.dumps(all_images), vehicle_id))
+                conn.commit()
+                conn.close()
+                return True
+            
+            conn.close()
+            return False
+        except Exception as e:
+            print(f"Error updating vehicle images in local database: {e}")
+            return False
     
-    bookings = cursor.fetchall()
-    conn.close()
-    
-    result = []
-    for booking in bookings:
-        result.append({
-            'id': booking['id'],
-            'flight_data': json.loads(booking['flight_data']),
-            'passenger_info': json.loads(booking['passenger_info']),
-            'status': booking['status'],
-            'total_amount': booking['total_amount'],
-            'created_at': booking['created_at'],
-            'confirmed_at': booking['confirmed_at'],
-            'ticket_number': booking['ticket_number']
-        })
-    
-    return result
+    def remove_vehicle_image(self, vehicle_id, image_url):
+        """Eliminar una imagen específica de un vehículo en base de datos local"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # Obtener imágenes existentes
+            cursor.execute('SELECT images FROM vehicles WHERE id = ?', (vehicle_id,))
+            result = cursor.fetchone()
+            
+            if result:
+                existing_images = result[0]
+                if existing_images:
+                    try:
+                        existing_images = json.loads(existing_images)
+                    except:
+                        existing_images = []
+                else:
+                    existing_images = []
+                
+                # Remover imagen
+                if image_url in existing_images:
+                    existing_images.remove(image_url)
+                    
+                    # Actualizar vehículo
+                    cursor.execute('UPDATE vehicles SET images = ? WHERE id = ?', 
+                                 (json.dumps(existing_images), vehicle_id))
+                    conn.commit()
+                    conn.close()
+                    return True
+            
+            conn.close()
+            return False
+        except Exception as e:
+            print(f"Error removing vehicle image in local database: {e}")
+            return False
 
-def log_scraping_result(airline_id, search_data, results_count, success=True, error_message=None, execution_time=None):
-    """Registrar resultado de scraping"""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('''
-        INSERT INTO scraping_logs 
-        (airline_id, search_data, results_count, success, error_message, execution_time)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (
-        airline_id,
-        json.dumps(search_data),
-        results_count,
-        success,
-        error_message,
-        execution_time
-    ))
-    
-    conn.commit()
-    conn.close()
+# Instancia global de la base de datos
+local_db = LocalDatabase()
 
-# Inicializar base de datos al importar el módulo
-init_database()

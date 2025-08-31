@@ -58,6 +58,63 @@ class SupabaseService:
             print(f"Error updating user status: {e}")
             return False
     
+    def add_user(self, data):
+        """Agregar nuevo usuario"""
+        try:
+            user_data = {
+                'user_id': data.get('user_id', ''),
+                'email': data.get('email', ''),
+                'name': data.get('name', ''),
+                'searches': data.get('searches', 0),
+                'last_seen': data.get('last_seen', datetime.now().isoformat()),
+                'blocked': data.get('blocked', False),
+                'created_at': datetime.now().isoformat()
+            }
+            
+            response = requests.post(
+                f'{self.supabase_url}/rest/v1/users',
+                headers=self.headers,
+                json=user_data
+            )
+            
+            if response.status_code == 201:
+                return response.json()
+            else:
+                raise Exception(f"Error adding user: {response.text}")
+        except Exception as e:
+            print(f"Error adding user: {e}")
+            raise e
+    
+    def update_user(self, user_id, data):
+        """Actualizar usuario"""
+        try:
+            response = requests.patch(
+                f'{self.supabase_url}/rest/v1/users?id=eq.{user_id}',
+                headers=self.headers,
+                json=data
+            )
+            
+            if response.status_code == 204:
+                return self.get_user_by_id(user_id)
+            else:
+                raise Exception(f"Error updating user: {response.text}")
+        except Exception as e:
+            print(f"Error updating user: {e}")
+            raise e
+    
+    def delete_user(self, user_id):
+        """Eliminar usuario"""
+        try:
+            response = requests.delete(
+                f'{self.supabase_url}/rest/v1/users?id=eq.{user_id}',
+                headers=self.headers
+            )
+            
+            return response.status_code == 204
+        except Exception as e:
+            print(f"Error deleting user: {e}")
+            return False
+    
     def get_products(self):
         """Obtener productos con imágenes"""
         try:
@@ -374,6 +431,72 @@ class SupabaseService:
                 'total_orders': 0,
                 'active_users': 0
             }
+
+    def add_rental_service(self, service_data):
+        """Agregar servicio a una renta en Supabase"""
+        try:
+            response = self.supabase.table('rental_services').insert(service_data).execute()
+            return response.data[0]['id'] if response.data else None
+        except Exception as e:
+            print(f"Error adding rental service to Supabase: {e}")
+            return None
+
+    # ==================== FUNCIONES DE IMÁGENES DE VEHÍCULOS ====================
+    
+    def update_vehicle_images(self, vehicle_id, images):
+        """Actualizar imágenes de un vehículo en Supabase"""
+        try:
+            # Obtener imágenes existentes
+            vehicle = self.get_vehicle_by_id(vehicle_id)
+            if vehicle:
+                existing_images = vehicle.get('images', [])
+                if isinstance(existing_images, str):
+                    import json
+                    existing_images = json.loads(existing_images)
+                else:
+                    existing_images = existing_images or []
+                
+                # Agregar nuevas imágenes
+                all_images = existing_images + images
+                
+                # Actualizar vehículo
+                response = self.supabase.table('vehicles').update({
+                    'images': json.dumps(all_images)
+                }).eq('id', vehicle_id).execute()
+                
+                return len(response.data) > 0 if response.data else False
+            return False
+        except Exception as e:
+            print(f"Error updating vehicle images in Supabase: {e}")
+            return False
+    
+    def remove_vehicle_image(self, vehicle_id, image_url):
+        """Eliminar una imagen específica de un vehículo en Supabase"""
+        try:
+            # Obtener imágenes existentes
+            vehicle = self.get_vehicle_by_id(vehicle_id)
+            if vehicle:
+                existing_images = vehicle.get('images', [])
+                if isinstance(existing_images, str):
+                    import json
+                    existing_images = json.loads(existing_images)
+                else:
+                    existing_images = existing_images or []
+                
+                # Remover imagen
+                if image_url in existing_images:
+                    existing_images.remove(image_url)
+                    
+                    # Actualizar vehículo
+                    response = self.supabase.table('vehicles').update({
+                        'images': json.dumps(existing_images)
+                    }).eq('id', vehicle_id).execute()
+                    
+                    return len(response.data) > 0 if response.data else False
+            return False
+        except Exception as e:
+            print(f"Error removing vehicle image in Supabase: {e}")
+            return False
 
 # Instancia global del servicio
 supabase_service = SupabaseService()
