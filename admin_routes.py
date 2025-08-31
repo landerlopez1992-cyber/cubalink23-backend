@@ -1658,7 +1658,7 @@ def get_cuba_transtur_statistics():
             'error': str(e)
         }), 500
 
-# ===== GESTIÓN DE VEHÍCULOS =====
+# ===== FUNCIONES BÁSICAS DE VEHÍCULOS =====
 @admin.route('/vehicles')
 @require_auth
 def vehicles():
@@ -1714,13 +1714,8 @@ def add_vehicle():
         # Agregar rutas de fotos a los datos del vehículo
         vehicle_data['photos'] = photo_paths
         
-        # Guardar en base de datos
-        try:
-            # Intentar guardar en Supabase primero
-            vehicle_id = supabase_service.add_vehicle(vehicle_data)
-        except:
-            # Si falla Supabase, usar base de datos local
-            vehicle_id = local_db.add_vehicle(vehicle_data)
+        # Guardar en base de datos local por ahora
+        vehicle_id = local_db.add_vehicle(vehicle_data)
         
         return jsonify({
             'success': True,
@@ -1736,166 +1731,7 @@ def add_vehicle():
 def get_vehicles():
     """Obtener lista de vehículos"""
     try:
-        # Intentar obtener desde Supabase primero
-        try:
-            vehicles = supabase_service.get_vehicles()
-            if vehicles:
-                return jsonify(vehicles)
-        except:
-            pass
-        
-        # Si falla Supabase, usar base de datos local
         vehicles = local_db.get_vehicles()
         return jsonify(vehicles)
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@admin.route('/api/vehicles/<int:vehicle_id>', methods=['DELETE'])
-@require_auth
-def delete_vehicle(vehicle_id):
-    """Eliminar vehículo"""
-    try:
-        # Intentar eliminar desde Supabase primero
-        try:
-            success = supabase_service.delete_vehicle(vehicle_id)
-            if success:
-                return jsonify({'success': True, 'message': 'Vehículo eliminado exitosamente'})
-        except:
-            pass
-        
-        # Si falla Supabase, usar base de datos local
-        success = local_db.delete_vehicle(vehicle_id)
-        if success:
-            return jsonify({'success': True, 'message': 'Vehículo eliminado exitosamente'})
-        else:
-            return jsonify({'success': False, 'error': 'No se pudo eliminar el vehículo'}), 400
-            
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-# ===== RESERVA POR TELÉFONO - AUTOMATIZACIÓN CUBA TRANSTUR =====
-@admin.route('/phone-booking')
-@require_auth
-def phone_booking():
-    """Panel de reserva por teléfono"""
-    return render_template('admin/phone_booking.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/phone-booking/create', methods=['POST'])
-@require_auth
-def create_phone_booking():
-    """Crear reserva automatizada por teléfono"""
-    try:
-        data = request.get_json()
-        
-        # Validar datos requeridos
-        required_fields = ['client_name', 'client_phone', 'vehicle_type', 'pickup_date', 'return_date', 'pickup_location']
-        for field in required_fields:
-            if not data.get(field):
-                return jsonify({'success': False, 'error': f'Campo requerido: {field}'}), 400
-        
-        # Ejecutar automatización
-        from cuba_transtur_automation import create_automated_booking
-        result = create_automated_booking(data)
-        
-        if result['success']:
-            return jsonify({
-                'success': True,
-                'booking': result['booking'],
-                'message': 'Reserva automatizada creada exitosamente'
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': result['error']
-            }), 500
-            
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@admin.route('/api/phone-booking/check-availability', methods=['POST'])
-@require_auth
-def check_vehicle_availability():
-    """Verificar disponibilidad de vehículos"""
-    try:
-        data = request.get_json()
-        
-        # Simular verificación de disponibilidad (en producción sería real)
-        vehicle_type = data.get('vehicle_type', '')
-        pickup_date = data.get('pickup_date', '')
-        return_date = data.get('return_date', '')
-        
-        # Calcular días
-        from datetime import datetime
-        start = datetime.strptime(pickup_date, '%Y-%m-%d')
-        end = datetime.strptime(return_date, '%Y-%m-%d')
-        days = (end - start).days
-        
-        # Precios base por tipo de vehículo
-        base_prices = {
-            'Económico Automático': 45,
-            'Económico Manual': 40,
-            'Intermedio Automático': 55,
-            'Intermedio Manual': 50,
-            'SUV': 75,
-            'Van': 85
-        }
-        
-        daily_price = base_prices.get(vehicle_type, 50)
-        total_price = daily_price * days
-        
-        return jsonify({
-            'success': True,
-            'availability': {
-                'available': True,
-                'daily_price': daily_price,
-                'total_price': total_price,
-                'days': days
-            }
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@admin.route('/api/phone-booking/history')
-@require_auth
-def get_phone_booking_history():
-    """Obtener historial de reservas por teléfono"""
-    try:
-        # Intentar obtener desde Supabase primero
-        try:
-            bookings = supabase_service.get_phone_bookings()
-            if bookings:
-                return jsonify(bookings)
-        except:
-            pass
-        
-        # Si falla Supabase, usar base de datos local
-        bookings = local_db.get_phone_bookings()
-        return jsonify(bookings)
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@admin.route('/api/phone-booking/<booking_id>/status')
-@require_auth
-def get_phone_booking_status(booking_id):
-    """Obtener estado de una reserva específica"""
-    try:
-        # Intentar obtener desde Supabase primero
-        try:
-            booking = supabase_service.get_phone_booking_by_id(booking_id)
-            if booking:
-                return jsonify(booking)
-        except:
-            pass
-        
-        # Si falla Supabase, usar base de datos local
-        booking = local_db.get_phone_booking_by_id(booking_id)
-        if booking:
-            return jsonify(booking)
-        else:
-            return jsonify({'success': False, 'error': 'Reserva no encontrada'}), 404
-            
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
