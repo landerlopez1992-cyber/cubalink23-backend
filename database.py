@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Módulo de base de datos simple para el backend
 """
@@ -15,6 +16,7 @@ class LocalDatabase:
     def init_database(self):
         """Inicializar la base de datos local"""
         conn = sqlite3.connect(self.db_path)
+        conn.text_factory = str
         cursor = conn.cursor()
         
         # Tabla de productos
@@ -625,7 +627,7 @@ class LocalDatabase:
             conn.close()
             return False
         except Exception as e:
-            print(f"Error updating vehicle images in local database: {e}")
+            print("Error updating vehicle images in local database: " + str(e))
             return False
     
     def remove_vehicle_image(self, vehicle_id, image_url):
@@ -662,7 +664,7 @@ class LocalDatabase:
             conn.close()
             return False
         except Exception as e:
-            print(f"Error removing vehicle image in local database: {e}")
+            print("Error removing vehicle image in local database: " + str(e))
             return False
 
     def add_phone_booking(self, booking_data):
