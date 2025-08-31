@@ -497,6 +497,52 @@ class SupabaseService:
         except Exception as e:
             print(f"Error removing vehicle image in Supabase: {e}")
             return False
+    
+    def add_phone_booking(self, booking_data):
+        """Agregar reserva por teléfono a Supabase"""
+        try:
+            response = self.supabase.table('phone_bookings').insert({
+                'reservation_id': booking_data['reservation_id'],
+                'client_name': booking_data['client_name'],
+                'client_phone': booking_data['client_phone'],
+                'client_email': booking_data.get('client_email', ''),
+                'vehicle_type': booking_data['vehicle_type'],
+                'pickup_date': booking_data['pickup_date'],
+                'return_date': booking_data['return_date'],
+                'pickup_location': booking_data['pickup_location'],
+                'return_location': booking_data.get('return_location', ''),
+                'total_price': booking_data['total_price'],
+                'commission': booking_data['commission'],
+                'status': booking_data['status'],
+                'confirmation_number': booking_data.get('confirmation_number', ''),
+                'temp_email': booking_data.get('temp_email', ''),
+                'booking_type': booking_data.get('booking_type', 'phone'),
+                'admin_created': booking_data.get('admin_created', True),
+                'automation_result': booking_data.get('automation_result', {})
+            }).execute()
+            
+            return response.data[0]['id'] if response.data else None
+        except Exception as e:
+            print(f"Error adding phone booking to Supabase: {e}")
+            raise
+    
+    def get_phone_bookings(self):
+        """Obtener todas las reservas por teléfono desde Supabase"""
+        try:
+            response = self.supabase.table('phone_bookings').select('*').order('booking_date', desc=True).execute()
+            return response.data
+        except Exception as e:
+            print(f"Error getting phone bookings from Supabase: {e}")
+            raise
+    
+    def get_phone_booking_by_id(self, booking_id):
+        """Obtener reserva por teléfono por ID desde Supabase"""
+        try:
+            response = self.supabase.table('phone_bookings').select('*').eq('id', booking_id).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error getting phone booking by ID from Supabase: {e}")
+            raise
 
 # Instancia global del servicio
 supabase_service = SupabaseService()
