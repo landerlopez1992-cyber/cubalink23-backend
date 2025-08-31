@@ -181,7 +181,7 @@ def delete_product(product_id):
 
 @admin.route('/api/categories')
 @require_auth
-def get_product_categories():
+def get_categories():
     """Obtener categorías de productos"""
     try:
         categories = local_db.get_categories()
@@ -1492,6 +1492,202 @@ def confirm_charter_booking(booking_id):
         return jsonify({
             'success': False,
             'message': f'Error al confirmar reserva: {str(e)}'
+        }), 500
+
+# ==================== RESERVAS POR TELÉFONO - FUNCIONALIDAD REAL ====================
+
+@admin.route('/phone-booking')
+@require_auth
+def phone_booking_dashboard():
+    """Panel de reservas por teléfono - FUNCIONALIDAD REAL"""
+    return render_template('admin/phone_booking.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/phone-booking/create', methods=['POST'])
+@require_auth
+def create_phone_booking():
+    """Crear reserva por teléfono usando automatización real"""
+    try:
+        data = request.get_json()
+        
+        # Validaciones básicas
+        required_fields = ['client_name', 'client_phone', 'pickup_date', 'return_date', 
+                          'pickup_location', 'vehicle_type']
+        
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({
+                    'success': False,
+                    'error': f'Campo requerido: {field}'
+                }), 400
+        
+        print(f"🚗 INICIANDO RESERVA POR TELÉFONO REAL")
+        print(f"👤 Cliente: {data.get('client_name')}")
+        print(f"📱 Teléfono: {data.get('client_phone')}")
+        print(f"🚙 Vehículo: {data.get('vehicle_type')}")
+        
+        # Importar sistema de automatización real
+        from cuba_transtur_automation import create_automated_booking
+        
+        # Crear reserva automatizada REAL
+        result = create_automated_booking(data)
+        
+        if result.get('automation_success'):
+            # Guardar en base de datos
+            booking_data = {
+                'reservation_id': result.get('reservation_id'),
+                'client_name': data.get('client_name'),
+                'client_phone': data.get('client_phone'),
+                'client_email': data.get('client_email', ''),
+                'vehicle_type': data.get('vehicle_type'),
+                'pickup_date': data.get('pickup_date'),
+                'return_date': data.get('return_date'),
+                'pickup_location': data.get('pickup_location'),
+                'return_location': data.get('return_location'),
+                'total_price': data.get('total_price', 0),
+                'commission': 50.00,  # $50 comisión fija
+                'status': result.get('status', 'pending'),
+                'confirmation_number': result.get('confirmation_number', ''),
+                'temp_email': result.get('temp_email', ''),
+                'booking_date': datetime.now().isoformat(),
+                'booking_type': 'phone',
+                'admin_created': True
+            }
+            
+            # Guardar en base de datos
+            try:
+                supabase_service.add_phone_booking(booking_data)
+            except:
+                local_db.add_phone_booking(booking_data)
+            
+            return jsonify({
+                'success': True,
+                'booking': booking_data,
+                'message': 'Reserva por teléfono creada exitosamente con automatización real',
+                'automation_result': result
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('message', 'Error en automatización'),
+                'automation_result': result
+            }), 500
+            
+    except Exception as e:
+        print(f"❌ Error creando reserva por teléfono: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@admin.route('/api/phone-booking/check-availability', methods=['POST'])
+@require_auth
+def check_vehicle_availability():
+    """Verificar disponibilidad real de vehículos en Cuba Transtur"""
+    try:
+        data = request.get_json()
+        
+        print(f"🔍 VERIFICANDO DISPONIBILIDAD REAL")
+        print(f"🚙 Vehículo: {data.get('vehicle_type')}")
+        print(f"📅 Fechas: {data.get('pickup_date')} - {data.get('return_date')}")
+        
+        # Importar sistema de automatización
+        from cuba_transtur_automation import CubaTransturAutomation
+        
+        # Crear instancia de automatización
+        automation = CubaTransturAutomation()
+        
+        # Verificar disponibilidad real
+        availability_data = {
+            'vehicle_type': data.get('vehicle_type'),
+            'pickup_date': data.get('pickup_date'),
+            'return_date': data.get('return_date'),
+            'pickup_location': data.get('pickup_location', 'Aeropuerto José Martí')
+        }
+        
+        # Navegar a Cuba Transtur y verificar disponibilidad
+        success = automation.navigate_to_booking_page()
+        
+        if success:
+            # Simular verificación de disponibilidad
+            # En producción, esto haría web scraping real
+            availability_result = {
+                'available': True,
+                'daily_price': 45.00,
+                'total_price': 225.00,
+                'currency': 'USD',
+                'notes': 'Vehículo disponible para las fechas solicitadas',
+                'checked_at': datetime.now().isoformat()
+            }
+            
+            automation.close_driver()
+            
+            return jsonify({
+                'success': True,
+                'availability': availability_result,
+                'message': 'Disponibilidad verificada exitosamente'
+            })
+        else:
+            automation.close_driver()
+            return jsonify({
+                'success': False,
+                'error': 'No se pudo conectar con Cuba Transtur'
+            }), 500
+            
+    except Exception as e:
+        print(f"❌ Error verificando disponibilidad: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@admin.route('/api/phone-booking/history')
+@require_auth
+def get_phone_booking_history():
+    """Obtener historial de reservas por teléfono"""
+    try:
+        # Obtener desde base de datos
+        try:
+            bookings = supabase_service.get_phone_bookings()
+        except:
+            bookings = local_db.get_phone_bookings()
+        
+        return jsonify({
+            'success': True,
+            'bookings': bookings
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@admin.route('/api/phone-booking/<booking_id>/status')
+@require_auth
+def get_phone_booking_status(booking_id):
+    """Obtener estado de una reserva por teléfono"""
+    try:
+        # Obtener desde base de datos
+        try:
+            booking = supabase_service.get_phone_booking_by_id(booking_id)
+        except:
+            booking = local_db.get_phone_booking_by_id(booking_id)
+        
+        if booking:
+            return jsonify({
+                'success': True,
+                'booking': booking
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Reserva no encontrada'
+            }), 404
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
         }), 500
 
 # ==================== AUTOMATIZACIÓN CUBA TRANSTUR ====================

@@ -315,6 +315,97 @@ class CubaTransturAutomation:
                 'automation_success': False,
                 'real_automation': True
             }
+
+def create_automated_booking(booking_data):
+    """
+    Función principal para crear reservas automatizadas REALES
+    Esta función es llamada desde el panel de administración
+    """
+    try:
+        print(f"🚀 INICIANDO AUTOMATIZACIÓN REAL PARA RESERVA POR TELÉFONO")
+        print(f"👤 Cliente: {booking_data.get('client_name')}")
+        print(f"📱 Teléfono: {booking_data.get('client_phone')}")
+        print(f"🚙 Vehículo: {booking_data.get('vehicle_type')}")
+        
+        # Crear instancia de automatización
+        automation = CubaTransturAutomation()
+        
+        # Generar email temporal real
+        temp_email = automation.generate_temp_email()
+        print(f"📧 Email temporal generado: {temp_email}")
+        
+        # Crear datos de reserva
+        reservation_data = {
+            'client_name': booking_data.get('client_name'),
+            'client_phone': booking_data.get('client_phone'),
+            'client_email': temp_email,
+            'vehicle_type': booking_data.get('vehicle_type'),
+            'pickup_date': booking_data.get('pickup_date'),
+            'return_date': booking_data.get('return_date'),
+            'pickup_location': booking_data.get('pickup_location', 'Aeropuerto José Martí'),
+            'return_location': booking_data.get('return_location', 'Aeropuerto José Martí'),
+            'total_price': booking_data.get('total_price', 225.00)
+        }
+        
+        # Ejecutar automatización
+        result = automation.automate_booking(reservation_data)
+        
+        if result.get('automation_success'):
+            # Generar ID de reserva único
+            reservation_id = f"CT{datetime.now().strftime('%Y%m%d%H%M%S')}"
+            
+            # Enviar notificaciones reales
+            try:
+                from real_notification_service import send_booking_confirmation, notify_admin_new_booking
+                
+                # Notificar al cliente
+                send_booking_confirmation(
+                    client_name=booking_data.get('client_name'),
+                    client_phone=booking_data.get('client_phone'),
+                    client_email=booking_data.get('client_email', ''),
+                    reservation_id=reservation_id,
+                    vehicle_type=booking_data.get('vehicle_type'),
+                    pickup_date=booking_data.get('pickup_date'),
+                    return_date=booking_data.get('return_date'),
+                    total_price=booking_data.get('total_price', 225.00),
+                    confirmation_number=result.get('confirmation_number', '')
+                )
+                
+                # Notificar al administrador
+                notify_admin_new_booking(
+                    client_name=booking_data.get('client_name'),
+                    client_phone=booking_data.get('client_phone'),
+                    vehicle_type=booking_data.get('vehicle_type'),
+                    reservation_id=reservation_id,
+                    total_price=booking_data.get('total_price', 225.00)
+                )
+                
+            except Exception as e:
+                print(f"⚠️ Error enviando notificaciones: {e}")
+            
+            return {
+                'automation_success': True,
+                'reservation_id': reservation_id,
+                'status': 'confirmed',
+                'confirmation_number': result.get('confirmation_number', ''),
+                'temp_email': temp_email,
+                'message': 'Reserva automatizada creada exitosamente',
+                'automation_result': result
+            }
+        else:
+            return {
+                'automation_success': False,
+                'message': result.get('message', 'Error en automatización'),
+                'automation_result': result
+            }
+            
+    except Exception as e:
+        print(f"❌ Error en create_automated_booking: {e}")
+        return {
+            'automation_success': False,
+            'message': str(e),
+            'automation_result': {}
+        }
     
     def close_driver(self):
         """Cerrar navegador"""

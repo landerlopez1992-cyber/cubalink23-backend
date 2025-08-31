@@ -87,6 +87,31 @@ class LocalDatabase:
                 VALUES (?, ?)
             ''', category)
         
+        # Crear tabla de reservas por teléfono
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS phone_bookings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                reservation_id TEXT UNIQUE NOT NULL,
+                client_name TEXT NOT NULL,
+                client_phone TEXT NOT NULL,
+                client_email TEXT,
+                vehicle_type TEXT NOT NULL,
+                pickup_date TEXT NOT NULL,
+                return_date TEXT NOT NULL,
+                pickup_location TEXT NOT NULL,
+                return_location TEXT,
+                total_price REAL NOT NULL,
+                commission REAL NOT NULL,
+                status TEXT DEFAULT 'pending',
+                confirmation_number TEXT,
+                temp_email TEXT,
+                booking_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                booking_type TEXT DEFAULT 'phone',
+                admin_created BOOLEAN DEFAULT 1,
+                automation_result TEXT
+            )
+        ''')
+        
         conn.commit()
         conn.close()
     
@@ -620,6 +645,119 @@ class LocalDatabase:
         except Exception as e:
             print(f"Error removing vehicle image in local database: {e}")
             return False
+
+    def add_phone_booking(self, booking_data):
+        """Agregar reserva por teléfono"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO phone_bookings (
+                reservation_id, client_name, client_phone, client_email,
+                vehicle_type, pickup_date, return_date, pickup_location,
+                return_location, total_price, commission, status,
+                confirmation_number, temp_email, booking_type, admin_created,
+                automation_result
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            booking_data['reservation_id'],
+            booking_data['client_name'],
+            booking_data['client_phone'],
+            booking_data.get('client_email', ''),
+            booking_data['vehicle_type'],
+            booking_data['pickup_date'],
+            booking_data['return_date'],
+            booking_data['pickup_location'],
+            booking_data.get('return_location', ''),
+            booking_data['total_price'],
+            booking_data['commission'],
+            booking_data['status'],
+            booking_data.get('confirmation_number', ''),
+            booking_data.get('temp_email', ''),
+            booking_data.get('booking_type', 'phone'),
+            booking_data.get('admin_created', True),
+            json.dumps(booking_data.get('automation_result', {}))
+        ))
+        
+        booking_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return booking_id
+    
+    def get_phone_bookings(self):
+        """Obtener todas las reservas por teléfono"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT * FROM phone_bookings 
+            ORDER BY booking_date DESC
+        ''')
+        
+        bookings = []
+        for row in cursor.fetchall():
+            bookings.append({
+                'id': row[0],
+                'reservation_id': row[1],
+                'client_name': row[2],
+                'client_phone': row[3],
+                'client_email': row[4],
+                'vehicle_type': row[5],
+                'pickup_date': row[6],
+                'return_date': row[7],
+                'pickup_location': row[8],
+                'return_location': row[9],
+                'total_price': row[10],
+                'commission': row[11],
+                'status': row[12],
+                'confirmation_number': row[13],
+                'temp_email': row[14],
+                'booking_date': row[15],
+                'booking_type': row[16],
+                'admin_created': bool(row[17]),
+                'automation_result': json.loads(row[18]) if row[18] else {}
+            })
+        
+        conn.close()
+        return bookings
+    
+    def get_phone_booking_by_id(self, booking_id):
+        """Obtener reserva por teléfono por ID"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT * FROM phone_bookings WHERE id = ?
+        ''', (booking_id,))
+        
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            return {
+                'id': row[0],
+                'reservation_id': row[1],
+                'client_name': row[2],
+                'client_phone': row[3],
+                'client_email': row[4],
+                'vehicle_type': row[5],
+                'pickup_date': row[6],
+                'return_date': row[7],
+                'pickup_location': row[8],
+                'return_location': row[9],
+                'total_price': row[10],
+                'commission': row[11],
+                'status': row[12],
+                'confirmation_number': row[13],
+                'temp_email': row[14],
+                'booking_date': row[15],
+                'booking_type': row[16],
+                'admin_created': bool(row[17]),
+                'automation_result': json.loads(row[18]) if row[18] else {}
+            }
+        
+        return None
 
 # Instancia global de la base de datos
 local_db = LocalDatabase()
