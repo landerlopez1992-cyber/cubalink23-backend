@@ -498,51 +498,191 @@ class SupabaseService:
             print(f"Error removing vehicle image in Supabase: {e}")
             return False
     
+    # ===== FUNCIONES CRUD PARA VEHÍCULOS =====
+    
+    def add_vehicle(self, vehicle_data):
+        """Agregar nuevo vehículo a Supabase"""
+        try:
+            response = requests.post(
+                f'{self.supabase_url}/rest/v1/vehicles',
+                headers=self.headers,
+                json={
+                    'name': vehicle_data['name'],
+                    'category': vehicle_data['category'],
+                    'daily_price': vehicle_data['daily_price'],
+                    'transmission': vehicle_data.get('transmission', ''),
+                    'passenger_capacity': vehicle_data.get('passenger_capacity', 0),
+                    'air_conditioning': vehicle_data.get('air_conditioning', ''),
+                    'description': vehicle_data.get('description', ''),
+                    'features': json.dumps(vehicle_data.get('features', [])),
+                    'photos': json.dumps(vehicle_data.get('photos', [])),
+                    'active': vehicle_data.get('active', True),
+                    'created_at': datetime.now().isoformat()
+                }
+            )
+            
+            if response.status_code == 201:
+                return response.json()[0]['id']
+            else:
+                raise Exception(f"Error adding vehicle: {response.text}")
+        except Exception as e:
+            print(f"Error adding vehicle to Supabase: {e}")
+            raise e
+    
+    def get_vehicles(self):
+        """Obtener todos los vehículos desde Supabase"""
+        try:
+            response = requests.get(
+                f'{self.supabase_url}/rest/v1/vehicles?order=created_at.desc',
+                headers=self.headers
+            )
+            if response.status_code == 200:
+                vehicles = response.json()
+                # Parsear JSON strings
+                for vehicle in vehicles:
+                    if vehicle.get('features'):
+                        vehicle['features'] = json.loads(vehicle['features'])
+                    if vehicle.get('photos'):
+                        vehicle['photos'] = json.loads(vehicle['photos'])
+                return vehicles
+            else:
+                return []
+        except Exception as e:
+            print(f"Error getting vehicles from Supabase: {e}")
+            return []
+    
+    def get_vehicle_by_id(self, vehicle_id):
+        """Obtener vehículo por ID desde Supabase"""
+        try:
+            response = requests.get(
+                f'{self.supabase_url}/rest/v1/vehicles?id=eq.{vehicle_id}',
+                headers=self.headers
+            )
+            if response.status_code == 200 and response.json():
+                vehicle = response.json()[0]
+                # Parsear JSON strings
+                if vehicle.get('features'):
+                    vehicle['features'] = json.loads(vehicle['features'])
+                if vehicle.get('photos'):
+                    vehicle['photos'] = json.loads(vehicle['photos'])
+                return vehicle
+            return None
+        except Exception as e:
+            print(f"Error getting vehicle by ID from Supabase: {e}")
+            return None
+    
+    def update_vehicle(self, vehicle_id, vehicle_data):
+        """Actualizar vehículo en Supabase"""
+        try:
+            response = requests.patch(
+                f'{self.supabase_url}/rest/v1/vehicles?id=eq.{vehicle_id}',
+                headers=self.headers,
+                json={
+                    'name': vehicle_data['name'],
+                    'category': vehicle_data['category'],
+                    'daily_price': vehicle_data['daily_price'],
+                    'transmission': vehicle_data.get('transmission', ''),
+                    'passenger_capacity': vehicle_data.get('passenger_capacity', 0),
+                    'air_conditioning': vehicle_data.get('air_conditioning', ''),
+                    'description': vehicle_data.get('description', ''),
+                    'features': json.dumps(vehicle_data.get('features', [])),
+                    'photos': json.dumps(vehicle_data.get('photos', [])),
+                    'active': vehicle_data.get('active', True),
+                    'updated_at': datetime.now().isoformat()
+                }
+            )
+            
+            return response.status_code == 204
+        except Exception as e:
+            print(f"Error updating vehicle in Supabase: {e}")
+            return False
+    
+    def delete_vehicle(self, vehicle_id):
+        """Eliminar vehículo de Supabase"""
+        try:
+            response = requests.delete(
+                f'{self.supabase_url}/rest/v1/vehicles?id=eq.{vehicle_id}',
+                headers=self.headers
+            )
+            
+            return response.status_code == 204
+        except Exception as e:
+            print(f"Error deleting vehicle from Supabase: {e}")
+            return False
+    
     def add_phone_booking(self, booking_data):
         """Agregar reserva por teléfono a Supabase"""
         try:
-            response = self.supabase.table('phone_bookings').insert({
-                'reservation_id': booking_data['reservation_id'],
-                'client_name': booking_data['client_name'],
-                'client_phone': booking_data['client_phone'],
-                'client_email': booking_data.get('client_email', ''),
-                'vehicle_type': booking_data['vehicle_type'],
-                'pickup_date': booking_data['pickup_date'],
-                'return_date': booking_data['return_date'],
-                'pickup_location': booking_data['pickup_location'],
-                'return_location': booking_data.get('return_location', ''),
-                'total_price': booking_data['total_price'],
-                'commission': booking_data['commission'],
-                'status': booking_data['status'],
-                'confirmation_number': booking_data.get('confirmation_number', ''),
-                'temp_email': booking_data.get('temp_email', ''),
-                'booking_type': booking_data.get('booking_type', 'phone'),
-                'admin_created': booking_data.get('admin_created', True),
-                'automation_result': booking_data.get('automation_result', {})
-            }).execute()
+            response = requests.post(
+                f'{self.supabase_url}/rest/v1/phone_bookings',
+                headers=self.headers,
+                json={
+                    'reservation_id': booking_data['reservation_id'],
+                    'client_name': booking_data['client_name'],
+                    'client_phone': booking_data['client_phone'],
+                    'client_email': booking_data.get('client_email', ''),
+                    'vehicle_type': booking_data['vehicle_type'],
+                    'pickup_date': booking_data['pickup_date'],
+                    'return_date': booking_data['return_date'],
+                    'pickup_location': booking_data['pickup_location'],
+                    'return_location': booking_data.get('return_location', ''),
+                    'total_price': booking_data['total_price'],
+                    'commission': booking_data['commission'],
+                    'status': booking_data['status'],
+                    'confirmation_number': booking_data.get('confirmation_number', ''),
+                    'temp_email': booking_data.get('temp_email', ''),
+                    'booking_type': booking_data.get('booking_type', 'phone'),
+                    'admin_created': booking_data.get('admin_created', True),
+                    'automation_result': json.dumps(booking_data.get('automation_result', {})),
+                    'booking_date': datetime.now().isoformat()
+                }
+            )
             
-            return response.data[0]['id'] if response.data else None
+            if response.status_code == 201:
+                return response.json()[0]['id']
+            else:
+                raise Exception(f"Error adding phone booking: {response.text}")
         except Exception as e:
             print(f"Error adding phone booking to Supabase: {e}")
-            raise
+            raise e
     
     def get_phone_bookings(self):
         """Obtener todas las reservas por teléfono desde Supabase"""
         try:
-            response = self.supabase.table('phone_bookings').select('*').order('booking_date', desc=True).execute()
-            return response.data
+            response = requests.get(
+                f'{self.supabase_url}/rest/v1/phone_bookings?order=booking_date.desc',
+                headers=self.headers
+            )
+            if response.status_code == 200:
+                bookings = response.json()
+                # Parsear JSON strings
+                for booking in bookings:
+                    if booking.get('automation_result'):
+                        booking['automation_result'] = json.loads(booking['automation_result'])
+                return bookings
+            else:
+                return []
         except Exception as e:
             print(f"Error getting phone bookings from Supabase: {e}")
-            raise
+            return []
     
     def get_phone_booking_by_id(self, booking_id):
         """Obtener reserva por teléfono por ID desde Supabase"""
         try:
-            response = self.supabase.table('phone_bookings').select('*').eq('id', booking_id).execute()
-            return response.data[0] if response.data else None
+            response = requests.get(
+                f'{self.supabase_url}/rest/v1/phone_bookings?id=eq.{booking_id}',
+                headers=self.headers
+            )
+            if response.status_code == 200 and response.json():
+                booking = response.json()[0]
+                # Parsear JSON strings
+                if booking.get('automation_result'):
+                    booking['automation_result'] = json.loads(booking['automation_result'])
+                return booking
+            return None
         except Exception as e:
             print(f"Error getting phone booking by ID from Supabase: {e}")
-            raise
+            return None
 
 # Instancia global del servicio
 supabase_service = SupabaseService()
