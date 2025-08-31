@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session, current_app
 import json
 import os
@@ -42,12 +41,6 @@ def init_db():
 @require_auth
 def dashboard():
     """Panel principal de administración"""
-    return render_template('admin/dashboard.html', config=ADMIN_CONFIG)
-
-@admin.route('/dashboard')
-@require_auth
-def dashboard_alt():
-    """Panel principal de administración (ruta alternativa)"""
     return render_template('admin/dashboard.html', config=ADMIN_CONFIG)
 
 @admin.route('/stats')
@@ -1176,7 +1169,7 @@ def upload_logo():
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'message': 'Error al subir el logo: ' + str(e)})
+        return jsonify({'success': False, 'message': f'Error al subir el logo: {str(e)}'})
 
 @admin.route('/api/upload-banners', methods=['POST'])
 @require_auth
@@ -1218,13 +1211,13 @@ def upload_banners():
         if banners_uploaded:
             return jsonify({
                 'success': True,
-                'message': 'Banners actualizados: ' + ', '.join(banners_uploaded)
+                'message': f'Banners actualizados: {", ".join(banners_uploaded)}'
             })
         else:
             return jsonify({'success': False, 'message': 'No se seleccionaron archivos'})
             
     except Exception as e:
-        return jsonify({'success': False, 'message': 'Error al subir banners: ' + str(e)})
+        return jsonify({'success': False, 'message': f'Error al subir banners: {str(e)}'})
 
 @admin.route('/api/send-push-notification', methods=['POST'])
 @require_auth
@@ -1254,7 +1247,7 @@ def send_push_notification():
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'message': 'Error al enviar notificación: ' + str(e)})
+        return jsonify({'success': False, 'message': f'Error al enviar notificación: {str(e)}'})
 
 @admin.route('/api/notification-history')
 @require_auth
@@ -1285,7 +1278,7 @@ def notification_history():
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'message': 'Error al cargar historial: ' + str(e)})
+        return jsonify({'success': False, 'message': f'Error al cargar historial: {str(e)}'})
 
 # ===== GESTIÓN DE AEROLÍNEAS CHARTER =====
 
@@ -1316,7 +1309,7 @@ def get_charter_airlines():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': 'Error: ' + str(e)
+            'message': f'Error: {str(e)}'
         }), 500
 
 @admin.route('/api/charter-airlines', methods=['POST'])
@@ -1348,7 +1341,7 @@ def save_charter_airline():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': 'Error al guardar: ' + str(e)
+            'message': f'Error al guardar: {str(e)}'
         }), 500
 
 @admin.route('/api/charter-airlines/<airline_id>/toggle', methods=['POST'])
@@ -1363,7 +1356,7 @@ def toggle_charter_airline(airline_id):
             
             return jsonify({
                 'success': True,
-                'message': "Aerolínea " + ('activada' if CHARTER_AIRLINES[airline_id]['active'] else 'desactivada') + " correctamente"
+                'message': f"Aerolínea {'activada' if CHARTER_AIRLINES[airline_id]['active'] else 'desactivada'} correctamente"
             })
         else:
             return jsonify({
@@ -1374,7 +1367,7 @@ def toggle_charter_airline(airline_id):
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': 'Error: ' + str(e)
+            'message': f'Error: {str(e)}'
         }), 500
 
 @admin.route('/api/charter-airlines/<airline_id>/test', methods=['POST'])
@@ -1412,7 +1405,7 @@ def test_charter_airline(airline_id):
         if flights:
             return jsonify({
                 'success': True,
-                'message': 'Conexión exitosa. Se encontraron ' + str(len(flights)) + ' vuelos de prueba.',
+                'message': f'Conexión exitosa. Se encontraron {len(flights)} vuelos de prueba.',
                 'test_flights': flights
             })
         else:
@@ -1424,7 +1417,7 @@ def test_charter_airline(airline_id):
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': 'Error en prueba: ' + str(e)
+            'message': f'Error en prueba: {str(e)}'
         }), 500
 
 @admin.route('/api/charter-bookings')
@@ -1470,7 +1463,7 @@ def get_charter_bookings():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': 'Error al cargar reservas: ' + str(e)
+            'message': f'Error al cargar reservas: {str(e)}'
         }), 500
 
 @admin.route('/api/charter-bookings/<booking_id>/confirm', methods=['POST'])
@@ -1489,7 +1482,7 @@ def confirm_charter_booking(booking_id):
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': 'Error al confirmar reserva: ' + str(e)
+            'message': f'Error al confirmar reserva: {str(e)}'
         }), 500
 
 # ==================== AUTOMATIZACIÓN CUBA TRANSTUR ====================
@@ -1532,7 +1525,7 @@ def create_cuba_transtur_booking():
             if not data.get(field):
                 return jsonify({
                     'success': False,
-                    'error': 'Campo requerido: ' + field
+                    'error': f'Campo requerido: {field}'
                 }), 400
         
         # Importar función de automatización
@@ -1706,8 +1699,13 @@ def add_vehicle():
         # Agregar rutas de fotos a los datos del vehículo
         vehicle_data['photos'] = photo_paths
         
-        # Guardar en base de datos local
-        vehicle_id = local_db.add_vehicle(vehicle_data)
+        # Guardar en base de datos
+        try:
+            # Intentar guardar en Supabase primero
+            vehicle_id = supabase_service.add_vehicle(vehicle_data)
+        except:
+            # Si falla Supabase, usar base de datos local
+            vehicle_id = local_db.add_vehicle(vehicle_data)
         
         return jsonify({
             'success': True,
@@ -1723,8 +1721,18 @@ def add_vehicle():
 def get_vehicles():
     """Obtener lista de vehículos"""
     try:
+        # Intentar obtener desde Supabase primero
+        try:
+            vehicles = supabase_service.get_vehicles()
+            if vehicles:
+                return jsonify(vehicles)
+        except:
+            pass
+        
+        # Si falla Supabase, usar base de datos local
         vehicles = local_db.get_vehicles()
         return jsonify(vehicles)
+        
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -1733,6 +1741,15 @@ def get_vehicles():
 def delete_vehicle(vehicle_id):
     """Eliminar vehículo"""
     try:
+        # Intentar eliminar desde Supabase primero
+        try:
+            success = supabase_service.delete_vehicle(vehicle_id)
+            if success:
+                return jsonify({'success': True, 'message': 'Vehículo eliminado exitosamente'})
+        except:
+            pass
+        
+        # Si falla Supabase, usar base de datos local
         success = local_db.delete_vehicle(vehicle_id)
         if success:
             return jsonify({'success': True, 'message': 'Vehículo eliminado exitosamente'})
