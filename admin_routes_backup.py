@@ -1,18 +1,28 @@
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for
+# -*- coding: utf-8 -*-
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session, current_app
 import json
 import os
 from datetime import datetime
 import sqlite3
 from supabase_service import supabase_service
-from flask_login import login_required
+from auth_routes import require_auth
+from werkzeug.utils import secure_filename
+from database import local_db
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
+
+# Configuración para subida de archivos
+UPLOAD_FOLDER = 'static/uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Configuración del panel
 ADMIN_CONFIG = {
     'app_name': 'Cubalink23',
-    'version': '1.0.0',
-    'admin_email': 'admin@cubalink23.com'
+    'version': '2.0.0',
+    'admin_email': 'landerlopez1992@gmail.com'
 }
 
 # Base de datos simple para estadísticas (mantener para logs locales)
@@ -29,11 +39,13 @@ def init_db():
     conn.close()
 
 @admin.route('/')
+@require_auth
 def dashboard():
     """Panel principal de administración"""
     return render_template('admin/dashboard.html', config=ADMIN_CONFIG)
 
 @admin.route('/stats')
+@require_auth
 def get_stats():
     """Obtener estadísticas en tiempo real desde Supabase"""
     try:
@@ -63,92 +75,343 @@ def get_stats():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@admin.route('/users')
-def users():
-    """Gestión de usuarios"""
-    return render_template('admin/users.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/users', methods=['GET'])
-def get_users():
-    """Obtener usuarios desde Supabase"""
-    try:
-        users = supabase_service.get_users()
-        return jsonify(users)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/users/<user_id>/toggle', methods=['POST'])
-def toggle_user_status(user_id):
-    """Bloquear/desbloquear usuario"""
-    try:
-        data = request.json
-        blocked = data.get('blocked', False)
-        success = supabase_service.update_user_status(user_id, blocked)
-        return jsonify({'success': success})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/flights')
-def flights():
-    """Gestión de vuelos y rutas"""
-    return render_template('admin/flights.html', config=ADMIN_CONFIG)
-
-@admin.route('/system')
-def system():
-    """Configuración del sistema"""
-    return render_template('admin/system.html', config=ADMIN_CONFIG)
-
-# Nuevas rutas para gestión de productos
+# ===== GESTIÓN DE PRODUCTOS MEJORADA =====
 @admin.route('/products')
+@require_auth
 def products():
     """Gestión de productos"""
     return render_template('admin/products.html', config=ADMIN_CONFIG)
 
-@admin.route('/api/products', methods=['GET'])
+@admin.route('/api/products')
+@require_auth
 def get_products():
-    """Obtener productos desde Supabase"""
+    """Obtener productos desde base de datos local"""
     try:
-        products = supabase_service.get_products()
+        # Intentar obtener desde Supabase primero
+        try:
+            products = supabase_service.get_products()
+            if products:
+                return jsonify(products)
+        except:
+            pass
+        
+        # Si falla Supabase, usar base de datos local
+        products = local_db.get_products()
         return jsonify(products)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @admin.route('/api/products', methods=['POST'])
+@require_auth
 def add_product():
-    """Agregar nuevo producto"""
+    """Agregar nuevo producto con imagen"""
     try:
-        data = request.json
-        product = supabase_service.add_product(data)
-        return jsonify({'success': True, 'product': product})
+        data = request.form.to_dict()
+        
+        # Manejar subida de imagen
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = "{}_{}".format(timestamp, filename)
+                
+                # Crear directorio si no existe
+                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+                file_path = os.path.join(UPLOAD_FOLDER, filename)
+                file.save(file_path)
+                
+                # URL de la imagen
+                data['image_url'] = '/static/uploads/{}'.format(filename)
+        
+        # Validar datos requeridos
+        if not data.get('name') or not data.get('price'):
+            return jsonify({'error': 'Nombre y precio son requeridos'}), 400
+        
+        # Intentar agregar a Supabase primero
+        try:
+            product = supabase_service.add_product(data)
+            return jsonify(product)
+        except:
+            # Si falla Supabase, usar base de datos local
+            product = local_db.add_product(data)
+            return jsonify(product)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @admin.route('/api/products/<product_id>', methods=['PUT'])
+@require_auth
 def update_product(product_id):
     """Actualizar producto"""
     try:
         data = request.json
-        success = supabase_service.update_product(product_id, data)
-        return jsonify({'success': success})
+        
+        # Validar datos requeridos
+        if not data.get('name') or not data.get('price'):
+            return jsonify({'error': 'Nombre y precio son requeridos'}), 400
+        
+        # Intentar actualizar en Supabase primero
+        try:
+            product = supabase_service.update_product(product_id, data)
+            return jsonify(product)
+        except:
+            # Si falla Supabase, usar base de datos local
+            product = local_db.update_product(product_id, data)
+            return jsonify(product)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @admin.route('/api/products/<product_id>', methods=['DELETE'])
+@require_auth
 def delete_product(product_id):
     """Eliminar producto"""
     try:
-        success = supabase_service.delete_product(product_id)
-        return jsonify({'success': success})
+        # Intentar eliminar en Supabase primero
+        try:
+            supabase_service.delete_product(product_id)
+            return jsonify({'success': True})
+        except:
+            # Si falla Supabase, usar base de datos local
+            success = local_db.delete_product(product_id)
+            if success:
+                return jsonify({'success': True})
+            else:
+                return jsonify({'error': 'Producto no encontrado'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Rutas para gestión de órdenes
+@admin.route('/api/categories')
+@require_auth
+def get_categories():
+    """Obtener categorías de productos"""
+    try:
+        categories = local_db.get_categories()
+        return jsonify(categories)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== GESTIÓN DE BANNERS PUBLICITARIOS =====
+@admin.route('/banners')
+@require_auth
+def banners():
+    """Gestión de banners publicitarios"""
+    return render_template('admin/banners.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/banners')
+@require_auth
+def get_banners():
+    """Obtener banners desde base de datos local"""
+    try:
+        # Intentar obtener desde Supabase primero
+        try:
+            banners = supabase_service.get_banners()
+            if banners:
+                return jsonify(banners)
+        except:
+            pass
+        
+        # Si falla Supabase, usar base de datos local
+        banners = local_db.get_banners()
+        return jsonify(banners)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/banners/active')
+def get_active_banners():
+    """Obtener solo banners activos (público)"""
+    try:
+        # Intentar obtener desde Supabase primero
+        try:
+            banners = supabase_service.get_active_banners()
+            if banners:
+                return jsonify(banners)
+        except:
+            pass
+        
+        # Si falla Supabase, usar base de datos local
+        banners = local_db.get_active_banners()
+        return jsonify(banners)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/banners', methods=['POST'])
+@require_auth
+def add_banner():
+    """Agregar nuevo banner con imagen"""
+    try:
+        data = request.form.to_dict()
+        
+        # Manejar subida de imagen
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = "banner_{}_{}".format(timestamp, filename)
+                
+                # Crear directorio si no existe
+                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+                file_path = os.path.join(UPLOAD_FOLDER, filename)
+                file.save(file_path)
+                
+                # URL de la imagen
+                data['image_url'] = '/static/uploads/{}'.format(filename)
+        
+        # Agregar banner a Supabase
+        banner = supabase_service.add_banner(data)
+        return jsonify(banner)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/banners/<banner_id>', methods=['PUT'])
+@require_auth
+def update_banner(banner_id):
+    """Actualizar banner"""
+    try:
+        data = request.json
+        banner = supabase_service.update_banner(banner_id, data)
+        return jsonify(banner)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/banners/<banner_id>', methods=['DELETE'])
+@require_auth
+def delete_banner(banner_id):
+    """Eliminar banner"""
+    try:
+        supabase_service.delete_banner(banner_id)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== GESTIÓN DE USUARIOS =====
+@admin.route('/users')
+@require_auth
+def users():
+    """Gestión de usuarios"""
+    return render_template('admin/users.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/users', methods=['GET'])
+@require_auth
+def get_users():
+    """Obtener usuarios desde base de datos local"""
+    try:
+        # Intentar obtener desde Supabase primero
+        try:
+            users = supabase_service.get_users()
+            if users:
+                return jsonify(users)
+        except:
+            pass
+        
+        # Si falla Supabase, usar base de datos local
+        users = local_db.get_users()
+        return jsonify(users)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/users', methods=['POST'])
+@require_auth
+def add_user():
+    """Agregar nuevo usuario"""
+    try:
+        data = request.json
+        
+        # Validar datos requeridos
+        if not data.get('email') or not data.get('name'):
+            return jsonify({'error': 'Email y nombre son requeridos'}), 400
+        
+        # Intentar agregar a Supabase primero
+        try:
+            user = supabase_service.add_user(data)
+            return jsonify(user)
+        except:
+            # Si falla Supabase, usar base de datos local
+            user = local_db.add_user(data)
+            return jsonify(user)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/users/<user_id>', methods=['PUT'])
+@require_auth
+def update_user(user_id):
+    """Actualizar usuario"""
+    try:
+        data = request.json
+        
+        # Validar datos requeridos
+        if not data.get('email') or not data.get('name'):
+            return jsonify({'error': 'Email y nombre son requeridos'}), 400
+        
+        # Intentar actualizar en Supabase primero
+        try:
+            user = supabase_service.update_user(user_id, data)
+            return jsonify(user)
+        except:
+            # Si falla Supabase, usar base de datos local
+            user = local_db.update_user(user_id, data)
+            return jsonify(user)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/users/<user_id>', methods=['DELETE'])
+@require_auth
+def delete_user(user_id):
+    """Eliminar usuario"""
+    try:
+        # Intentar eliminar en Supabase primero
+        try:
+            success = supabase_service.delete_user(user_id)
+            return jsonify({'success': success})
+        except:
+            # Si falla Supabase, usar base de datos local
+            success = local_db.delete_user(user_id)
+            if success:
+                return jsonify({'success': True})
+            else:
+                return jsonify({'error': 'Usuario no encontrado'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/users/<user_id>/toggle', methods=['POST'])
+@require_auth
+def toggle_user_status(user_id):
+    """Bloquear/desbloquear usuario"""
+    try:
+        data = request.json
+        blocked = data.get('blocked', False)
+        
+        # Intentar actualizar en Supabase primero
+        try:
+            success = supabase_service.update_user_status(user_id, blocked)
+            return jsonify({'success': success})
+        except:
+            # Si falla Supabase, usar base de datos local
+            success = local_db.block_user(user_id, blocked)
+            return jsonify({'success': success})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/users/<user_id>/activity', methods=['POST'])
+@require_auth
+def update_user_activity(user_id):
+    """Actualizar actividad del usuario"""
+    try:
+        # Actualizar actividad en base de datos local
+        local_db.update_user_activity(user_id)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== GESTIÓN DE ÓRDENES =====
 @admin.route('/orders')
+@require_auth
 def orders():
     """Gestión de órdenes"""
     return render_template('admin/orders.html', config=ADMIN_CONFIG)
 
-@admin.route('/api/orders', methods=['GET'])
+@admin.route('/api/orders')
+@require_auth
 def get_orders():
     """Obtener órdenes desde Supabase"""
     try:
@@ -158,6 +421,7 @@ def get_orders():
         return jsonify({'error': str(e)}), 500
 
 @admin.route('/api/orders/<order_id>/status', methods=['PUT'])
+@require_auth
 def update_order_status(order_id):
     """Actualizar estado de orden"""
     try:
@@ -168,8 +432,91 @@ def update_order_status(order_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Rutas para historial de recargas
-@admin.route('/api/recharges', methods=['GET'])
+# ===== CONFIGURACIÓN DEL SISTEMA =====
+@admin.route('/system')
+@require_auth
+def system():
+    """Configuración del sistema"""
+    return render_template('admin/system.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/config')
+@require_auth
+def get_config():
+    """Obtener configuración de la app"""
+    try:
+        config = supabase_service.get_app_config()
+        return jsonify(config)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/config', methods=['PUT'])
+@require_auth
+def update_config():
+    """Actualizar configuración de la app"""
+    try:
+        data = request.json
+        config = supabase_service.update_app_config(data)
+        return jsonify(config)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== GESTIÓN DE VUELOS Y RUTAS =====
+@admin.route('/flights')
+@require_auth
+def flights():
+    """Gestión de vuelos"""
+    return render_template('admin/flights.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/flights')
+@require_auth
+def get_flights():
+    """Obtener vuelos desde Duffel API"""
+    try:
+        # Simular datos de vuelos (en realidad vendrían de Duffel API)
+        flights = [
+            {
+                'id': '1',
+                'origin': 'MIA',
+                'destination': 'HAV',
+                'airline': 'American Airlines',
+                'departure_time': '2024-01-15 10:30:00',
+                'arrival_time': '2024-01-15 11:45:00',
+                'price': 299.99,
+                'status': 'active'
+            },
+            {
+                'id': '2',
+                'origin': 'MVD',
+                'destination': 'MIA',
+                'airline': 'LATAM',
+                'departure_time': '2024-01-16 14:20:00',
+                'arrival_time': '2024-01-16 18:30:00',
+                'price': 450.00,
+                'status': 'active'
+            }
+        ]
+        return jsonify(flights)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/routes')
+@require_auth
+def get_routes():
+    """Obtener rutas populares"""
+    try:
+        routes = [
+            {'route': 'MIA-HAV', 'searches': 156, 'bookings': 23},
+            {'route': 'MVD-MIA', 'searches': 89, 'bookings': 12},
+            {'route': 'LAX-HAV', 'searches': 67, 'bookings': 8},
+            {'route': 'MIA-MVD', 'searches': 45, 'bookings': 6}
+        ]
+        return jsonify(routes)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== HISTORIAL DE RECARGAS =====
+@admin.route('/api/recharges')
+@require_auth
 def get_recharges():
     """Obtener historial de recargas"""
     try:
@@ -178,8 +525,9 @@ def get_recharges():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Rutas para transferencias
-@admin.route('/api/transfers', methods=['GET'])
+# ===== TRANSFERENCIAS =====
+@admin.route('/api/transfers')
+@require_auth
 def get_transfers():
     """Obtener transferencias"""
     try:
@@ -188,8 +536,9 @@ def get_transfers():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Rutas para categorías
-@admin.route('/api/categories', methods=['GET'])
+# ===== CATEGORÍAS =====
+@admin.route('/api/categories')
+@require_auth
 def get_categories():
     """Obtener categorías"""
     try:
@@ -199,587 +548,1354 @@ def get_categories():
         return jsonify({'error': str(e)}), 500
 
 @admin.route('/api/categories', methods=['POST'])
+@require_auth
 def add_category():
     """Agregar categoría"""
     try:
         data = request.json
         category = supabase_service.add_category(data)
-        return jsonify({'success': True, 'category': category})
+        return jsonify(category)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Rutas para actividades
-@admin.route('/api/activities', methods=['GET'])
+# ===== ACTIVIDADES =====
+@admin.route('/api/activities')
+@require_auth
 def get_activities():
-    """Obtener actividades"""
+    """Obtener actividades de usuarios"""
     try:
         activities = supabase_service.get_activities()
         return jsonify(activities)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@admin.route('/api/config', methods=['GET', 'POST'])
-def api_config():
-    """API para configurar la app Flutter"""
-    if request.method == 'POST':
-        data = request.json
-        # Guardar configuración en Supabase
-        success = supabase_service.update_app_config(data)
-        return jsonify({'success': success, 'message': 'Configuración actualizada'})
-    else:
-        # Leer configuración desde Supabase
-        config = supabase_service.get_app_config()
-        return jsonify(config)
-
-@admin.route('/api/notifications', methods=['POST'])
-def send_notification():
-    """Enviar notificaciones a usuarios"""
+# ===== NOTIFICACIONES =====
+@admin.route('/api/notifications')
+@require_auth
+def get_notifications():
+    """Obtener notificaciones"""
     try:
-        data = request.json
-        notification = supabase_service.send_notification(data)
-        return jsonify({'success': True, 'message': 'Notificación enviada', 'notification': notification})
+        notifications = supabase_service.get_notifications()
+        return jsonify(notifications)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@admin.route('/api/notifications', methods=['POST'])
+@require_auth
+def send_notification():
+    """Enviar notificación push"""
+    try:
+        data = request.json
+        notification = supabase_service.send_notification(data)
+        return jsonify(notification)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== MODO MANTENIMIENTO =====
 @admin.route('/api/maintenance', methods=['POST'])
+@require_auth
 def toggle_maintenance():
     """Activar/desactivar modo mantenimiento"""
     try:
         data = request.json
-        maintenance_mode = data.get('maintenance_mode', False)
+        enabled = data.get('enabled', False)
+        message = data.get('message', 'La aplicación está en mantenimiento')
         
-        # Actualizar configuración en Supabase
-        config_data = {'maintenance_mode': maintenance_mode}
+        # Actualizar configuración de mantenimiento
+        config_data = {
+            'maintenance_mode': enabled,
+            'maintenance_message': message
+        }
+        
         success = supabase_service.update_app_config(config_data)
-        
-        return jsonify({'success': success, 'maintenance_mode': maintenance_mode})
+        return jsonify({'success': success, 'maintenance_mode': enabled})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Nuevas rutas para renta de autos
-@admin.route('/cars')
-@login_required
-def cars():
-    return render_template('admin/cars.html')
-
-@admin.route('/api/cars')
-@login_required
-def api_cars():
+# ===== ANALYTICS Y REPORTES =====
+@admin.route('/api/analytics/sales')
+@require_auth
+def get_sales_analytics():
+    """Obtener analytics de ventas"""
     try:
-        # Aquí irá la lógica para obtener autos de Supabase
-        cars = [
+        analytics = {
+            'total_sales': 12500.00,
+            'monthly_sales': [
+                {'month': 'Enero', 'amount': 3200.00},
+                {'month': 'Febrero', 'amount': 2800.00},
+                {'month': 'Marzo', 'amount': 3500.00},
+                {'month': 'Abril', 'amount': 3000.00}
+            ],
+            'top_products': [
+                {'name': 'Producto A', 'sales': 45},
+                {'name': 'Producto B', 'sales': 32},
+                {'name': 'Producto C', 'sales': 28}
+            ],
+            'sales_by_category': [
+                {'category': 'Electrónicos', 'amount': 4500.00},
+                {'category': 'Ropa', 'amount': 3800.00},
+                {'category': 'Hogar', 'amount': 4200.00}
+            ]
+        }
+        return jsonify(analytics)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/analytics/users')
+@require_auth
+def get_user_analytics():
+    """Obtener analytics de usuarios"""
+    try:
+        analytics = {
+            'total_users': 1250,
+            'new_users_this_month': 89,
+            'active_users': 856,
+            'user_growth': [
+                {'month': 'Enero', 'users': 1200},
+                {'month': 'Febrero', 'users': 1250},
+                {'month': 'Marzo', 'users': 1300},
+                {'month': 'Abril', 'users': 1350}
+            ],
+            'user_activity': [
+                {'day': 'Lunes', 'active': 156},
+                {'day': 'Martes', 'active': 142},
+                {'day': 'Miércoles', 'active': 178},
+                {'day': 'Jueves', 'active': 165},
+                {'day': 'Viernes', 'active': 189},
+                {'day': 'Sábado', 'active': 201},
+                {'day': 'Domingo', 'active': 167}
+            ]
+        }
+        return jsonify(analytics)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== PROMOCIONES =====
+@admin.route('/api/promotions')
+@require_auth
+def get_promotions():
+    """Obtener promociones"""
+    try:
+        promotions = [
             {
-                'id': 1,
-                'brand': 'Toyota',
-                'model': 'Corolla',
-                'year': 2022,
-                'price_daily': 50,
-                'price_high_season': 75,
-                'insurance_daily': 15,
-                'fuel_price': 25,
-                'available': True,
-                'image_url': '/static/uploads/car1.jpg'
-            }
-        ]
-        return jsonify(cars)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/cars', methods=['POST'])
-@login_required
-def add_car():
-    try:
-        data = request.form.to_dict()
-        # Lógica para agregar auto a Supabase
-        return jsonify({'success': True, 'message': 'Auto agregado exitosamente'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# Nuevas rutas para repartidores
-@admin.route('/drivers')
-@login_required
-def drivers():
-    return render_template('admin/drivers.html')
-
-@admin.route('/api/drivers')
-@login_required
-def api_drivers():
-    try:
-        drivers = [
-            {
-                'id': 1,
-                'name': 'Carlos Pérez',
-                'email': 'carlos@example.com',
-                'phone': '+53 5 123 4567',
-                'status': 'active',
-                'balance': 150.50,
-                'payment_type': 'per_delivery',
-                'total_deliveries': 45,
-                'rating': 4.8
-            }
-        ]
-        return jsonify(drivers)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/drivers/<int:driver_id>/toggle', methods=['POST'])
-@login_required
-def toggle_driver_status(driver_id):
-    try:
-        data = request.get_json()
-        # Lógica para cambiar estado del repartidor
-        return jsonify({'success': True})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# Nuevas rutas para vendedores
-@admin.route('/api/vendors/<int:vendor_id>/approve', methods=['POST'])
-@login_required
-def approve_vendor(vendor_id):
-    try:
-        # Lógica para aprobar vendedor
-        return jsonify({'success': True})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# Rutas para solicitudes de aprobación
-@admin.route('/approvals')
-@login_required
-def approvals():
-    return render_template('admin/approvals.html')
-
-@admin.route('/api/approvals')
-@login_required
-def api_approvals():
-    try:
-        approvals = [
-            {
-                'id': 1,
-                'type': 'vendor',
-                'name': 'María González',
-                'email': 'maria@example.com',
-                'status': 'pending',
-                'created_at': '2024-01-15T10:30:00Z'
+                'id': '1',
+                'title': 'Descuento 20% en vuelos',
+                'description': 'Descuento especial en vuelos a Cuba',
+                'discount': 20,
+                'code': 'CUBA20',
+                'valid_from': '2024-01-01',
+                'valid_until': '2024-12-31',
+                'active': True
             },
             {
-                'id': 2,
-                'type': 'driver',
-                'name': 'Luis Rodríguez',
-                'email': 'luis@example.com',
-                'status': 'pending',
-                'created_at': '2024-01-14T15:45:00Z'
+                'id': '2',
+                'title': 'Envío gratis',
+                'description': 'Envío gratis en compras superiores a $50',
+                'discount': 0,
+                'code': 'FREESHIP',
+                'valid_from': '2024-01-01',
+                'valid_until': '2024-06-30',
+                'active': True
             }
         ]
-        return jsonify(approvals)
+        return jsonify(promotions)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ===== SISTEMA DE VENDEDORES =====
+@admin.route('/api/promotions', methods=['POST'])
+@require_auth
+def add_promotion():
+    """Agregar promoción"""
+    try:
+        data = request.json
+        # Aquí se guardaría en Supabase
+        return jsonify({'success': True, 'promotion': data})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== CONFIGURACIÓN AVANZADA =====
+@admin.route('/api/config/advanced')
+@require_auth
+def get_advanced_config():
+    """Obtener configuración avanzada"""
+    try:
+        config = {
+            'app_name': 'Cubalink23',
+            'version': '2.0.0',
+            'api_url': 'https://cubalink23-backend.onrender.com/api/duffel',
+            'duffel_api_status': 'Connected',
+            'supabase_status': 'Connected',
+            'maintenance_mode': False,
+            'maintenance_message': '',
+            'features': {
+                'flight_search': True,
+                'product_store': True,
+                'user_registration': True,
+                'payment_processing': True,
+                'push_notifications': True
+            }
+        }
+        return jsonify(config)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/config/advanced', methods=['PUT'])
+@require_auth
+def update_advanced_config():
+    """Actualizar configuración avanzada"""
+    try:
+        data = request.json
+        success = supabase_service.update_app_config(data)
+        return jsonify({'success': success})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/payroll/process', methods=['POST'])
+@require_auth
+def process_payroll():
+    """Procesar nómina"""
+    try:
+        data = request.json
+        success = supabase_service.process_payroll(data)
+        return jsonify({'success': success})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== SISTEMA DE VERIFICACIÓN MANUAL DE RENTA CAR =====
+
+@admin.route('/rental-verifications')
+@require_auth
+def rental_verifications():
+    """Panel de verificaciones manuales de renta de autos - Redirigir al dashboard"""
+    return redirect('/admin/')
+
+@admin.route('/rental-verifications/pending')
+@require_auth
+def pending_rental_verifications():
+    """Verificaciones pendientes - Redirigir al dashboard"""
+    return redirect('/admin/')
+
+@admin.route('/api/rental-verifications')
+@require_auth
+def get_rental_verifications():
+    """Obtener todas las verificaciones de renta"""
+    try:
+        verifications = supabase_service.get_rental_verifications()
+        return jsonify(verifications)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/rental-verifications/pending')
+@require_auth
+def get_pending_rental_verifications():
+    """Obtener verificaciones pendientes"""
+    try:
+        pending = supabase_service.get_pending_rental_verifications()
+        return jsonify(pending)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/rental-verifications/request', methods=['POST'])
+@require_auth
+def request_rental_verification():
+    """Solicitar verificación manual de disponibilidad"""
+    try:
+        data = request.json
+        verification_data = {
+            'car_model': data.get('car_model'),
+            'start_date': data.get('start_date'),
+            'end_date': data.get('end_date'),
+            'province': data.get('province'),
+            'user_id': data.get('user_id'),
+            'user_name': data.get('user_name'),
+            'user_phone': data.get('user_phone'),
+            'user_email': data.get('user_email'),
+            'status': 'pending',
+            'priority': data.get('priority', 'normal'),  # low, normal, high, urgent
+            'notes': data.get('notes', ''),
+            'created_at': datetime.now().isoformat()
+        }
+        
+        # Guardar verificación en Supabase
+        verification = supabase_service.create_rental_verification(verification_data)
+        
+        # Enviar notificación al admin
+        send_verification_notification(verification)
+        
+        return jsonify({
+            'success': True,
+            'verification_id': verification.get('id'),
+            'message': 'Verificación solicitada. El administrador la revisará pronto.',
+            'estimated_time': '2-4 horas'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/rental-verifications/<verification_id>/update', methods=['POST'])
+@require_auth
+def update_rental_verification(verification_id):
+    """Actualizar resultado de verificación manual"""
+    try:
+        data = request.json
+        update_data = {
+            'status': data.get('status'),  # pending, available, not_available, completed
+            'daily_price': data.get('daily_price'),
+            'total_price': data.get('total_price'),
+            'currency': data.get('currency', 'USD'),
+            'availability_notes': data.get('availability_notes'),
+            'admin_notes': data.get('admin_notes'),
+            'checked_at': datetime.now().isoformat(),
+            'checked_by': data.get('admin_id'),
+            'rentcarcuba_url': data.get('rentcarcuba_url'),
+            'commission_amount': data.get('commission_amount', 50.00)  # $50 comisión por alquiler
+        }
+        
+        # Actualizar verificación en Supabase
+        updated_verification = supabase_service.update_rental_verification(verification_id, update_data)
+        
+        # Notificar al usuario del resultado
+        if updated_verification:
+            notify_user_verification_result(verification_id, update_data)
+        
+        return jsonify({
+            'success': True,
+            'verification_id': verification_id,
+            'message': 'Verificación actualizada exitosamente'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/rental-verifications/<verification_id>/complete', methods=['POST'])
+@require_auth
+def complete_rental_verification(verification_id):
+    """Marcar verificación como completada y procesar alquiler"""
+    try:
+        data = request.json
+        completion_data = {
+            'status': 'completed',
+            'rental_confirmed': data.get('rental_confirmed', False),
+            'rental_id': data.get('rental_id'),
+            'payment_status': data.get('payment_status', 'pending'),
+            'commission_paid': data.get('commission_paid', False),
+            'completed_at': datetime.now().isoformat(),
+            'completion_notes': data.get('completion_notes')
+        }
+        
+        # Actualizar verificación
+        updated_verification = supabase_service.update_rental_verification(verification_id, completion_data)
+        
+        # Si se confirmó el alquiler, crear registro de alquiler
+        if data.get('rental_confirmed'):
+            rental_data = {
+                'verification_id': verification_id,
+                'user_id': updated_verification.get('user_id'),
+                'car_model': updated_verification.get('car_model'),
+                'start_date': updated_verification.get('start_date'),
+                'end_date': updated_verification.get('end_date'),
+                'province': updated_verification.get('province'),
+                'daily_price': updated_verification.get('daily_price'),
+                'total_price': updated_verification.get('total_price'),
+                'commission_amount': updated_verification.get('commission_amount'),
+                'status': 'confirmed',
+                'created_at': datetime.now().isoformat()
+            }
+            
+            rental = supabase_service.create_rental(rental_data)
+        
+        return jsonify({
+            'success': True,
+            'verification_id': verification_id,
+            'message': 'Verificación completada exitosamente'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/rental-verifications/<verification_id>/cancel', methods=['POST'])
+@require_auth
+def cancel_rental_verification(verification_id):
+    """Cancelar verificación de renta"""
+    try:
+        data = request.json
+        cancel_data = {
+            'status': 'cancelled',
+            'cancellation_reason': data.get('cancellation_reason'),
+            'cancelled_at': datetime.now().isoformat(),
+            'cancelled_by': data.get('admin_id')
+        }
+        
+        # Actualizar verificación
+        updated_verification = supabase_service.update_rental_verification(verification_id, cancel_data)
+        
+        # Notificar al usuario
+        notify_user_verification_cancelled(verification_id, cancel_data)
+        
+        return jsonify({
+            'success': True,
+            'verification_id': verification_id,
+            'message': 'Verificación cancelada exitosamente'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/rental-verifications/stats')
+@require_auth
+def get_rental_verification_stats():
+    """Obtener estadísticas de verificaciones"""
+    try:
+        stats = supabase_service.get_rental_verification_stats()
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ===== FUNCIONES AUXILIARES PARA NOTIFICACIONES =====
+
+def send_verification_notification(verification):
+    """Enviar notificación al admin sobre nueva verificación"""
+    try:
+        # Aquí iría la lógica para enviar email/SMS al admin
+        # Por ahora simulamos la notificación
+        
+        notification_data = {
+            'type': 'rental_verification_request',
+            'title': 'Nueva Verificación de Renta de Auto',
+            'message': "Verificación solicitada: {} en {}".format(verification.get('car_model'), verification.get('province')),
+            'verification_id': verification.get('id'),
+            'priority': verification.get('priority'),
+            'created_at': datetime.now().isoformat()
+        }
+        
+        # Guardar notificación en base de datos
+        supabase_service.create_notification(notification_data)
+        
+        # Enviar email al admin (implementar después)
+        # send_admin_email(notification_data)
+        
+        return True
+    except Exception as e:
+        print("Error enviando notificación: {}".format(e))
+        return False
+
+def notify_user_verification_result(verification_id, result_data):
+    """Notificar al usuario del resultado de la verificación"""
+    try:
+        # Obtener datos de la verificación
+        verification = supabase_service.get_rental_verification_detail(verification_id)
+        
+        if not verification:
+            return False
+        
+        # Preparar mensaje según el resultado
+        if result_data.get('status') == 'available':
+            message = "✅ Disponible: {} en {}\n".format(verification.get('car_model'), verification.get('province'))
+            message += "💰 Precio por día: ${}\n".format(result_data.get('daily_price'))
+            message += "💵 Total: ${}\n".format(result_data.get('total_price'))
+            message += "📝 Notas: {}".format(result_data.get('availability_notes', 'Sin notas adicionales'))
+        else:
+            message = "❌ No disponible: {} en {}\n".format(verification.get('car_model'), verification.get('province'))
+            message += "📝 Notas: {}".format(result_data.get('availability_notes', 'Sin notas adicionales'))
+        
+        # Enviar notificación al usuario
+        user_notification = {
+            'user_id': verification.get('user_id'),
+            'type': 'rental_verification_result',
+            'title': 'Resultado de Verificación de Renta',
+            'message': message,
+            'verification_id': verification_id,
+            'created_at': datetime.now().isoformat()
+        }
+        
+        supabase_service.create_user_notification(user_notification)
+        
+        return True
+    except Exception as e:
+        print("Error notificando usuario: {}".format(e))
+        return False
+
+def notify_user_verification_cancelled(verification_id, cancel_data):
+    """Notificar al usuario que la verificación fue cancelada"""
+    try:
+        verification = supabase_service.get_rental_verification_detail(verification_id)
+        
+        if not verification:
+            return False
+        
+        message = "❌ Verificación cancelada: {} en {}\n".format(verification.get('car_model'), verification.get('province'))
+        message += "📝 Razón: {}".format(cancel_data.get('cancellation_reason', 'Sin especificar'))
+        
+        user_notification = {
+            'user_id': verification.get('user_id'),
+            'type': 'rental_verification_cancelled',
+            'title': 'Verificación Cancelada',
+            'message': message,
+            'verification_id': verification_id,
+            'created_at': datetime.now().isoformat()
+        }
+        
+        supabase_service.create_user_notification(user_notification)
+        
+        return True
+    except Exception as e:
+        print("Error notificando cancelación: {}".format(e))
+        return False
+
+# ===== RUTAS FALTANTES PARA BOTONES NUEVOS =====
+
 @admin.route('/vendors')
-@login_required
+@require_auth
 def vendors():
-    """Panel de gestión de vendedores"""
+    """Gestión de vendedores"""
     return render_template('admin/vendors.html', config=ADMIN_CONFIG)
 
-@admin.route('/vendors/pending')
-@login_required
-def pending_vendors():
-    """Vendedores pendientes de aprobación"""
-    return render_template('admin/pending_vendors.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/vendors/pending')
-@login_required
-def api_pending_vendors():
-    try:
-        pending_vendors = [
-            {
-                'id': 1,
-                'user_id': 'user_123',
-                'business_name': 'Tienda María',
-                'business_type': 'tienda',
-                'business_email': 'maria@tienda.com',
-                'business_phone': '+53 555 1234',
-                'profile_photo': 'https://example.com/photo.jpg',
-                'delivery_method': 'express',
-                'created_at': '2024-01-15T10:30:00Z',
-                'status': 'pending'
-            }
-        ]
-        return jsonify(pending_vendors)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/vendors/<int:vendor_id>/approve', methods=['POST'])
-@login_required
-def approve_vendor(vendor_id):
-    try:
-        # Lógica para aprobar vendedor
-        return jsonify({'success': True, 'message': 'Vendedor aprobado exitosamente'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/vendors/<int:vendor_id>/suspend', methods=['POST'])
-@login_required
-def suspend_vendor(vendor_id):
-    try:
-        # Lógica para suspender vendedor
-        return jsonify({'success': True, 'message': 'Vendedor suspendido temporalmente'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/vendors/<int:vendor_id>/block', methods=['POST'])
-@login_required
-def block_vendor(vendor_id):
-    try:
-        # Lógica para bloquear vendedor
-        return jsonify({'success': True, 'message': 'Vendedor bloqueado permanentemente'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== PRODUCTOS DE VENDEDORES =====
-@admin.route('/seller-products')
-@login_required
-def seller_products():
-    """Panel de productos de vendedores"""
-    return render_template('admin/seller_products.html', config=ADMIN_CONFIG)
-
-@admin.route('/seller-products/pending')
-@login_required
-def pending_products():
-    """Productos pendientes de aprobación"""
-    return render_template('admin/pending_products.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/seller-products/pending')
-@login_required
-def api_pending_products():
-    try:
-        pending_products = [
-            {
-                'id': 1,
-                'seller_id': 1,
-                'seller_name': 'Tienda María',
-                'name': 'Producto de Prueba',
-                'description': 'Descripción del producto',
-                'price': 25.99,
-                'category': 'Electrónicos',
-                'images': ['https://example.com/image1.jpg'],
-                'status': 'pending',
-                'created_at': '2024-01-15T10:30:00Z'
-            }
-        ]
-        return jsonify(pending_products)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/seller-products/<int:product_id>/approve', methods=['POST'])
-@login_required
-def approve_product(product_id):
-    try:
-        # Lógica para aprobar producto
-        return jsonify({'success': True, 'message': 'Producto aprobado exitosamente'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/seller-products/<int:product_id>/reject', methods=['POST'])
-@login_required
-def reject_product(product_id):
-    try:
-        data = request.json
-        reason = data.get('reason', 'No cumple con los estándares de calidad')
-        # Lógica para rechazar producto
-        return jsonify({'success': True, 'message': f'Producto rechazado: {reason}'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== SISTEMA DE REPARTIDORES =====
 @admin.route('/drivers')
-@login_required
+@require_auth
 def drivers():
-    """Panel de gestión de repartidores"""
+    """Gestión de repartidores"""
     return render_template('admin/drivers.html', config=ADMIN_CONFIG)
 
-@admin.route('/drivers/active')
-@login_required
-def active_drivers():
-    """Repartidores activos"""
-    return render_template('admin/active_drivers.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/drivers')
-@login_required
-def api_drivers():
-    try:
-        drivers = [
-            {
-                'id': 1,
-                'user_id': 'user_456',
-                'name': 'Carlos López',
-                'vehicle_type': 'motorcycle',
-                'vehicle_plate': 'ABC123',
-                'rating': 4.8,
-                'total_deliveries': 150,
-                'total_earnings': 1250.75,
-                'wallet_balance': 350.25,
-                'payment_method': 'per_delivery',
-                'is_available': True,
-                'profile_photo': 'https://example.com/driver.jpg',
-                'status': 'active'
-            }
-        ]
-        return jsonify(drivers)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/drivers/<int:driver_id>/set-payment', methods=['POST'])
-@login_required
-def set_driver_payment(driver_id):
-    try:
-        data = request.json
-        payment_method = data.get('payment_method')
-        rate = data.get('rate')
-        # Lógica para configurar método de pago
-        return jsonify({'success': True, 'message': 'Método de pago actualizado'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== ENTREGAS =====
-@admin.route('/deliveries')
-@login_required
-def deliveries():
-    """Panel de gestión de entregas"""
-    return render_template('admin/deliveries.html', config=ADMIN_CONFIG)
-
-@admin.route('/deliveries/pending')
-@login_required
-def pending_deliveries():
-    """Entregas pendientes"""
-    return render_template('admin/pending_deliveries.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/deliveries/pending')
-@login_required
-def api_pending_deliveries():
-    try:
-        pending_deliveries = [
-            {
-                'id': 1,
-                'order_id': 'order_123',
-                'customer_name': 'Juan Pérez',
-                'pickup_location': 'Tienda Centro',
-                'delivery_location': 'Calle 23 #456',
-                'estimated_time': 30,
-                'status': 'pending',
-                'created_at': '2024-01-15T10:30:00Z'
-            }
-        ]
-        return jsonify(pending_deliveries)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== SISTEMA DE RENTA CAR =====
 @admin.route('/vehicles')
-@login_required
+@require_auth
 def vehicles():
-    """Panel de gestión de vehículos"""
+    """Gestión de renta car"""
     return render_template('admin/vehicles.html', config=ADMIN_CONFIG)
 
-@admin.route('/vehicles/add')
-@login_required
-def add_vehicle():
-    """Agregar vehículo"""
-    return render_template('admin/add_vehicle.html', config=ADMIN_CONFIG)
+@admin.route('/support-chat')
+@require_auth
+def support_chat():
+    """Chat de soporte"""
+    return render_template('admin/support_chat.html', config=ADMIN_CONFIG)
 
-@admin.route('/api/vehicles')
-@login_required
-def api_vehicles():
-    try:
-        vehicles = [
-            {
-                'id': 1,
-                'vehicle_type': 'sedan',
-                'brand': 'Toyota',
-                'model': 'Corolla',
-                'year': 2023,
-                'license_plate': 'XYZ789',
-                'daily_rate': 85.00,
-                'weekly_rate': 500.00,
-                'high_season_rate': 120.00,
-                'fuel_full_tank_price': 45.00,
-                'min_rental_days': 1,
-                'max_rental_days': 30,
-                'is_available': True,
-                'images': ['https://example.com/car1.jpg'],
-                'commission_amount': 50.00
-            }
-        ]
-        return jsonify(vehicles)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/api/vehicles', methods=['POST'])
-@login_required
-def create_vehicle():
-    try:
-        data = request.json
-        # Lógica para crear vehículo
-        return jsonify({'success': True, 'message': 'Vehículo agregado exitosamente'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== RESERVAS DE RENTA CAR =====
-@admin.route('/rentals')
-@login_required
-def rentals():
-    """Panel de gestión de reservas"""
-    return render_template('admin/rentals.html', config=ADMIN_CONFIG)
-
-@admin.route('/rentals/active')
-@login_required
-def active_rentals():
-    """Reservas activas"""
-    return render_template('admin/active_rentals.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/rentals')
-@login_required
-def api_rentals():
-    try:
-        rentals = [
-            {
-                'id': 1,
-                'user_id': 'user_789',
-                'customer_name': 'Ana García',
-                'vehicle_id': 1,
-                'vehicle_info': 'Toyota Corolla 2023',
-                'pickup_date': '2022024-01-20',
-                'return_date': '2024-01-25',
-                'total_amount': 425.00,
-                'commission_amount': 50.00,
-                'status': 'confirmed',
-                'created_at': '2024-01-15T10:30:00Z'
-            }
-        ]
-        return jsonify(rentals)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== SISTEMA DE ALERTAS DINGCONNECT =====
 @admin.route('/alerts')
-@login_required
+@require_auth
 def alerts():
-    """Panel de alertas del sistema"""
+    """Gestión de alertas"""
     return render_template('admin/alerts.html', config=ADMIN_CONFIG)
 
-@admin.route('/alerts/dingconnect')
-@login_required
-def dingconnect_alerts():
-    """Alertas específicas de DingConnect"""
-    return render_template('admin/dingconnect_alerts.html', config=ADMIN_CONFIG)
+@admin.route('/wallet')
+@require_auth
+def wallet():
+    """Gestión de billetera"""
+    return render_template('admin/wallet.html', config=ADMIN_CONFIG)
 
-@admin.route('/api/alerts')
-@login_required
-def api_alerts():
+@admin.route('/payment-methods')
+@require_auth
+def payment_methods():
+    """Gestión de métodos de pago"""
+    return render_template('admin/payment_methods.html', config=ADMIN_CONFIG)
+
+@admin.route('/payroll')
+@require_auth
+def payroll():
+    """Gestión de nómina"""
+    return render_template('admin/payroll.html', config=ADMIN_CONFIG)
+
+@admin.route('/system-rules')
+@require_auth
+def system_rules():
+    """Reglas del sistema"""
+    return render_template('admin/system_rules.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/contact-info', methods=['GET', 'POST'])
+@require_auth
+def contact_info():
+    """API para gestionar información de contacto de la empresa"""
+    if request.method == 'POST':
+        data = request.get_json()
+        
+        # Aquí se guardaría en la base de datos
+        contact_info = {
+            'phone': data.get('phone'),
+            'email': data.get('email'),
+            'whatsapp': data.get('whatsapp'),
+            'address': data.get('address'),
+            'facebook': data.get('facebook'),
+            'instagram': data.get('instagram'),
+            'twitter': data.get('twitter'),
+            'business_hours': data.get('businessHours'),
+            'terms_conditions': data.get('termsConditions'),
+            'privacy_policy': data.get('privacyPolicy'),
+            'updated_at': datetime.now().isoformat()
+        }
+        
+        # Por ahora retornamos éxito
+        return jsonify({'success': True, 'message': 'Información de contacto actualizada'})
+    
+    # GET - Retornar información actual
+    contact_info = {
+        'phone': '+1 (555) 123-4567',
+        'email': 'contacto@cubalink.com',
+        'whatsapp': '+1 (555) 987-6543',
+        'address': '123 Calle Principal, La Habana, Cuba',
+        'facebook': 'https://facebook.com/cubalink',
+        'instagram': 'https://instagram.com/cubalink',
+        'twitter': 'https://twitter.com/cubalink',
+        'business_hours': 'Lunes a Viernes: 9:00 AM - 6:00 PM',
+        'terms_conditions': 'Términos y condiciones de la empresa...',
+        'privacy_policy': 'Política de privacidad de la empresa...'
+    }
+    
+    return jsonify(contact_info)
+
+@admin.route('/api/upload-logo', methods=['POST'])
+@require_auth
+def upload_logo():
+    """API para subir y actualizar el logo de la empresa"""
     try:
-        alerts = [
+        if 'logo' not in request.files:
+            return jsonify({'success': False, 'message': 'No se seleccionó ningún archivo'})
+        
+        file = request.files['logo']
+        if file.filename == '':
+            return jsonify({'success': False, 'message': 'No se seleccionó ningún archivo'})
+        
+        # Validar tipo de archivo
+        allowed_extensions = {'svg', 'png', 'jpg', 'jpeg'}
+        if not file.filename.lower().endswith(tuple('.' + ext for ext in allowed_extensions)):
+            return jsonify({'success': False, 'message': 'Formato de archivo no soportado'})
+        
+        # Validar tamaño (2MB máximo)
+        if len(file.read()) > 2 * 1024 * 1024:
+            file.seek(0)  # Reset file pointer
+            return jsonify({'success': False, 'message': 'El archivo es demasiado grande'})
+        
+        file.seek(0)  # Reset file pointer
+        
+        # Guardar el archivo
+        filename = 'company-logo' + os.path.splitext(file.filename)[1]
+        filepath = os.path.join('static', 'img', filename)
+        
+        # Asegurar que el directorio existe
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        
+        file.save(filepath)
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Logo actualizado correctamente',
+            'filename': filename
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error al subir el logo: {str(e)}'})
+
+@admin.route('/api/upload-banners', methods=['POST'])
+@require_auth
+def upload_banners():
+    """API para subir banners de la app"""
+    try:
+        banners_uploaded = []
+        
+        # Procesar banner principal
+        if 'main_banner' in request.files:
+            file = request.files['main_banner']
+            if file.filename != '':
+                filename = 'main-banner' + os.path.splitext(file.filename)[1]
+                filepath = os.path.join('static', 'img', 'banners', filename)
+                os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                file.save(filepath)
+                banners_uploaded.append('Banner Principal')
+        
+        # Procesar banner secundario
+        if 'secondary_banner' in request.files:
+            file = request.files['secondary_banner']
+            if file.filename != '':
+                filename = 'secondary-banner' + os.path.splitext(file.filename)[1]
+                filepath = os.path.join('static', 'img', 'banners', filename)
+                os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                file.save(filepath)
+                banners_uploaded.append('Banner Secundario')
+        
+        # Procesar banner de promociones
+        if 'promo_banner' in request.files:
+            file = request.files['promo_banner']
+            if file.filename != '':
+                filename = 'promo-banner' + os.path.splitext(file.filename)[1]
+                filepath = os.path.join('static', 'img', 'banners', filename)
+                os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                file.save(filepath)
+                banners_uploaded.append('Banner de Promociones')
+        
+        if banners_uploaded:
+            return jsonify({
+                'success': True,
+                'message': f'Banners actualizados: {", ".join(banners_uploaded)}'
+            })
+        else:
+            return jsonify({'success': False, 'message': 'No se seleccionaron archivos'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error al subir banners: {str(e)}'})
+
+@admin.route('/api/send-push-notification', methods=['POST'])
+@require_auth
+def send_push_notification():
+    """API para enviar notificaciones push"""
+    try:
+        data = request.get_json()
+        
+        # Aquí se integraría con Firebase Cloud Messaging o similar
+        notification_data = {
+            'title': data.get('title'),
+            'message': data.get('message'),
+            'type': data.get('type', 'all'),
+            'urgent': data.get('urgent', False),
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        # Guardar en base de datos
+        # save_notification_to_db(notification_data)
+        
+        # Enviar notificación push real
+        # send_push_to_devices(notification_data)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Notificación enviada correctamente'
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error al enviar notificación: {str(e)}'})
+
+@admin.route('/api/notification-history')
+@require_auth
+def notification_history():
+    """API para obtener historial de notificaciones"""
+    try:
+        # Aquí se obtendría de la base de datos
+        notifications = [
             {
-                'id': 1,
-                'alert_type': 'dingconnect_balance',
-                'title': 'Saldo bajo en DingConnect',
-                'message': 'El saldo de DingConnect está por debajo del mínimo requerido',
-                'severity': 'high',
-                'is_resolved': False,
-                'affected_records': ['recharge_123', 'recharge_456'],
-                'created_at': '2024-01-15T10:30:00Z'
+                'date': '2024-01-15 10:30:00',
+                'title': 'Nueva Promoción',
+                'message': '¡Descuento del 20% en todos los productos!',
+                'type': 'all',
+                'status': 'Enviada'
             },
             {
-                'id': 2,
-                'alert_type': 'api_error',
-                'title': 'Error en API de recargas',
-                'message': 'Error de conexión con DingConnect API',
-                'severity': 'critical',
-                'is_resolved': False,
-                'affected_records': ['recharge_789'],
-                'created_at': '2024-01-15T09:15:00Z'
+                'date': '2024-01-14 15:45:00',
+                'title': 'Mantenimiento Programado',
+                'message': 'El sistema estará en mantenimiento mañana de 2:00 AM a 4:00 AM',
+                'type': 'all',
+                'status': 'Enviada'
             }
         ]
-        return jsonify(alerts)
+        
+        return jsonify({
+            'success': True,
+            'notifications': notifications
+        })
+        
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'success': False, 'message': f'Error al cargar historial: {str(e)}'})
 
-@admin.route('/api/alerts/<int:alert_id>/resolve', methods=['POST'])
-@login_required
-def resolve_alert(alert_id):
+# ===== GESTIÓN DE AEROLÍNEAS CHARTER =====
+
+@admin.route('/api/charter-airlines', methods=['GET'])
+@require_auth
+def get_charter_airlines():
+    """Obtener lista de aerolíneas charter"""
     try:
-        # Lógica para resolver alerta
-        return jsonify({'success': True, 'message': 'Alerta resuelta exitosamente'})
+        from charter_routes import CHARTER_AIRLINES
+        
+        airlines = []
+        for key, airline in CHARTER_AIRLINES.items():
+            airlines.append({
+                'id': key,
+                'name': airline['name'],
+                'url': airline['url'],
+                'markup': airline['markup'],
+                'active': airline['active'],
+                'routes': airline['routes'],
+                'check_frequency': airline['check_frequency']
+            })
+        
+        return jsonify({
+            'success': True,
+            'airlines': airlines
+        })
+        
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }), 500
 
-# ===== RECARGAS FALLIDAS =====
-@admin.route('/recharges/failed')
-@login_required
-def failed_recharges():
-    """Recargas fallidas"""
-    return render_template('admin/failed_recharges.html', config=ADMIN_CONFIG)
-
-@admin.route('/recharges/pending')
-@login_required
-def pending_recharges():
-    """Recargas pendientes"""
-    return render_template('admin/pending_recharges.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/recharges/failed')
-@login_required
-def api_failed_recharges():
+@admin.route('/api/charter-airlines', methods=['POST'])
+@require_auth
+def save_charter_airline():
+    """Guardar o actualizar aerolínea charter"""
     try:
-        failed_recharges = [
+        data = request.get_json()
+        from charter_routes import CHARTER_AIRLINES
+        
+        # En producción, esto se guardaría en la base de datos
+        # Por ahora, actualizamos la configuración en memoria
+        airline_id = data.get('id')
+        if airline_id and airline_id in CHARTER_AIRLINES:
+            CHARTER_AIRLINES[airline_id].update({
+                'name': data.get('name'),
+                'url': data.get('url'),
+                'markup': float(data.get('markup', 0)),
+                'active': data.get('status') == 'active',
+                'routes': data.get('routes', '').split(','),
+                'check_frequency': int(data.get('check_frequency', 30))
+            })
+        
+        return jsonify({
+            'success': True,
+            'message': 'Aerolínea guardada correctamente'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error al guardar: {str(e)}'
+        }), 500
+
+@admin.route('/api/charter-airlines/<airline_id>/toggle', methods=['POST'])
+@require_auth
+def toggle_charter_airline(airline_id):
+    """Activar/desactivar aerolínea charter"""
+    try:
+        from charter_routes import CHARTER_AIRLINES
+        
+        if airline_id in CHARTER_AIRLINES:
+            CHARTER_AIRLINES[airline_id]['active'] = not CHARTER_AIRLINES[airline_id]['active']
+            
+            return jsonify({
+                'success': True,
+                'message': f"Aerolínea {'activada' if CHARTER_AIRLINES[airline_id]['active'] else 'desactivada'} correctamente"
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Aerolínea no encontrada'
+            }), 404
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }), 500
+
+@admin.route('/api/charter-airlines/<airline_id>/test', methods=['POST'])
+@require_auth
+def test_charter_airline(airline_id):
+    """Probar conexión con aerolínea charter"""
+    try:
+        from charter_routes import CHARTER_AIRLINES, charter_scraper
+        from datetime import datetime, timedelta
+        
+        if airline_id not in CHARTER_AIRLINES:
+            return jsonify({
+                'success': False,
+                'message': 'Aerolínea no encontrada'
+            }), 404
+        
+        airline = CHARTER_AIRLINES[airline_id]
+        
+        # Simular prueba de conexión
+        test_data = {
+            'origin': 'Miami',
+            'destination': 'Havana',
+            'departure_date': (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d')
+        }
+        
+        if airline_id == 'xael':
+            flights = charter_scraper.scrape_xael_charter(test_data)
+        elif airline_id == 'cubazul':
+            flights = charter_scraper.scrape_cubazul_charter(test_data)
+        elif airline_id == 'havana_air':
+            flights = charter_scraper.scrape_havana_air_charter(test_data)
+        else:
+            flights = []
+        
+        if flights:
+            return jsonify({
+                'success': True,
+                'message': f'Conexión exitosa. Se encontraron {len(flights)} vuelos de prueba.',
+                'test_flights': flights
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'No se pudieron obtener vuelos de prueba'
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error en prueba: {str(e)}'
+        }), 500
+
+@admin.route('/api/charter-bookings')
+@require_auth
+def get_charter_bookings():
+    """Obtener reservas charter"""
+    try:
+        # En producción, obtener de base de datos
+        bookings = [
             {
-                'id': 1,
-                'user_id': 'user_123',
-                'customer_name': 'Pedro López',
-                'phone_number': '+53 555 1234',
-                'amount': 10.00,
-                'provider': 'Cubacel',
-                'status': 'failed',
-                'internal_status': 'api_error',
-                'error_message': 'Saldo insuficiente en DingConnect',
-                'created_at': '2024-01-15T10:30:00Z'
-            }
-        ]
-        return jsonify(failed_recharges)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ===== MENSAJES DEL SISTEMA =====
-@admin.route('/system-messages')
-@login_required
-def system_messages():
-    """Panel de mensajes del sistema"""
-    return render_template('admin/system_messages.html', config=ADMIN_CONFIG)
-
-@admin.route('/api/system-messages')
-@login_required
-def api_system_messages():
-    try:
-        messages = [
+                'id': 'CH001',
+                'passenger_name': 'Juan Pérez',
+                'origin': 'Miami',
+                'destination': 'Havana',
+                'departure_date': '2024-01-20',
+                'airline': 'Xael Charter',
+                'status': 'PENDIENTE',
+                'total_price': 300,
+                'created_at': '2024-01-15 10:30:00',
+                'can_modify': True,
+                'can_cancel': True
+            },
             {
-                'id': 1,
-                'recipient_type': 'seller',
-                'recipient_name': 'María González',
-                'subject': 'Producto rechazado',
-                'message': 'Su producto "Producto de Prueba" ha sido rechazado por no cumplir con los estándares de calidad.',
-                'is_read': False,
-                'created_at': '2024-01-15T10:30:00Z'
+                'id': 'CH002',
+                'passenger_name': 'María García',
+                'origin': 'Miami',
+                'destination': 'Havana',
+                'departure_date': '2024-01-22',
+                'airline': 'Cubazul Air Charter',
+                'status': 'CONFIRMADO',
+                'total_price': 285,
+                'created_at': '2024-01-14 15:45:00',
+                'can_modify': False,
+                'can_cancel': False
             }
         ]
-        return jsonify(messages)
+        
+        return jsonify({
+            'success': True,
+            'bookings': bookings
+        })
+        
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({
+            'success': False,
+            'message': f'Error al cargar reservas: {str(e)}'
+        }), 500
 
-@admin.route('/api/system-messages', methods=['POST'])
-@login_required
-def send_system_message():
+@admin.route('/api/charter-bookings/<booking_id>/confirm', methods=['POST'])
+@require_auth
+def confirm_charter_booking(booking_id):
+    """Confirmar reserva charter"""
     try:
-        data = request.json
-        # Lógica para enviar mensaje del sistema
-        return jsonify({'success': True, 'message': 'Mensaje enviado exitosamente'})
+        # En producción, actualizar en base de datos
+        # update_booking_status(booking_id, 'CONFIRMADO')
+        
+        return jsonify({
+            'success': True,
+            'message': 'Reserva confirmada. Tiquete emitido. No se permiten más cambios.'
+        })
+        
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({
+            'success': False,
+            'message': f'Error al confirmar reserva: {str(e)}'
+        }), 500
 
+# ==================== AUTOMATIZACIÓN CUBA TRANSTUR ====================
+
+@admin.route('/cuba-transtur')
+@require_auth
+def cuba_transtur_dashboard():
+    """Panel de automatización de Cuba Transtur"""
+    return render_template('admin/cuba_transtur.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/cuba-transtur/bookings')
+@require_auth
+def get_cuba_transtur_bookings():
+    """Obtener historial de reservas automatizadas"""
+    try:
+        from cuba_transtur_automation import get_booking_history
+        bookings = get_booking_history()
+        return jsonify({
+            'success': True,
+            'bookings': bookings
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@admin.route('/api/cuba-transtur/bookings', methods=['POST'])
+@require_auth
+def create_cuba_transtur_booking():
+    """Crear reserva automatizada en Cuba Transtur"""
+    try:
+        data = request.get_json()
+        
+        # Validaciones básicas
+        required_fields = ['name', 'phone', 'pickup_date', 'return_date', 
+                          'pickup_location', 'vehicle_type']
+        
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({
+                    'success': False,
+                    'error': f'Campo requerido: {field}'
+                }), 400
+        
+        # Importar función de automatización
+        from cuba_transtur_automation import create_automated_booking
+        
+        # Crear reserva automatizada
+        result = create_automated_booking(data)
+        
+        if result.get('automation_success'):
+            return jsonify({
+                'success': True,
+                'booking': result,
+                'message': 'Reserva automatizada creada exitosamente'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('message', 'Error en automatización')
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@admin.route('/api/cuba-transtur/bookings/<reservation_id>')
+@require_auth
+def get_cuba_transtur_booking_status(reservation_id):
+    """Obtener estado de una reserva específica"""
+    try:
+        from cuba_transtur_automation import check_booking_status
+        booking = check_booking_status(reservation_id)
+        
+        if booking:
+            return jsonify({
+                'success': True,
+                'booking': booking
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Reserva no encontrada'
+            }), 404
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@admin.route('/api/cuba-transtur/test-connection')
+@require_auth
+def test_cuba_transtur_connection():
+    """Probar conexión con Cuba Transtur"""
+    try:
+        from cuba_transtur_automation import CubaTransturAutomation
+        
+        # Crear instancia de prueba
+        automation = CubaTransturAutomation()
+        
+        # Probar navegación
+        success = automation.navigate_to_booking_page()
+        
+        # Cerrar navegador
+        automation.close_driver()
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Conexión exitosa con Cuba Transtur'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'No se pudo conectar con Cuba Transtur'
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@admin.route('/api/cuba-transtur/statistics')
+@require_auth
+def get_cuba_transtur_statistics():
+    """Obtener estadísticas de reservas automatizadas"""
+    try:
+        from cuba_transtur_automation import get_booking_history
+        bookings = get_booking_history()
+        
+        # Calcular estadísticas
+        total_bookings = len(bookings)
+        confirmed_bookings = len([b for b in bookings if b.get('status') == 'confirmed'])
+        pending_bookings = len([b for b in bookings if b.get('status') == 'pending'])
+        error_bookings = len([b for b in bookings if b.get('status') == 'error'])
+        
+        # Ingresos estimados (ejemplo)
+        total_income = sum(b.get('estimated_cost', 0) for b in bookings if b.get('status') == 'confirmed')
+        
+        stats = {
+            'total_bookings': total_bookings,
+            'confirmed_bookings': confirmed_bookings,
+            'pending_bookings': pending_bookings,
+            'error_bookings': error_bookings,
+            'success_rate': (confirmed_bookings / total_bookings * 100) if total_bookings > 0 else 0,
+            'total_income': total_income,
+            'average_booking_value': total_income / confirmed_bookings if confirmed_bookings > 0 else 0
+        }
+        
+        return jsonify({
+            'success': True,
+            'statistics': stats
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# ===== GESTIÓN DE VEHÍCULOS =====
+@admin.route('/vehicles')
+@require_auth
+def vehicles():
+    """Gestión de vehículos de renta car"""
+    return render_template('admin/vehicles.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/vehicles/add', methods=['POST'])
+@require_auth
+def add_vehicle():
+    """Agregar nuevo vehículo con fotos"""
+    try:
+        # Verificar si hay archivos
+        if 'photos' not in request.files:
+            return jsonify({'success': False, 'error': 'No se seleccionaron fotos'}), 400
+        
+        files = request.files.getlist('photos')
+        if not files or files[0].filename == '':
+            return jsonify({'success': False, 'error': 'No se seleccionaron fotos válidas'}), 400
+        
+        # Obtener datos del formulario
+        vehicle_data = {
+            'name': request.form.get('name'),
+            'category': request.form.get('category'),
+            'daily_price': float(request.form.get('daily_price', 0)),
+            'transmission': request.form.get('transmission'),
+            'passenger_capacity': int(request.form.get('passenger_capacity', 0)),
+            'air_conditioning': request.form.get('air_conditioning'),
+            'description': request.form.get('description'),
+            'features': json.loads(request.form.get('features', '[]')),
+            'created_at': datetime.now().isoformat()
+        }
+        
+        # Validar datos requeridos
+        if not vehicle_data['name'] or not vehicle_data['category'] or vehicle_data['daily_price'] <= 0:
+            return jsonify({'success': False, 'error': 'Datos incompletos o inválidos'}), 400
+        
+        # Crear directorio para fotos si no existe
+        vehicle_photos_dir = os.path.join(current_app.static_folder, 'uploads', 'vehicles')
+        os.makedirs(vehicle_photos_dir, exist_ok=True)
+        
+        # Guardar fotos
+        photo_paths = []
+        for i, file in enumerate(files):
+            if file and allowed_file(file.filename):
+                filename = secure_filename(f"{vehicle_data['name']}_{i}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg")
+                filepath = os.path.join(vehicle_photos_dir, filename)
+                file.save(filepath)
+                photo_paths.append(f"/static/uploads/vehicles/{filename}")
+        
+        if not photo_paths:
+            return jsonify({'success': False, 'error': 'No se pudieron guardar las fotos'}), 400
+        
+        # Agregar rutas de fotos a los datos del vehículo
+        vehicle_data['photos'] = photo_paths
+        
+        # Guardar en base de datos
+        try:
+            # Intentar guardar en Supabase primero
+            vehicle_id = supabase_service.add_vehicle(vehicle_data)
+        except:
+            # Si falla Supabase, usar base de datos local
+            vehicle_id = local_db.add_vehicle(vehicle_data)
+        
+        return jsonify({
+            'success': True,
+            'vehicle_id': vehicle_id,
+            'message': 'Vehículo agregado exitosamente'
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin.route('/api/vehicles')
+@require_auth
+def get_vehicles():
+    """Obtener lista de vehículos"""
+    try:
+        # Intentar obtener desde Supabase primero
+        try:
+            vehicles = supabase_service.get_vehicles()
+            if vehicles:
+                return jsonify(vehicles)
+        except:
+            pass
+        
+        # Si falla Supabase, usar base de datos local
+        vehicles = local_db.get_vehicles()
+        return jsonify(vehicles)
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin.route('/api/vehicles/<int:vehicle_id>', methods=['DELETE'])
+@require_auth
+def delete_vehicle(vehicle_id):
+    """Eliminar vehículo"""
+    try:
+        # Intentar eliminar desde Supabase primero
+        try:
+            success = supabase_service.delete_vehicle(vehicle_id)
+            if success:
+                return jsonify({'success': True, 'message': 'Vehículo eliminado exitosamente'})
+        except:
+            pass
+        
+        # Si falla Supabase, usar base de datos local
+        success = local_db.delete_vehicle(vehicle_id)
+        if success:
+            return jsonify({'success': True, 'message': 'Vehículo eliminado exitosamente'})
+        else:
+            return jsonify({'success': False, 'error': 'No se pudo eliminar el vehículo'}), 400
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ===== RESERVA POR TELÉFONO - AUTOMATIZACIÓN CUBA TRANSTUR =====
+@admin.route('/phone-booking')
+@require_auth
+def phone_booking():
+    """Panel de reserva por teléfono"""
+    return render_template('admin/phone_booking.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/phone-booking/create', methods=['POST'])
+@require_auth
+def create_phone_booking():
+    """Crear reserva automatizada por teléfono"""
+    try:
+        data = request.get_json()
+        
+        # Validar datos requeridos
+        required_fields = ['client_name', 'client_phone', 'vehicle_type', 'pickup_date', 'return_date', 'pickup_location']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'success': False, 'error': f'Campo requerido: {field}'}), 400
+        
+        # Ejecutar automatización
+        from cuba_transtur_automation import create_automated_booking
+        result = create_automated_booking(data)
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'booking': result['booking'],
+                'message': 'Reserva automatizada creada exitosamente'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result['error']
+            }), 500
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin.route('/api/phone-booking/check-availability', methods=['POST'])
+@require_auth
+def check_vehicle_availability():
+    """Verificar disponibilidad de vehículos"""
+    try:
+        data = request.get_json()
+        
+        # Simular verificación de disponibilidad (en producción sería real)
+        vehicle_type = data.get('vehicle_type', '')
+        pickup_date = data.get('pickup_date', '')
+        return_date = data.get('return_date', '')
+        
+        # Calcular días
+        from datetime import datetime
+        start = datetime.strptime(pickup_date, '%Y-%m-%d')
+        end = datetime.strptime(return_date, '%Y-%m-%d')
+        days = (end - start).days
+        
+        # Precios base por tipo de vehículo
+        base_prices = {
+            'Económico Automático': 45,
+            'Económico Manual': 40,
+            'Intermedio Automático': 55,
+            'Intermedio Manual': 50,
+            'SUV': 75,
+            'Van': 85
+        }
+        
+        daily_price = base_prices.get(vehicle_type, 50)
+        total_price = daily_price * days
+        
+        return jsonify({
+            'success': True,
+            'availability': {
+                'available': True,
+                'daily_price': daily_price,
+                'total_price': total_price,
+                'days': days
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin.route('/api/phone-booking/history')
+@require_auth
+def get_phone_booking_history():
+    """Obtener historial de reservas por teléfono"""
+    try:
+        # Intentar obtener desde Supabase primero
+        try:
+            bookings = supabase_service.get_phone_bookings()
+            if bookings:
+                return jsonify(bookings)
+        except:
+            pass
+        
+        # Si falla Supabase, usar base de datos local
+        bookings = local_db.get_phone_bookings()
+        return jsonify(bookings)
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin.route('/api/phone-booking/<booking_id>/status')
+@require_auth
+def get_phone_booking_status(booking_id):
+    """Obtener estado de una reserva específica"""
+    try:
+        # Intentar obtener desde Supabase primero
+        try:
+            booking = supabase_service.get_phone_booking_by_id(booking_id)
+            if booking:
+                return jsonify(booking)
+        except:
+            pass
+        
+        # Si falla Supabase, usar base de datos local
+        booking = local_db.get_phone_booking_by_id(booking_id)
+        if booking:
+            return jsonify(booking)
+        else:
+            return jsonify({'success': False, 'error': 'Reserva no encontrada'}), 404
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500

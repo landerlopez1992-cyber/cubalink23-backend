@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session, current_app
 import json
 import os
@@ -1179,7 +1178,7 @@ def upload_logo():
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'message': f'Error al subir el logo: {str(e)}'})
+        return jsonify({'success': False, 'message': 'Error al subir el logo: ' + str(e)})
 
 @admin.route('/api/upload-banners', methods=['POST'])
 @require_auth
@@ -1221,13 +1220,13 @@ def upload_banners():
         if banners_uploaded:
             return jsonify({
                 'success': True,
-                'message': f'Banners actualizados: {", ".join(banners_uploaded)}'
+                'message': 'Banners actualizados: ' + ', '.join(banners_uploaded)
             })
         else:
             return jsonify({'success': False, 'message': 'No se seleccionaron archivos'})
             
     except Exception as e:
-        return jsonify({'success': False, 'message': f'Error al subir banners: {str(e)}'})
+        return jsonify({'success': False, 'message': 'Error al subir banners: ' + str(e)})
 
 @admin.route('/api/send-push-notification', methods=['POST'])
 @require_auth
@@ -1257,7 +1256,7 @@ def send_push_notification():
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'message': f'Error al enviar notificación: {str(e)}'})
+        return jsonify({'success': False, 'message': 'Error al enviar notificación: ' + str(e)})
 
 @admin.route('/api/notification-history')
 @require_auth
@@ -1288,7 +1287,7 @@ def notification_history():
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'message': f'Error al cargar historial: {str(e)}'})
+        return jsonify({'success': False, 'message': 'Error al cargar historial: ' + str(e)})
 
 # ===== GESTIÓN DE AEROLÍNEAS CHARTER =====
 
@@ -1319,7 +1318,7 @@ def get_charter_airlines():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Error: {str(e)}'
+            'message': 'Error: ' + str(e)
         }), 500
 
 @admin.route('/api/charter-airlines', methods=['POST'])
@@ -1351,7 +1350,7 @@ def save_charter_airline():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Error al guardar: {str(e)}'
+            'message': 'Error al guardar: ' + str(e)
         }), 500
 
 @admin.route('/api/charter-airlines/<airline_id>/toggle', methods=['POST'])
@@ -1366,7 +1365,7 @@ def toggle_charter_airline(airline_id):
             
             return jsonify({
                 'success': True,
-                'message': f"Aerolínea {'activada' if CHARTER_AIRLINES[airline_id]['active'] else 'desactivada'} correctamente"
+                'message': "Aerolínea " + ('activada' if CHARTER_AIRLINES[airline_id]['active'] else 'desactivada') + " correctamente"
             })
         else:
             return jsonify({
@@ -1377,7 +1376,7 @@ def toggle_charter_airline(airline_id):
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Error: {str(e)}'
+            'message': 'Error: ' + str(e)
         }), 500
 
 @admin.route('/api/charter-airlines/<airline_id>/test', methods=['POST'])
@@ -1415,7 +1414,7 @@ def test_charter_airline(airline_id):
         if flights:
             return jsonify({
                 'success': True,
-                'message': f'Conexión exitosa. Se encontraron {len(flights)} vuelos de prueba.',
+                'message': 'Conexión exitosa. Se encontraron ' + str(len(flights)) + ' vuelos de prueba.',
                 'test_flights': flights
             })
         else:
@@ -1427,7 +1426,7 @@ def test_charter_airline(airline_id):
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Error en prueba: {str(e)}'
+            'message': 'Error en prueba: ' + str(e)
         }), 500
 
 @admin.route('/api/charter-bookings')
@@ -1473,7 +1472,7 @@ def get_charter_bookings():
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Error al cargar reservas: {str(e)}'
+            'message': 'Error al cargar reservas: ' + str(e)
         }), 500
 
 @admin.route('/api/charter-bookings/<booking_id>/confirm', methods=['POST'])
@@ -1492,7 +1491,7 @@ def confirm_charter_booking(booking_id):
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Error al confirmar reserva: {str(e)}'
+            'message': 'Error al confirmar reserva: ' + str(e)
         }), 500
 
 # ==================== AUTOMATIZACIÓN CUBA TRANSTUR ====================
@@ -1535,7 +1534,7 @@ def create_cuba_transtur_booking():
             if not data.get(field):
                 return jsonify({
                     'success': False,
-                    'error': f'Campo requerido: {field}'
+                    'error': 'Campo requerido: ' + field
                 }), 400
         
         # Importar función de automatización
@@ -1703,10 +1702,10 @@ def add_vehicle():
         photo_paths = []
         for i, file in enumerate(files):
             if file and allowed_file(file.filename):
-                filename = secure_filename(f"{vehicle_data['name']}_{i}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg")
+                filename = secure_filename(vehicle_data['name'] + "_" + str(i) + "_" + datetime.now().strftime('%Y%m%d_%H%M%S') + ".jpg")
                 filepath = os.path.join(vehicle_photos_dir, filename)
                 file.save(filepath)
-                photo_paths.append(f"/static/uploads/vehicles/{filename}")
+                photo_paths.append("/static/uploads/vehicles/" + filename)
         
         if not photo_paths:
             return jsonify({'success': False, 'error': 'No se pudieron guardar las fotos'}), 400
@@ -1714,7 +1713,7 @@ def add_vehicle():
         # Agregar rutas de fotos a los datos del vehículo
         vehicle_data['photos'] = photo_paths
         
-        # Guardar en base de datos local por ahora
+        # Guardar en base de datos local
         vehicle_id = local_db.add_vehicle(vehicle_data)
         
         return jsonify({
@@ -1733,5 +1732,18 @@ def get_vehicles():
     try:
         vehicles = local_db.get_vehicles()
         return jsonify(vehicles)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin.route('/api/vehicles/<int:vehicle_id>', methods=['DELETE'])
+@require_auth
+def delete_vehicle(vehicle_id):
+    """Eliminar vehículo"""
+    try:
+        success = local_db.delete_vehicle(vehicle_id)
+        if success:
+            return jsonify({'success': True, 'message': 'Vehículo eliminado exitosamente'})
+        else:
+            return jsonify({'success': False, 'error': 'Vehículo no encontrado'}), 404
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
