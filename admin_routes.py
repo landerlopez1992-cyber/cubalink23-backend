@@ -538,8 +538,8 @@ def get_transfers():
 # ===== CATEGORÍAS =====
 @admin.route('/api/categories')
 @require_auth
-def get_categories():
-    """Obtener categorías"""
+def get_product_categories():
+    """Obtener categorías de productos"""
     try:
         categories = supabase_service.get_categories()
         return jsonify(categories)
