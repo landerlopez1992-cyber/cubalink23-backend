@@ -511,11 +511,14 @@
             
             // Obtener usuarios desde la API
             fetch('/admin/api/users')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success === false) {
-                        throw new Error(data.error || 'Error al cargar usuarios');
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error en la respuesta del servidor: ' + response.status);
                     }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Datos recibidos:', data);
                     
                     const users = Array.isArray(data) ? data : [];
                     
