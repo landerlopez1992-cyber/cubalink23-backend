@@ -290,82 +290,117 @@ def users():
     """Gestión de usuarios"""
     return render_template('admin/users.html', config=ADMIN_CONFIG)
 
-@admin.route('/api/users')
+@admin.route('/api/users', methods=['GET'])
 @require_auth
 def get_users():
-    """Obtener lista de usuarios desde Supabase"""
+    """Obtener usuarios desde base de datos local"""
     try:
-        users = supabase_service.get_users()
+        # Intentar obtener desde Supabase primero
+        try:
+            users = supabase_service.get_users()
+            if users:
+                return jsonify(users)
+        except:
+            pass
+        
+        # Si falla Supabase, usar base de datos local
+        users = local_db.get_users()
         return jsonify(users)
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@admin.route('/api/users/<user_id>')
-@require_auth
-def get_user(user_id):
-    """Obtener usuario específico"""
-    try:
-        user = supabase_service.get_user_by_id(user_id)
-        if user:
-            return jsonify(user)
-        else:
-            return jsonify({'success': False, 'error': 'Usuario no encontrado'}), 404
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@admin.route('/api/users/<user_id>/status', methods=['PUT'])
-@require_auth
-def update_user_status(user_id):
-    """Actualizar estado del usuario (bloquear/desbloquear)"""
-    try:
-        data = request.get_json()
-        blocked = data.get('blocked', False)
-        
-        success = supabase_service.update_user_status(user_id, blocked)
-        if success:
-            return jsonify({'success': True, 'message': 'Estado del usuario actualizado'})
-        else:
-            return jsonify({'success': False, 'error': 'Error al actualizar estado'}), 500
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'error': str(e)}), 500
 
 @admin.route('/api/users', methods=['POST'])
 @require_auth
 def add_user():
     """Agregar nuevo usuario"""
     try:
-        data = request.get_json()
-        user = supabase_service.add_user(data)
-        return jsonify({'success': True, 'user': user, 'message': 'Usuario agregado exitosamente'})
+        data = request.json
+        
+        # Validar datos requeridos
+        if not data.get('email') or not data.get('name'):
+            return jsonify({'error': 'Email y nombre son requeridos'}), 400
+        
+        # Intentar agregar a Supabase primero
+        try:
+            user = supabase_service.add_user(data)
+            return jsonify(user)
+        except:
+            # Si falla Supabase, usar base de datos local
+            user = local_db.add_user(data)
+            return jsonify(user)
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'error': str(e)}), 500
 
 @admin.route('/api/users/<user_id>', methods=['PUT'])
 @require_auth
 def update_user(user_id):
     """Actualizar usuario"""
     try:
-        data = request.get_json()
-        user = supabase_service.update_user(user_id, data)
-        if user:
-            return jsonify({'success': True, 'user': user, 'message': 'Usuario actualizado exitosamente'})
-        else:
-            return jsonify({'success': False, 'error': 'Usuario no encontrado'}), 404
+        data = request.json
+        
+        # Validar datos requeridos
+        if not data.get('email') or not data.get('name'):
+            return jsonify({'error': 'Email y nombre son requeridos'}), 400
+        
+        # Intentar actualizar en Supabase primero
+        try:
+            user = supabase_service.update_user(user_id, data)
+            return jsonify(user)
+        except:
+            # Si falla Supabase, usar base de datos local
+            user = local_db.update_user(user_id, data)
+            return jsonify(user)
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'error': str(e)}), 500
 
 @admin.route('/api/users/<user_id>', methods=['DELETE'])
 @require_auth
 def delete_user(user_id):
     """Eliminar usuario"""
     try:
-        success = supabase_service.delete_user(user_id)
-        if success:
-            return jsonify({'success': True, 'message': 'Usuario eliminado exitosamente'})
-        else:
-            return jsonify({'success': False, 'error': 'Usuario no encontrado'}), 404
+        # Intentar eliminar en Supabase primero
+        try:
+            success = supabase_service.delete_user(user_id)
+            return jsonify({'success': success})
+        except:
+            # Si falla Supabase, usar base de datos local
+            success = local_db.delete_user(user_id)
+            if success:
+                return jsonify({'success': True})
+            else:
+                return jsonify({'error': 'Usuario no encontrado'}), 404
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/users/<user_id>/toggle', methods=['POST'])
+@require_auth
+def toggle_user_status(user_id):
+    """Bloquear/desbloquear usuario"""
+    try:
+        data = request.json
+        blocked = data.get('blocked', False)
+        
+        # Intentar actualizar en Supabase primero
+        try:
+            success = supabase_service.update_user_status(user_id, blocked)
+            return jsonify({'success': success})
+        except:
+            # Si falla Supabase, usar base de datos local
+            success = local_db.block_user(user_id, blocked)
+            return jsonify({'success': success})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/users/<user_id>/activity', methods=['POST'])
+@require_auth
+def update_user_activity(user_id):
+    """Actualizar actividad del usuario"""
+    try:
+        # Actualizar actividad en base de datos local
+        local_db.update_user_activity(user_id)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # ===== GESTIÓN DE ÓRDENES =====
 @admin.route('/orders')
@@ -1736,3 +1771,87 @@ def delete_vehicle(vehicle_id):
             return jsonify({'success': False, 'error': 'Vehículo no encontrado'}), 404
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+# ===== GESTIÓN DE USUARIOS =====
+@admin.route('/users')
+@require_auth
+def users():
+    """Gestión de usuarios"""
+    return render_template('admin/users.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/users')
+@require_auth
+def get_users():
+    """Obtener lista de usuarios desde Supabase"""
+    try:
+        users = supabase_service.get_users()
+        return jsonify(users)
+    except Exception as e:
+        print("Error getting users: " + str(e))
+        return jsonify([]), 500
+
+@admin.route('/api/users/<user_id>')
+@require_auth
+def get_user_by_id(user_id):
+    """Obtener usuario específico por ID"""
+    try:
+        user = supabase_service.get_user_by_id(user_id)
+        if user:
+            return jsonify(user)
+        else:
+            return jsonify({'error': 'Usuario no encontrado'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/users', methods=['POST'])
+@require_auth
+def add_user():
+    """Agregar nuevo usuario"""
+    try:
+        data = request.get_json()
+        user_id = supabase_service.add_user(data)
+        return jsonify({'success': True, 'user_id': user_id})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/users/<user_id>', methods=['PUT'])
+@require_auth
+def update_user(user_id):
+    """Actualizar usuario"""
+    try:
+        data = request.get_json()
+        success = supabase_service.update_user(user_id, data)
+        if success:
+            return jsonify({'success': True})
+        else:
+            return jsonify({'error': 'Usuario no encontrado'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/users/<user_id>/status', methods=['PUT'])
+@require_auth
+def update_user_status(user_id):
+    """Actualizar estado del usuario (bloquear/desbloquear)"""
+    try:
+        data = request.get_json()
+        new_status = data.get('status', 'Activo')
+        success = supabase_service.update_user_status(user_id, new_status)
+        if success:
+            return jsonify({'success': True, 'status': new_status})
+        else:
+            return jsonify({'error': 'Usuario no encontrado'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/api/users/<user_id>', methods=['DELETE'])
+@require_auth
+def delete_user(user_id):
+    """Eliminar usuario"""
+    try:
+        success = supabase_service.delete_user(user_id)
+        if success:
+            return jsonify({'success': True, 'message': 'Usuario eliminado exitosamente'})
+        else:
+            return jsonify({'error': 'Usuario no encontrado'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
