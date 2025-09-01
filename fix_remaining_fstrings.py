@@ -64,3 +64,4 @@ with open('supabase_service.py', 'w') as f:
     f.write(content)
 
 print("Remaining f-strings fixed successfully!")
+

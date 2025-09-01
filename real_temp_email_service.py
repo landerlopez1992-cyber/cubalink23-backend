@@ -211,3 +211,4 @@ def get_booking_confirmation_status(reservation_id):
 def validate_temp_email(email):
     """Validar email temporal"""
     return email_validator.validate_temp_email(email)
+

@@ -549,3 +549,4 @@ def simulate_vehicle_rental_flow():
 
 if __name__ == "__main__":
     simulate_vehicle_rental_flow()
+

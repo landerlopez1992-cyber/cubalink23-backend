@@ -228,3 +228,4 @@ python3 test_support_chat.py
 ```
 
 Este script prueba todas las funcionalidades del sistema de chat de soporte.
+

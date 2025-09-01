@@ -639,3 +639,4 @@ class SupabaseService:
 
 # Instancia global
 supabase_service = SupabaseService()
+
