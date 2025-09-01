@@ -16,8 +16,8 @@ class SupabaseService:
         self.supabase_service_key = os.getenv('SUPABASE_SERVICE_KEY', 'your-service-key')
         
         self.headers = {
-            'apikey': self.supabase_anon_key,
-            'Authorization': 'Bearer ' + self.supabase_anon_key,
+            'apikey': self.supabase_key,
+            'Authorization': 'Bearer ' + self.supabase_key,
             'Content-Type': 'application/json'
         }
     
