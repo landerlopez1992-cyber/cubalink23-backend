@@ -319,3 +319,4 @@ El sistema incluye más de **30 configuraciones predefinidas** organizadas en 6 
 - **App**: 6 configuraciones
 
 Además incluye **3 reglas de negocio** y **3 límites del sistema** por defecto.
+

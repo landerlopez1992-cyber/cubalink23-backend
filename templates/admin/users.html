@@ -505,15 +505,76 @@
         });
 
         function loadUsersData() {
-            // Simular carga de datos
-            document.getElementById('total-users').textContent = '0';
-            document.getElementById('active-users').textContent = '0';
-            document.getElementById('new-users').textContent = '0';
-            document.getElementById('blocked-users').textContent = '0';
-            
-            // Simular tabla vacía
+            // Mostrar loading
             document.getElementById('users-table').innerHTML = 
-                '<tr><td colspan="7" class="text-center">No hay usuarios registrados</td></tr>';
+                '<tr><td colspan="7" class="text-center"><i class="fas fa-spinner fa-spin"></i> Cargando usuarios...</td></tr>';
+            
+            // Obtener usuarios desde la API
+            fetch('/admin/api/users')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success === false) {
+                        throw new Error(data.error || 'Error al cargar usuarios');
+                    }
+                    
+                    const users = Array.isArray(data) ? data : [];
+                    
+                    // Actualizar estadísticas
+                    document.getElementById('total-users').textContent = users.length;
+                    document.getElementById('active-users').textContent = users.filter(u => !u.blocked).length;
+                    document.getElementById('new-users').textContent = users.filter(u => {
+                        const created = new Date(u.created_at);
+                        const now = new Date();
+                        const diffDays = (now - created) / (1000 * 60 * 60 * 24);
+                        return diffDays <= 7;
+                    }).length;
+                    document.getElementById('blocked-users').textContent = users.filter(u => u.blocked).length;
+                    
+                    // Actualizar tabla
+                    if (users.length === 0) {
+                        document.getElementById('users-table').innerHTML = 
+                            '<tr><td colspan="7" class="text-center">No hay usuarios registrados</td></tr>';
+                    } else {
+                        const tableBody = document.getElementById('users-table');
+                        tableBody.innerHTML = users.map(user => `
+                            <tr>
+                                <td>${user.name || 'N/A'}</td>
+                                <td>${user.email || 'N/A'}</td>
+                                <td>${user.user_id || 'N/A'}</td>
+                                <td>${user.searches || 0}</td>
+                                <td>${formatDate(user.last_seen)}</td>
+                                <td>
+                                    <span class="badge ${user.blocked ? 'bg-danger' : 'bg-success'}">
+                                        ${user.blocked ? 'Bloqueado' : 'Activo'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-info" onclick="viewUserDetails('${user.id}')" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-warning" onclick="editUser('${user.id}')" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm ${user.blocked ? 'btn-success' : 'btn-danger'}" 
+                                                onclick="toggleUserStatus('${user.id}', ${!user.blocked})" 
+                                                title="${user.blocked ? 'Desbloquear' : 'Bloquear'}">
+                                            <i class="fas ${user.blocked ? 'fa-unlock' : 'fa-lock'}"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-secondary" onclick="viewUserHistory('${user.id}')" title="Historial">
+                                            <i class="fas fa-history"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('users-table').innerHTML = 
+                        '<tr><td colspan="7" class="text-center text-danger">Error al cargar usuarios: ' + error.message + '</td></tr>';
+                });
         }
 
         function refreshUsers() {
@@ -527,11 +588,83 @@
         function addUser() {
             const form = document.getElementById('addUserForm');
             const formData = new FormData(form);
+            
+            const userData = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                user_id: formData.get('user_id'),
+                searches: parseInt(formData.get('searches') || '0'),
+                blocked: formData.get('blocked') === 'on'
+            };
+            
+            fetch('/admin/api/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Usuario agregado correctamente');
+                    bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+                    loadUsersData();
+                    form.reset();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al agregar usuario');
+            });
+        }
+
+        function toggleUserStatus(userId, blocked) {
+            const action = blocked ? 'bloquear' : 'desbloquear';
+            if (!confirm(`¿Estás seguro de que quieres ${action} este usuario?`)) {
+                return;
+            }
+            
+            fetch(`/admin/api/users/${userId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ blocked: blocked })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Usuario ${action}do correctamente`);
+                    loadUsersData();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al actualizar estado del usuario');
+            });
         }
 
         function viewUserDetails(userId) {
-            // Implementar vista detallada del usuario
-            alert('Ver detalles del usuario ' + userId);
+            fetch(`/admin/api/users/${userId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success === false) {
+                        alert('Error: ' + data.error);
+                        return;
+                    }
+                    
+                    const user = data;
+                    alert(`Detalles del usuario:\n\nNombre: ${user.name}\nEmail: ${user.email}\nID: ${user.user_id}\nBúsquedas: ${user.searches}\nÚltima actividad: ${formatDate(user.last_seen)}\nEstado: ${user.blocked ? 'Bloqueado' : 'Activo'}`);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al obtener detalles del usuario');
+                });
         }
 
         function viewUserHistory(userId) {
@@ -541,20 +674,22 @@
 
         function editUser(userId) {
             // Implementar edición de usuario
-            alert('Editar usuario ' + userId);
+            alert('Función de edición en desarrollo');
         }
 
         function viewPaymentPhoto(paymentId) {
             // Implementar vista de foto de pago Zelle
             alert('Ver foto de transacción Zelle ' + paymentId);
         }
-            
-            // Aquí iría la lógica para agregar usuario
-            alert('Usuario agregado correctamente');
-            
-            // Cerrar modal y recargar datos
-            bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
-            loadUsersData();
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleString('es-ES');
+            } catch (e) {
+                return 'N/A';
+            }
         }
     </script>
 </body>

@@ -270,3 +270,4 @@ Para soporte técnico o preguntas sobre el sistema, contactar al equipo de desar
 **Versión**: 1.0.0  
 **Última actualización**: Diciembre 2024  
 **Desarrollado por**: Equipo Cubalink23
+

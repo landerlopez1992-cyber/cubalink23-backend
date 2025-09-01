@@ -271,3 +271,4 @@ def send_booking_confirmation(booking_data):
 def notify_admin_new_booking(booking_data):
     """Notificar admin sobre nueva reserva"""
     return notification_service.notify_admin_booking(booking_data)
+

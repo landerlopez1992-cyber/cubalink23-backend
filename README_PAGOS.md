@@ -304,3 +304,4 @@ Para soporte técnico o preguntas sobre el sistema, contactar al equipo de desar
 **Última actualización**: Diciembre 2024  
 **Desarrollado por**: Equipo Cubalink23  
 **Integración**: Square Payments
+
