@@ -652,12 +652,36 @@ def search_airports():
             'Duffel-Version': 'v2'
         }
         
-        url = f'https://api.duffel.com/air/airports?name[icontains]={query}&limit=10'
-        response = requests.get(url, headers=headers)
+        # Múltiples estrategias de búsqueda
+        urls_to_try = [
+            f'https://api.duffel.com/air/airports?iata_code[eq]={query.upper()}&limit=5',  # Código exacto
+            f'https://api.duffel.com/air/airports?name[icontains]={query}&limit=10',        # Por nombre
+            f'https://api.duffel.com/air/airports?city_name[icontains]={query}&limit=10'   # Por ciudad
+        ]
         
-        if response.status_code == 200:
-            data = response.json()
-            airports = data.get('data', [])
+        all_airports = []
+        for url in urls_to_try:
+            try:
+                resp = requests.get(url, headers=headers)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    airports_batch = data.get('data', [])
+                    all_airports.extend(airports_batch)
+            except:
+                continue
+        
+        # Remover duplicados
+        seen_codes = set()
+        airports = []
+        for airport in all_airports:
+            code = airport.get('iata_code', '')
+            if code and code not in seen_codes:
+                seen_codes.add(code)
+                airports.append(airport)
+        
+        print(f"🔍 Total aeropuertos obtenidos: {len(airports)}")
+        
+        if len(airports) > 0:
             
             # FILTRADO MANUAL: Solo aeropuertos que coincidan con búsqueda
             filtered_airports = []
@@ -691,7 +715,7 @@ def search_airports():
             print(f"✈️ Aeropuertos encontrados: {len(formatted_airports)}")
             return jsonify(formatted_airports)
         else:
-            print(f"❌ Error Duffel API: {response.status_code}")
+            print("❌ No se encontraron aeropuertos en Duffel API")
             return jsonify([])
         
     except Exception as e:
