@@ -44,6 +44,6 @@ def test():
     })
 
 if __name__ == '__main__':
-    print('🚀 Iniciando CubaLink23 Backend...')
+    print('🚀 Iniciando CubaLink23 Backend v2.2 - FIXED DEPS...')
     port = int(os.environ.get('PORT', 3005))
     app.run(host='0.0.0.0', port=port, debug=False)
