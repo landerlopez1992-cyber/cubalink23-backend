@@ -652,36 +652,16 @@ def search_airports():
             'Duffel-Version': 'v2'
         }
         
-        # Múltiples estrategias de búsqueda
-        urls_to_try = [
-            f'https://api.duffel.com/air/airports?iata_code[eq]={query.upper()}&limit=5',  # Código exacto
-            f'https://api.duffel.com/air/airports?name[icontains]={query}&limit=10',        # Por nombre
-            f'https://api.duffel.com/air/airports?city_name[icontains]={query}&limit=10'   # Por ciudad
-        ]
+        # Usar endpoint correcto según documentación  
+        url = f'https://api.duffel.com/air/airports?search={query}&limit=20'
+        print(f"🔍 URL Duffel: {url}")
         
-        all_airports = []
-        for url in urls_to_try:
-            try:
-                resp = requests.get(url, headers=headers)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    airports_batch = data.get('data', [])
-                    all_airports.extend(airports_batch)
-            except:
-                continue
+        response = requests.get(url, headers=headers)
         
-        # Remover duplicados
-        seen_codes = set()
-        airports = []
-        for airport in all_airports:
-            code = airport.get('iata_code', '')
-            if code and code not in seen_codes:
-                seen_codes.add(code)
-                airports.append(airport)
-        
-        print(f"🔍 Total aeropuertos obtenidos: {len(airports)}")
-        
-        if len(airports) > 0:
+        if response.status_code == 200:
+            data = response.json()
+            airports = data.get('data', [])
+            print(f"🔍 Total aeropuertos obtenidos: {len(airports)}")
             
             # FILTRADO MANUAL: Solo aeropuertos que coincidan con búsqueda
             filtered_airports = []
