@@ -659,9 +659,27 @@ def search_airports():
             data = response.json()
             airports = data.get('data', [])
             
+            # FILTRADO MANUAL: Solo aeropuertos que coincidan con búsqueda
+            filtered_airports = []
+            query_lower = query.lower()
+            
+            for airport in airports:
+                # Verificar si coincide con IATA, nombre, ciudad
+                iata_code = airport.get('iata_code', '').lower()
+                name = airport.get('name', '').lower()
+                city = airport.get('city_name', '').lower()
+                
+                if (query_lower in iata_code or 
+                    query_lower in name or 
+                    query_lower in city or
+                    iata_code.startswith(query_lower)):
+                    filtered_airports.append(airport)
+            
+            print(f"🔍 Filtrados {len(filtered_airports)} de {len(airports)} aeropuertos")
+            
             # Transformar a formato Flutter
             formatted_airports = []
-            for airport in airports:
+            for airport in filtered_airports:
                 formatted_airports.append({
                     'iata_code': airport.get('iata_code', ''),
                     'name': airport.get('name', ''),
