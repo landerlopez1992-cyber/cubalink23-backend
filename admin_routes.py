@@ -502,10 +502,9 @@ def get_flights():
 
 @admin.route('/api/flights/search', methods=['POST'])
 def search_flights():
-    """🔍 Búsqueda de vuelos - Endpoint para app Flutter"""
+    """🔍 Búsqueda de vuelos - Endpoint para app Flutter (SOLO DUFFEL)"""
     try:
         from duffel_service import DuffelService
-        from charter_scraper import ChartorScraper
         
         data = request.get_json()
         
@@ -514,29 +513,24 @@ def search_flights():
         destination = data.get('destination') 
         departure_date = data.get('departure_date')
         passengers = data.get('passengers', 1)
-        airline_type = data.get('airlineType', 'comerciales')
+        airline_type = data.get('airline_type', 'comerciales')
         
-        print(f"🔍 Búsqueda: {origin} → {destination} | Tipo: {airline_type}")
+        print(f"🔍 Búsqueda DUFFEL: {origin} → {destination} | Tipo: {airline_type}")
         
         flights = []
         
-        if airline_type == 'comerciales' or airline_type == 'ambos':
-            # Usar Duffel API para vuelos comerciales
+        # SOLO usar Duffel API (evitar charter que necesita bs4)
+        if airline_type in ['comerciales', 'ambos']:
             duffel_service = DuffelService()
             commercial_flights = duffel_service.search_flights(
                 origin, destination, departure_date, passengers
             )
             flights.extend(commercial_flights)
-            print(f"✈️ Vuelos comerciales encontrados: {len(commercial_flights)}")
+            print(f"✈️ Vuelos Duffel encontrados: {len(commercial_flights)}")
         
-        if airline_type == 'charter' or airline_type == 'ambos':
-            # Usar scraper para vuelos charter
-            charter_scraper = ChartorScraper()
-            charter_flights = charter_scraper.search_charter_flights(
-                origin, destination, departure_date, passengers
-            )
-            flights.extend(charter_flights)
-            print(f"🛩️ Vuelos charter encontrados: {len(charter_flights)}")
+        # TODO: Charter flights require bs4 - disabled until dependency fixed
+        if airline_type == 'charter':
+            print("⚠️ Vuelos charter temporalmente deshabilitados")
         
         print(f"🎯 Total vuelos encontrados: {len(flights)}")
         
