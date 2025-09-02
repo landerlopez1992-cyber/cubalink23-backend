@@ -652,9 +652,9 @@ def search_airports():
             'Duffel-Version': 'v2'
         }
         
-        # Usar endpoint correcto según documentación  
-        url = f'https://api.duffel.com/air/airports?search={query}&limit=20'
-        print(f"🔍 URL Duffel: {url}")
+        # Usar Place Suggestion API según documentación oficial
+        url = f'https://api.duffel.com/air/suggestions?query={query}&limit=20'
+        print(f"🔍 URL Duffel Place Suggestion API: {url}")
         
         response = requests.get(url, headers=headers)
         
