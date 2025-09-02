@@ -533,7 +533,7 @@ def search_flights():
             headers = {
                 'Accept': 'application/json',
                 'Authorization': f'Bearer {api_token}',
-                'Duffel-Version': 'v1',
+                'Duffel-Version': 'v2',
                 'Content-Type': 'application/json'
             }
             
@@ -649,7 +649,7 @@ def search_airports():
         headers = {
             'Accept': 'application/json',
             'Authorization': f'Bearer {api_token}',
-            'Duffel-Version': 'v1'
+            'Duffel-Version': 'v2'
         }
         
         url = f'https://api.duffel.com/air/airports?name[icontains]={query}&limit=10'
@@ -665,8 +665,8 @@ def search_airports():
                 formatted_airports.append({
                     'iata_code': airport.get('iata_code', ''),
                     'name': airport.get('name', ''),
-                    'city': airport.get('city', {}).get('name', ''),
-                    'country': airport.get('city', {}).get('country', {}).get('name', ''),
+                    'city': airport.get('city_name', ''),
+                    'country': airport.get('iata_country_code', ''),
                     'time_zone': airport.get('time_zone', '')
                 })
             
