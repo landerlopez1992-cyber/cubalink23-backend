@@ -498,6 +498,120 @@ def get_flights():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# ===== ENDPOINTS PARA APP FLUTTER =====
+
+@admin.route('/api/flights/search', methods=['POST'])
+def search_flights():
+    """🔍 Búsqueda de vuelos - Endpoint para app Flutter"""
+    try:
+        from duffel_service import DuffelService
+        from charter_scraper import ChartorScraper
+        
+        data = request.get_json()
+        
+        # Extraer parámetros
+        origin = data.get('origin')
+        destination = data.get('destination') 
+        departure_date = data.get('departure_date')
+        passengers = data.get('passengers', 1)
+        airline_type = data.get('airlineType', 'comerciales')
+        
+        print(f"🔍 Búsqueda: {origin} → {destination} | Tipo: {airline_type}")
+        
+        flights = []
+        
+        if airline_type == 'comerciales' or airline_type == 'ambos':
+            # Usar Duffel API para vuelos comerciales
+            duffel_service = DuffelService()
+            commercial_flights = duffel_service.search_flights(
+                origin, destination, departure_date, passengers
+            )
+            flights.extend(commercial_flights)
+            print(f"✈️ Vuelos comerciales encontrados: {len(commercial_flights)}")
+        
+        if airline_type == 'charter' or airline_type == 'ambos':
+            # Usar scraper para vuelos charter
+            charter_scraper = ChartorScraper()
+            charter_flights = charter_scraper.search_charter_flights(
+                origin, destination, departure_date, passengers
+            )
+            flights.extend(charter_flights)
+            print(f"🛩️ Vuelos charter encontrados: {len(charter_flights)}")
+        
+        print(f"🎯 Total vuelos encontrados: {len(flights)}")
+        
+        return jsonify({
+            'success': True,
+            'data': flights,
+            'total': len(flights)
+        })
+        
+    except Exception as e:
+        print(f"❌ Error en búsqueda de vuelos: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'data': []
+        }), 500
+
+@admin.route('/api/flights/airports')
+def search_airports():
+    """🏢 Búsqueda de aeropuertos - Endpoint para app Flutter"""
+    try:
+        from duffel_service import DuffelService
+        
+        query = request.args.get('q', '')
+        print(f"🔍 Buscando aeropuertos: '{query}'")
+        
+        if not query:
+            return jsonify([])
+        
+        # Usar Duffel API para búsqueda de aeropuertos
+        duffel_service = DuffelService()
+        airports = duffel_service.search_airports(query)
+        
+        print(f"✈️ Aeropuertos encontrados: {len(airports)}")
+        
+        return jsonify(airports)
+        
+    except Exception as e:
+        print(f"❌ Error en búsqueda de aeropuertos: {str(e)}")
+        return jsonify([])
+
+@admin.route('/api/flights/airlines')
+def get_airlines():
+    """🏢 Obtener aerolíneas disponibles - Endpoint para app Flutter"""
+    try:
+        # Aerolíneas populares disponibles
+        airlines = [
+            {'code': 'AA', 'name': 'American Airlines'},
+            {'code': 'LA', 'name': 'LATAM Airlines'},
+            {'code': 'CM', 'name': 'Copa Airlines'},
+            {'code': 'DL', 'name': 'Delta Air Lines'},
+            {'code': 'UA', 'name': 'United Airlines'},
+            {'code': 'AC', 'name': 'Air Canada'},
+            {'code': 'CU', 'name': 'Cubana de Aviación'}
+        ]
+        
+        return jsonify(airlines)
+        
+    except Exception as e:
+        print(f"❌ Error obteniendo aerolíneas: {str(e)}")
+        return jsonify([])
+
+@admin.route('/api/flights/test')
+def test_flights_endpoint():
+    """🧪 Test endpoint para app Flutter"""
+    return jsonify({
+        'status': 'ok',
+        'message': 'Flights API funcionando correctamente',
+        'endpoints': [
+            '/api/flights/search',
+            '/api/flights/airports', 
+            '/api/flights/airlines'
+        ]
+    })
+
 @admin.route('/api/routes')
 @require_auth
 def get_routes():
