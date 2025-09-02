@@ -599,18 +599,7 @@ def get_airlines():
         print(f"❌ Error obteniendo aerolíneas: {str(e)}")
         return jsonify([])
 
-@admin.route('/api/flights/test')
-def test_flights_endpoint():
-    """🧪 Test endpoint para app Flutter"""
-    return jsonify({
-        'status': 'ok',
-        'message': 'Flights API funcionando correctamente',
-        'endpoints': [
-            '/api/flights/search',
-            '/api/flights/airports', 
-            '/api/flights/airlines'
-        ]
-    })
+
 
 @admin.route('/api/routes')
 @require_auth
