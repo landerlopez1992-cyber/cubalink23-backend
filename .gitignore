@@ -1,8 +1,12 @@
-# Python
+# Variables de entorno
+.env
+config.env
+
+# Cache Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
+*.pyc
+*.pyo
+*.pyd
 .Python
 build/
 develop-eggs/
@@ -19,49 +23,12 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
-# Virtual Environment
-venv/
-env/
-ENV/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Logs
-*.log
-server.log
-logs/
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Environment variables
-.env
-.env.local
-.env.production
-
-# OS
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Temporary files
+# Archivos temporales
 *.tmp
-*.temp
-.cache/
+*.log
+.DS_Store
 
-# Backup files
-*_backup.py
-*.bak
-
+# Archivos locales de desarrollo
+static/uploads/
+instance/

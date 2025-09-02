@@ -1,7 +1,7 @@
+# -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session, current_app
 import json
 import os
-import requests
 from datetime import datetime
 import sqlite3
 from supabase_service import supabase_service
@@ -499,210 +499,6 @@ def get_flights():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ===== ENDPOINTS PARA APP FLUTTER =====
-
-@admin.route('/api/flights/search', methods=['POST'])
-def search_flights():
-    """🔍 Búsqueda de vuelos - Endpoint para app Flutter (SOLO DUFFEL)"""
-    try:
-        data = request.get_json()
-        
-        # Extraer parámetros
-        origin = data.get('origin')
-        destination = data.get('destination') 
-        departure_date = data.get('departure_date')
-        passengers = data.get('passengers', 1)
-        airline_type = data.get('airline_type', 'comerciales')
-        
-        print(f"🔍 Búsqueda DUFFEL: {origin} → {destination} | Tipo: {airline_type}")
-        
-        flights = []
-        
-        # API KEY REAL de Duffel desde variables de entorno
-        api_token = os.environ.get('DUFFEL_API_KEY')
-        if not api_token:
-            return jsonify({
-                'success': False,
-                'error': 'DUFFEL_API_KEY no configurada en variables de entorno',
-                'data': []
-            }), 500
-        
-        # SOLO usar Duffel API (evitar charter que necesita bs4)
-        if airline_type in ['comerciales', 'ambos']:
-            # Búsqueda directa con Duffel API
-            headers = {
-                'Accept': 'application/json',
-                'Authorization': f'Bearer {api_token}',
-                'Duffel-Version': 'v1',
-                'Content-Type': 'application/json'
-            }
-            
-            # Crear request de ofertas
-            offer_request_data = {
-                'data': {
-                    'slices': [{
-                        'origin': origin,
-                        'destination': destination,
-                        'departure_date': departure_date
-                    }],
-                    'passengers': [{'type': 'adult'}] * passengers,
-                    'cabin_class': 'economy'
-                }
-            }
-            
-            # Crear offer request
-            response = requests.post(
-                'https://api.duffel.com/air/offer_requests',
-                headers=headers,
-                json=offer_request_data
-            )
-            
-            if response.status_code == 201:
-                offer_request = response.json()['data']
-                
-                # Obtener ofertas
-                offers_response = requests.get(
-                    f"https://api.duffel.com/air/offers?offer_request_id={offer_request['id']}&limit=20",
-                    headers=headers
-                )
-                
-                if offers_response.status_code == 200:
-                    offers_data = offers_response.json()
-                    offers = offers_data.get('data', [])
-                    
-                    # Transformar a formato Flutter
-                    for offer in offers:
-                        if offer.get('slices') and len(offer['slices']) > 0:
-                            slice_data = offer['slices'][0]
-                            if slice_data.get('segments') and len(slice_data['segments']) > 0:
-                                first_segment = slice_data['segments'][0]
-                                
-                                # Obtener información de aerolínea
-                                airline_name = 'Aerolínea'
-                                airline_code = ''
-                                airline_logo = ''
-                                
-                                if first_segment.get('marketing_carrier'):
-                                    carrier = first_segment['marketing_carrier']
-                                    airline_name = carrier.get('name', 'Aerolínea')
-                                    airline_code = carrier.get('iata_code', '')
-                                    if carrier.get('logo_symbol_url'):
-                                        # Convertir SVG a PNG para compatibilidad con Android
-                                        svg_url = carrier['logo_symbol_url']
-                                        airline_logo = svg_url.replace('.svg', '.png')
-                                
-                                flight_data = {
-                                    'id': offer['id'],
-                                    'airline': airline_name,
-                                    'airline_code': airline_code,
-                                    'airline_logo': airline_logo,
-                                    'departureTime': first_segment.get('departing_at', ''),
-                                    'arrivalTime': first_segment.get('arriving_at', ''),
-                                    'duration': slice_data.get('duration', ''),
-                                    'stops': len(slice_data['segments']) - 1,
-                                    'price': float(offer.get('total_amount', '0')),
-                                    'currency': offer.get('total_currency', 'USD'),
-                                    'origin_airport': first_segment.get('origin', {}).get('iata_code', origin),
-                                    'destination_airport': first_segment.get('destination', {}).get('iata_code', destination)
-                                }
-                                flights.append(flight_data)
-            
-            print(f"✈️ Vuelos Duffel encontrados: {len(flights)}")
-        
-        # TODO: Charter flights require bs4 - disabled until dependency fixed
-        if airline_type == 'charter':
-            print("⚠️ Vuelos charter temporalmente deshabilitados")
-        
-        print(f"🎯 Total vuelos encontrados: {len(flights)}")
-        
-        return jsonify({
-            'success': True,
-            'data': flights,
-            'total': len(flights)
-        })
-        
-    except Exception as e:
-        print(f"❌ Error en búsqueda de vuelos: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e),
-            'data': []
-        }), 500
-
-@admin.route('/api/flights/airports')
-def search_airports():
-    """🏢 Búsqueda de aeropuertos - Endpoint para app Flutter"""
-    try:
-        query = request.args.get('q', '')
-        print(f"🔍 Buscando aeropuertos: '{query}'")
-        
-        if not query:
-            return jsonify([])
-        
-        # API KEY REAL de Duffel desde variables de entorno
-        api_token = os.environ.get('DUFFEL_API_KEY')
-        if not api_token:
-            print("❌ DUFFEL_API_KEY no configurada")
-            return jsonify([])
-        
-        # Búsqueda directa con Duffel API
-        headers = {
-            'Accept': 'application/json',
-            'Authorization': f'Bearer {api_token}',
-            'Duffel-Version': 'v1'
-        }
-        
-        url = f'https://api.duffel.com/air/airports?name[icontains]={query}&limit=10'
-        response = requests.get(url, headers=headers)
-        
-        if response.status_code == 200:
-            data = response.json()
-            airports = data.get('data', [])
-            
-            # Transformar a formato Flutter
-            formatted_airports = []
-            for airport in airports:
-                formatted_airports.append({
-                    'iata_code': airport.get('iata_code', ''),
-                    'name': airport.get('name', ''),
-                    'city': airport.get('city', {}).get('name', ''),
-                    'country': airport.get('city', {}).get('country', {}).get('name', ''),
-                    'time_zone': airport.get('time_zone', '')
-                })
-            
-            print(f"✈️ Aeropuertos encontrados: {len(formatted_airports)}")
-            return jsonify(formatted_airports)
-        else:
-            print(f"❌ Error Duffel API: {response.status_code}")
-            return jsonify([])
-        
-    except Exception as e:
-        print(f"❌ Error en búsqueda de aeropuertos: {str(e)}")
-        return jsonify([])
-
-@admin.route('/api/flights/airlines')
-def get_airlines():
-    """🏢 Obtener aerolíneas disponibles - Endpoint para app Flutter"""
-    try:
-        # Aerolíneas populares disponibles
-        airlines = [
-            {'code': 'AA', 'name': 'American Airlines'},
-            {'code': 'LA', 'name': 'LATAM Airlines'},
-            {'code': 'CM', 'name': 'Copa Airlines'},
-            {'code': 'DL', 'name': 'Delta Air Lines'},
-            {'code': 'UA', 'name': 'United Airlines'},
-            {'code': 'AC', 'name': 'Air Canada'},
-            {'code': 'CU', 'name': 'Cubana de Aviación'}
-        ]
-        
-        return jsonify(airlines)
-        
-    except Exception as e:
-        print(f"❌ Error obteniendo aerolíneas: {str(e)}")
-        return jsonify([])
-
-
-
 @admin.route('/api/routes')
 @require_auth
 def get_routes():
@@ -741,6 +537,15 @@ def get_transfers():
         return jsonify({'error': str(e)}), 500
 
 # ===== CATEGORÍAS =====
+@admin.route('/api/categories')
+@require_auth
+def get_categories():
+    """Obtener categorías"""
+    try:
+        categories = supabase_service.get_categories()
+        return jsonify(categories)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @admin.route('/api/categories', methods=['POST'])
 @require_auth
@@ -1853,7 +1658,12 @@ def get_cuba_transtur_statistics():
             'error': str(e)
         }), 500
 
-# ===== FUNCIONES BÁSICAS DE VEHÍCULOS =====
+# ===== GESTIÓN DE VEHÍCULOS =====
+@admin.route('/vehicles')
+@require_auth
+def vehicles():
+    """Gestión de vehículos de renta car"""
+    return render_template('admin/vehicles.html', config=ADMIN_CONFIG)
 
 @admin.route('/api/vehicles/add', methods=['POST'])
 @require_auth
@@ -1869,26 +1679,12 @@ def add_vehicle():
             return jsonify({'success': False, 'error': 'No se seleccionaron fotos válidas'}), 400
         
         # Obtener datos del formulario
-        daily_price_str = request.form.get('daily_price', '0')
-        passenger_capacity_str = request.form.get('passenger_capacity', '0')
-        
-        # Validar y convertir valores numéricos
-        try:
-            daily_price = float(daily_price_str) if daily_price_str else 0
-        except ValueError:
-            daily_price = 0
-            
-        try:
-            passenger_capacity = int(passenger_capacity_str) if passenger_capacity_str else 0
-        except ValueError:
-            passenger_capacity = 0
-        
         vehicle_data = {
             'name': request.form.get('name'),
             'category': request.form.get('category'),
-            'daily_price': daily_price,
+            'daily_price': float(request.form.get('daily_price', 0)),
             'transmission': request.form.get('transmission'),
-            'passenger_capacity': passenger_capacity,
+            'passenger_capacity': int(request.form.get('passenger_capacity', 0)),
             'air_conditioning': request.form.get('air_conditioning'),
             'description': request.form.get('description'),
             'features': json.loads(request.form.get('features', '[]')),
@@ -1907,10 +1703,10 @@ def add_vehicle():
         photo_paths = []
         for i, file in enumerate(files):
             if file and allowed_file(file.filename):
-                filename = secure_filename(vehicle_data['name'] + "_" + str(i) + "_" + datetime.now().strftime('%Y%m%d_%H%M%S') + ".jpg")
+                filename = secure_filename(f"{vehicle_data['name']}_{i}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg")
                 filepath = os.path.join(vehicle_photos_dir, filename)
                 file.save(filepath)
-                photo_paths.append("/static/uploads/vehicles/" + filename)
+                photo_paths.append(f"/static/uploads/vehicles/{filename}")
         
         if not photo_paths:
             return jsonify({'success': False, 'error': 'No se pudieron guardar las fotos'}), 400
@@ -1973,7 +1769,133 @@ def delete_vehicle(vehicle_id):
         if success:
             return jsonify({'success': True, 'message': 'Vehículo eliminado exitosamente'})
         else:
-            return jsonify({'success': False, 'error': 'Vehículo no encontrado'}), 404
+            return jsonify({'success': False, 'error': 'No se pudo eliminar el vehículo'}), 400
+            
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# ===== RESERVA POR TELÉFONO - AUTOMATIZACIÓN CUBA TRANSTUR =====
+@admin.route('/phone-booking')
+@require_auth
+def phone_booking():
+    """Panel de reserva por teléfono"""
+    return render_template('admin/phone_booking.html', config=ADMIN_CONFIG)
+
+@admin.route('/api/phone-booking/create', methods=['POST'])
+@require_auth
+def create_phone_booking():
+    """Crear reserva automatizada por teléfono"""
+    try:
+        data = request.get_json()
+        
+        # Validar datos requeridos
+        required_fields = ['client_name', 'client_phone', 'vehicle_type', 'pickup_date', 'return_date', 'pickup_location']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'success': False, 'error': f'Campo requerido: {field}'}), 400
+        
+        # Ejecutar automatización
+        from cuba_transtur_automation import create_automated_booking
+        result = create_automated_booking(data)
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'booking': result['booking'],
+                'message': 'Reserva automatizada creada exitosamente'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result['error']
+            }), 500
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin.route('/api/phone-booking/check-availability', methods=['POST'])
+@require_auth
+def check_vehicle_availability():
+    """Verificar disponibilidad de vehículos"""
+    try:
+        data = request.get_json()
+        
+        # Simular verificación de disponibilidad (en producción sería real)
+        vehicle_type = data.get('vehicle_type', '')
+        pickup_date = data.get('pickup_date', '')
+        return_date = data.get('return_date', '')
+        
+        # Calcular días
+        from datetime import datetime
+        start = datetime.strptime(pickup_date, '%Y-%m-%d')
+        end = datetime.strptime(return_date, '%Y-%m-%d')
+        days = (end - start).days
+        
+        # Precios base por tipo de vehículo
+        base_prices = {
+            'Económico Automático': 45,
+            'Económico Manual': 40,
+            'Intermedio Automático': 55,
+            'Intermedio Manual': 50,
+            'SUV': 75,
+            'Van': 85
+        }
+        
+        daily_price = base_prices.get(vehicle_type, 50)
+        total_price = daily_price * days
+        
+        return jsonify({
+            'success': True,
+            'availability': {
+                'available': True,
+                'daily_price': daily_price,
+                'total_price': total_price,
+                'days': days
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin.route('/api/phone-booking/history')
+@require_auth
+def get_phone_booking_history():
+    """Obtener historial de reservas por teléfono"""
+    try:
+        # Intentar obtener desde Supabase primero
+        try:
+            bookings = supabase_service.get_phone_bookings()
+            if bookings:
+                return jsonify(bookings)
+        except:
+            pass
+        
+        # Si falla Supabase, usar base de datos local
+        bookings = local_db.get_phone_bookings()
+        return jsonify(bookings)
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin.route('/api/phone-booking/<booking_id>/status')
+@require_auth
+def get_phone_booking_status(booking_id):
+    """Obtener estado de una reserva específica"""
+    try:
+        # Intentar obtener desde Supabase primero
+        try:
+            booking = supabase_service.get_phone_booking_by_id(booking_id)
+            if booking:
+                return jsonify(booking)
+        except:
+            pass
+        
+        # Si falla Supabase, usar base de datos local
+        booking = local_db.get_phone_booking_by_id(booking_id)
+        if booking:
+            return jsonify(booking)
+        else:
+            return jsonify({'success': False, 'error': 'Reserva no encontrada'}), 404
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
