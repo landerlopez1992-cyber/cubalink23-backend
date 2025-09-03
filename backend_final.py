@@ -74,7 +74,7 @@ def search_airports():
             print(f"📡 Consultando Duffel API para: {query}")
             
             # Usar el endpoint correcto de Duffel para aeropuertos
-            url = f'https://api.duffel.com/air/airports?search={query}'
+            url = f'https://api.duffel.com/places/suggestions?query={query}'
             response = requests.get(url, headers=headers, timeout=10)
             
             print(f"📡 Status Duffel: {response.status_code}")
@@ -84,24 +84,37 @@ def search_airports():
                 airports = []
                 
                 if 'data' in data:
-                    for airport in data['data']:
-                        airport_data = {
-                            'iata_code': airport.get('iata_code', ''),
-                            'name': airport.get('name', ''),
-                            'city': airport.get('city_name', ''),
-                            'country': airport.get('country_name', ''),
-                            'time_zone': airport.get('time_zone', '')
-                        }
-                        if airport_data['iata_code'] and airport_data['name']:
-                            airports.append(airport_data)
+                    for place in data['data']:
+                        # Solo aeropuertos (type = airport)
+                        if place.get('type') == 'airport':
+                            airport_data = {
+                                'iata_code': place.get('iata_code', ''),
+                                'name': place.get('name', ''),
+                                'city': place.get('city_name', ''),
+                                'country': place.get('country_name', ''),
+                                'time_zone': place.get('time_zone', '')
+                            }
+                            if airport_data['iata_code'] and airport_data['name']:
+                                airports.append(airport_data)
                 
-                print(f"✅ Encontrados {len(airports)} aeropuertos REALES de Duffel")
-                if airports:
-                    print("🔍 PREVIEW aeropuertos DUFFEL:")
-                    for i, airport in enumerate(airports[:5]):
+                # 🔧 FILTRO LOCAL: Filtrar por la consulta del usuario
+                query_lower = query.lower()
+                filtered_airports = []
+                
+                for airport in airports:
+                    # Buscar en código IATA, nombre, ciudad
+                    if (query_lower in airport['iata_code'].lower() or
+                        query_lower in airport['name'].lower() or
+                        query_lower in airport['city'].lower()):
+                        filtered_airports.append(airport)
+                
+                print(f"✅ Encontrados {len(filtered_airports)} aeropuertos FILTRADOS para: {query}")
+                if filtered_airports:
+                    print("🔍 PREVIEW aeropuertos FILTRADOS:")
+                    for i, airport in enumerate(filtered_airports[:5]):
                         print(f"   {i+1}. {airport['iata_code']} - {airport['name']}")
                 
-                return jsonify(airports)
+                return jsonify(filtered_airports)
             
             else:
                 print(f"❌ Error Duffel API: {response.status_code}")
@@ -288,4 +301,3 @@ if __name__ == '__main__':
             )
         else:
             raise e
-
