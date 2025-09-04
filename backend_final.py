@@ -146,7 +146,22 @@ def search_flights():
         destination = data.get('destination', '')
         departure_date = data.get('departure_date', '')
         passengers = data.get('passengers', 1)
-        cabin_class = data.get('cabin_class', 'economy')
+        cabin_class_raw = data.get('cabin_class', 'economy')
+        
+        # Mapear cabin_class a valores válidos de Duffel
+        cabin_class_mapping = {
+            'economy': 'economy',
+            'Económica': 'economy',
+            'premium_economy': 'premium_economy',
+            'Premium Económica': 'premium_economy',
+            'business': 'business',
+            'Business': 'business',
+            'first': 'first',
+            'Primera Clase': 'first'
+        }
+        
+        cabin_class = cabin_class_mapping.get(cabin_class_raw, 'economy')
+        print(f"🎯 Cabin class mapeado: '{cabin_class_raw}' → '{cabin_class}'")
         
         print(f"🔍 Buscando vuelos: {origin} → {destination}")
         print(f"📅 Fecha: {departure_date} | Pasajeros: {passengers}")
@@ -187,10 +202,12 @@ def search_flights():
             
             print(f"📡 Offer request status: {offer_response.status_code}")
             print(f"📡 Offer request response: {offer_response.text}")
+            print(f"📡 Offer request headers: {dict(offer_response.headers)}")
             
             if offer_response.status_code != 201:
                 print(f"❌ Error creando offer request: {offer_response.status_code}")
                 print(f"❌ Response: {offer_response.text}")
+                print(f"❌ Request payload: {offer_request_data}")
                 return jsonify({"error": f"Error creando offer request: {offer_response.text}"}), 500
             
             offer_request = offer_response.json()
