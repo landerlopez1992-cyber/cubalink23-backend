@@ -53,7 +53,7 @@ def search_airports():
     print("🚀 BÚSQUEDA DE AEROPUERTOS - FUNCIONANDO AL 100%")
     
     try:
-        query = request.args.get('q', '')
+        query = request.args.get('query', '')
         print(f"🔍 Query recibida: {query}")
         
         if not query or len(query) < 1:
