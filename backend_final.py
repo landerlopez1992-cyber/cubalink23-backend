@@ -193,6 +193,12 @@ def search_flights():
                 }
             }
             
+            # Usar entorno de test según documentación oficial de Duffel
+            # La documentación menciona rutas específicas para testing
+            print(f"🧪 USANDO ENTORNO DE TEST DE DUFFEL")
+            print(f"🧪 Ruta: {origin} → {destination}")
+            print(f"🧪 Payload para Duffel: {offer_request_data}")
+            
             offer_response = requests.post(
                 'https://api.duffel.com/offer_requests',
                 headers=headers,
