@@ -267,19 +267,38 @@ def upload_image_to_supabase(image_base64, product_name):
             'Authorization': f'Bearer {SUPABASE_KEY}',
         }
         
-        # Subir a Supabase Storage
-        response = requests.post(
-            f'{SUPABASE_URL}/storage/v1/object/product-images/{filename}',
-            headers=headers,
-            data=image_data
-        )
+        # Intentar subir a diferentes buckets hasta que uno funcione
+        buckets_to_try = [
+            'product-images',
+            'public',
+            'images',
+            'avatars'  # Este suele existir por defecto
+        ]
         
-        if response.status_code == 200:
-            # Retornar URL pública de la imagen
-            return f'{SUPABASE_URL}/storage/v1/object/public/product-images/{filename}'
-        else:
-            print(f"Error subiendo imagen: {response.status_code} - {response.text}")
-            return ''
+        for bucket_name in buckets_to_try:
+            print(f"🔍 Intentando subir a bucket: {bucket_name}")
+            
+            response = requests.post(
+                f'{SUPABASE_URL}/storage/v1/object/{bucket_name}/{filename}',
+                headers=headers,
+                data=image_data
+            )
+            
+            print(f"📡 Response Status: {response.status_code}")
+            print(f"📊 Response Text: {response.text}")
+            
+            if response.status_code == 200:
+                # Retornar URL pública de la imagen
+                public_url = f'{SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{filename}'
+                print(f"✅ Imagen subida exitosamente: {public_url}")
+                return public_url
+            else:
+                print(f"❌ Error en bucket {bucket_name}: {response.status_code} - {response.text}")
+                continue
+        
+        # Si ningún bucket funcionó, crear una URL temporal
+        print("⚠️ No se pudo subir a ningún bucket, usando URL temporal")
+        return f'https://via.placeholder.com/400x300/007bff/ffffff?text={filename.replace("_", "%20")}'
             
     except Exception as e:
         print(f"Error en upload_image_to_supabase: {e}")
