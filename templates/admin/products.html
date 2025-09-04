@@ -708,40 +708,65 @@
                 is_active: formData.get('is_active') === 'true'
             };
             
-            // Mostrar spinner en el botón
-            const submitBtn = document.querySelector('#editProductModal .btn-primary');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
-            submitBtn.disabled = true;
+            // Manejar imagen del producto
+            const imageFile = formData.get('image');
+            if (imageFile && imageFile.size > 0) {
+                // Convertir imagen a base64 para enviar al servidor
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    productData.image_base64 = e.target.result;
+                    console.log('📸 Imagen de edición convertida a base64');
+                    // Continuar con el envío después de convertir la imagen
+                    sendUpdateData();
+                };
+                reader.readAsDataURL(imageFile);
+                return; // Salir aquí, el envío se hará en el callback
+            }
             
-            // Enviar actualización a la API
-            fetch(`/admin/api/products/${productId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(productData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Producto actualizado correctamente');
-                    // Cerrar modal y recargar datos
-                    bootstrap.Modal.getInstance(document.getElementById('editProductModal')).hide();
-                    loadProductsData();
-                } else {
-                    alert('Error al actualizar producto: ' + (data.error || 'Error desconocido'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error de conexión al actualizar producto');
-            })
-            .finally(() => {
-                // Restaurar botón
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            });
+            // Función para enviar los datos actualizados
+            function sendUpdateData() {
+                // Mostrar spinner en el botón
+                const submitBtn = document.querySelector('#editProductModal .btn-primary');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
+                submitBtn.disabled = true;
+                
+                // Enviar actualización a la API
+                fetch(`/admin/api/products/${productId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(productData)
+                })
+                .then(response => {
+                    console.log('📡 Update Response Status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('📊 Update Response Data:', data);
+                    if (data.success) {
+                        alert('Producto actualizado correctamente');
+                        bootstrap.Modal.getInstance(document.getElementById('editProductModal')).hide();
+                        loadProductsData();
+                    } else {
+                        alert('Error al actualizar producto: ' + (data.error || 'Error desconocido'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error de conexión al actualizar producto');
+                })
+                .finally(() => {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                });
+            }
+            
+            // Si no hay imagen, enviar inmediatamente
+            if (!imageFile || imageFile.size === 0) {
+                sendUpdateData();
+            }
         }
         
         function deleteProduct(productId) {
