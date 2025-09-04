@@ -7,7 +7,6 @@ import 'package:cubalink23/services/auth_service_bypass.dart';
 import 'package:cubalink23/services/database_service.dart';
 import 'package:cubalink23/services/cart_service.dart';
 import 'package:cubalink23/services/store_service.dart';
-import 'package:cubalink23/models/user.dart';
 import 'package:cubalink23/models/store_product.dart';
 import 'package:cubalink23/screens/shopping/product_details_screen.dart';
 
@@ -27,7 +26,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final StoreService _storeService = StoreService();
   int _currentBannerIndex = 0;
   PageController _bannerController = PageController();
-  final DatabaseService _databaseService = DatabaseService.instance;
   List<Map<String, dynamic>> _categories = [];
   List<Map<String, dynamic>> _bestSellers = [];
   List<StoreProduct> _realFoodProducts = [];
@@ -328,6 +326,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         print('ℹ️ No hay productos recientes, usando productos de ejemplo');
         bestSellersMap = _getDefaultProductsMap();
       }
+      
+      // Load real food products to fix the loading issue
+      await _loadRealProducts();
 
       if (mounted) {
         setState(() {

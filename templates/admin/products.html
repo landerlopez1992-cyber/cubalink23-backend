@@ -463,81 +463,95 @@
             // Manejar imagen del producto
             const imageFile = formData.get('image');
             if (imageFile && imageFile.size > 0) {
-                // TODO: Implementar upload real a Supabase Storage
-                // Por ahora, usar una URL temporal del usuario
-                productData.image_url = `https://via.placeholder.com/400x300/007bff/ffffff?text=${encodeURIComponent(productData.name)}`;
-                console.log('📸 Imagen detectada, usando placeholder personalizado');
+                // Convertir imagen a base64 para enviar al servidor
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    productData.image_base64 = e.target.result;
+                    console.log('📸 Imagen convertida a base64');
+                    // Continuar con el envío después de convertir la imagen
+                    sendProductData();
+                };
+                reader.readAsDataURL(imageFile);
+                return; // Salir aquí, el envío se hará en el callback
             } else {
                 productData.image_url = '';
                 console.log('📸 No hay imagen, enviando vacío');
             }
             
-            // Procesar métodos de envío
-            const shippingMethods = [];
-            const shippingCheckboxes = form.querySelectorAll('input[name="shipping_methods"]:checked');
-            shippingCheckboxes.forEach(checkbox => {
-                shippingMethods.push(checkbox.value);
-            });
-            productData.shipping_methods = shippingMethods;
-            
-            // Procesar variantes
-            const variantTypes = formData.getAll('variant_type[]');
-            const variantValues = formData.getAll('variant_value[]');
-            productData.variants = [];
-            for (let i = 0; i < variantTypes.length; i++) {
-                if (variantTypes[i] && variantValues[i]) {
-                    productData.variants.push({
-                        type: variantTypes[i],
-                        value: variantValues[i]
-                    });
+            // Función para enviar los datos del producto
+            function sendProductData() {
+                // Procesar métodos de envío
+                const shippingMethods = [];
+                const shippingCheckboxes = form.querySelectorAll('input[name="shipping_methods"]:checked');
+                shippingCheckboxes.forEach(checkbox => {
+                    shippingMethods.push(checkbox.value);
+                });
+                productData.shipping_methods = shippingMethods;
+                
+                // Procesar variantes
+                const variantTypes = formData.getAll('variant_type[]');
+                const variantValues = formData.getAll('variant_value[]');
+                productData.variants = [];
+                for (let i = 0; i < variantTypes.length; i++) {
+                    if (variantTypes[i] && variantValues[i]) {
+                        productData.variants.push({
+                            type: variantTypes[i],
+                            value: variantValues[i]
+                        });
+                    }
                 }
+                
+                // Mostrar spinner en el botón
+                const submitBtn = document.querySelector('#addProductModal .btn-primary');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
+                submitBtn.disabled = true;
+                
+                // Enviar producto a la API
+                fetch('/admin/api/products', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(productData)
+                })
+                .then(response => {
+                    console.log('📡 Respuesta del servidor:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('📊 Datos de respuesta:', data);
+                    if (data.success) {
+                        console.log('✅ Producto creado exitosamente');
+                        alert('Producto agregado correctamente');
+                        // Cerrar modal y recargar datos
+                        bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+                        form.reset();
+                        // Pequeña pausa antes de recargar para asegurar que el producto esté en DB
+                        setTimeout(() => {
+                            console.log('🔄 Recargando lista de productos...');
+                            loadProductsData();
+                        }, 500);
+                    } else {
+                        console.error('❌ Error del servidor:', data.error);
+                        alert('Error al agregar producto: ' + (data.error || 'Error desconocido'));
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error de conexión:', error);
+                    alert('Error de conexión al agregar producto: ' + error.message);
+                })
+                .finally(() => {
+                    // Restaurar botón
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                });
             }
             
-            // Mostrar spinner en el botón
-            const submitBtn = document.querySelector('#addProductModal .btn-primary');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
-            submitBtn.disabled = true;
-            
-            // Enviar producto a la API
-            fetch('/admin/api/products', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(productData)
-            })
-            .then(response => {
-                console.log('📡 Respuesta del servidor:', response.status);
-                return response.json();
-            })
-            .then(data => {
-                console.log('📊 Datos de respuesta:', data);
-                if (data.success) {
-                    console.log('✅ Producto creado exitosamente');
-                    alert('Producto agregado correctamente');
-                    // Cerrar modal y recargar datos
-                    bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
-                    form.reset();
-                    // Pequeña pausa antes de recargar para asegurar que el producto esté en DB
-                    setTimeout(() => {
-                        console.log('🔄 Recargando lista de productos...');
-                        loadProductsData();
-                    }, 500);
-                } else {
-                    console.error('❌ Error del servidor:', data.error);
-                    alert('Error al agregar producto: ' + (data.error || 'Error desconocido'));
-                }
-            })
-            .catch(error => {
-                console.error('❌ Error de conexión:', error);
-                alert('Error de conexión al agregar producto: ' + error.message);
-            })
-            .finally(() => {
-                // Restaurar botón
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            });
+            // Si no hay imagen, enviar inmediatamente
+            if (!imageFile || imageFile.size === 0) {
+                sendProductData();
+            }
         }
         
         function editProduct(productId) {
@@ -615,6 +629,44 @@
                                                     <option value="true" ${product.is_active ? 'selected' : ''}>Activo</option>
                                                     <option value="false" ${!product.is_active ? 'selected' : ''}>Inactivo</option>
                                                 </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Imagen del producto -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Imagen del Producto</label>
+                                        <input type="file" class="form-control" name="image" id="editProductImage" accept="image/*" onchange="previewEditImage(this)">
+                                        <div id="editImagePreview" class="mt-2">
+                                            ${product.image_url ? 
+                                                `<img src="${product.image_url}" alt="Imagen actual" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+                                                 <button type="button" class="btn btn-sm btn-danger ms-2" onclick="removeEditImage()">Eliminar</button>` : 
+                                                '<div class="text-muted">No hay imagen</div>'
+                                            }
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Métodos de Envío -->
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <h6 class="mb-3">Métodos de Envío Disponibles</h6>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="shipping_methods" value="express" id="edit_shipping_express">
+                                                        <label class="form-check-label" for="edit_shipping_express">
+                                                            Envío Express (3 a 8 días)
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="shipping_methods" value="maritime" id="edit_shipping_maritime">
+                                                        <label class="form-check-label" for="edit_shipping_maritime">
+                                                            Envío Marítimo (4 a 6 semanas)
+                                                        </label>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -796,6 +848,29 @@
         
         function removeVariant(button) {
             button.closest('.variant-item').remove();
+        }
+        
+        // Funciones para el modal de edición
+        function previewEditImage(input) {
+            const preview = document.getElementById('editImagePreview');
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `
+                        <img src="${e.target.result}" alt="Nueva imagen" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+                        <button type="button" class="btn btn-sm btn-danger ms-2" onclick="removeEditImage()">Eliminar</button>
+                    `;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        function removeEditImage() {
+            const preview = document.getElementById('editImagePreview');
+            const input = document.getElementById('editProductImage');
+            preview.innerHTML = '<div class="text-muted">No hay imagen</div>';
+            input.value = '';
         }
     </script>
 </body>

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:cubalink23/services/cart_service.dart';
+import 'package:cubalink23/services/favorites_service.dart';
 import 'package:cubalink23/models/amazon_product.dart';
 import 'package:cubalink23/models/walmart_product.dart';
 
@@ -41,8 +44,24 @@ class ProductDetailsScreen extends StatefulWidget {
 
 class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   final CartService _cartService = CartService();
+  final FavoritesService _favoritesService = FavoritesService.instance;
   int _quantity = 1;
   int _selectedImageIndex = 0;
+  bool _isFavorite = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkFavoriteStatus();
+  }
+  
+  void _checkFavoriteStatus() async {
+    await _favoritesService.initialize();
+    final productId = widget.productId ?? widget.product?['id'] ?? 'unknown';
+    setState(() {
+      _isFavorite = _favoritesService.isFavorite(productId);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,20 +89,16 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     
     // Get store colors
     Color primaryColor;
-    Color backgroundColor;
     String storeName;
     
     if (widget.isFromWalmart) {
       primaryColor = Color(0xFF004C91);
-      backgroundColor = Color(0xFFFFC220);
       storeName = 'Walmart';
     } else if (widget.isFromAmazon) {
       primaryColor = Color(0xFFFF9900);
-      backgroundColor = Color(0xFF232F3E);
       storeName = 'Amazon';
     } else {
       primaryColor = Theme.of(context).colorScheme.primary;
-      backgroundColor = Theme.of(context).colorScheme.surface;
       storeName = widget.product?['store'] ?? 'Tienda';
     }
 
@@ -117,15 +132,14 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             actions: [
               IconButton(
                 icon: Icon(Icons.share, color: Colors.white),
-                onPressed: () {
-                  // Implement share functionality
-                },
+                onPressed: () => _shareProduct(),
               ),
               IconButton(
-                icon: Icon(Icons.favorite_border, color: Colors.white),
-                onPressed: () {
-                  // Implement favorite functionality
-                },
+                icon: Icon(
+                  _isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: _isFavorite ? Colors.red : Colors.white,
+                ),
+                onPressed: () => _toggleFavorite(),
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
@@ -572,5 +586,91 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
     // Navigate back or show success
     Navigator.pop(context);
+  }
+
+  void _shareProduct() {
+    final String title = widget.productTitle ?? widget.product?['title'] ?? widget.product?['name'] ?? 'Producto';
+    final double price = widget.productPrice ?? widget.product?['price']?.toDouble() ?? 0.0;
+    final String storeName = widget.isFromWalmart ? 'Walmart' : widget.isFromAmazon ? 'Amazon' : widget.product?['store'] ?? 'Tienda';
+    
+    final String shareText = '''
+🛍️ ¡Mira este producto en CubaLink23!
+
+📦 $title
+💰 Precio: \$${price.toStringAsFixed(2)}
+🏪 Tienda: $storeName
+
+Descarga CubaLink23 para más productos increíbles:
+https://cubalink23.com
+''';
+
+    Share.share(
+      shareText,
+      subject: 'Producto: $title',
+    );
+  }
+
+  void _toggleFavorite() async {
+    final String title = widget.productTitle ?? widget.product?['title'] ?? widget.product?['name'] ?? 'Producto';
+    final String productId = widget.productId ?? widget.product?['id'] ?? 'unknown';
+    final double price = widget.productPrice ?? widget.product?['price']?.toDouble() ?? 0.0;
+    final String imageUrl = widget.productImage ?? widget.product?['image'] ?? widget.product?['imageUrl'] ?? '';
+    final String description = widget.productDescription ?? widget.product?['description'] ?? 'Sin descripción disponible';
+    final String brand = widget.productBrand ?? widget.product?['brand'] ?? 'Desconocido';
+    final String storeName = widget.isFromWalmart ? 'Walmart' : widget.isFromAmazon ? 'Amazon' : widget.product?['store'] ?? 'Tienda';
+    
+    // Create product map for favorites
+    final productMap = FavoritesService.createProductMap(
+      id: productId,
+      name: title,
+      price: price,
+      imageUrl: imageUrl,
+      description: description,
+      category: widget.product?['category'] ?? 'General',
+      store: storeName,
+      brand: brand,
+      rating: widget.productRating ?? widget.product?['rating']?.toDouble(),
+      reviewsCount: widget.productReviews ?? widget.product?['reviewsCount'],
+    );
+    
+    // Toggle favorite status
+    final success = await _favoritesService.toggleFavorite(productMap);
+    
+    if (success) {
+      setState(() {
+        _isFavorite = _favoritesService.isFavorite(productId);
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                _isFavorite ? Icons.favorite : Icons.favorite_border,
+                color: Colors.white,
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _isFavorite 
+                    ? 'Agregado a favoritos: $title'
+                    : 'Removido de favoritos: $title'
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: _isFavorite ? Colors.red : Colors.grey[600],
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al actualizar favoritos'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 }

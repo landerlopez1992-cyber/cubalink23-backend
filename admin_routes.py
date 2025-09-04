@@ -3,6 +3,8 @@ import json
 import os
 from datetime import datetime
 import sqlite3
+import base64
+import uuid
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -185,6 +187,12 @@ def create_product():
             'Content-Type': 'application/json'
         }
         
+        # Manejar imagen del producto
+        image_url = data.get('image_url', '')
+        if data.get('image_base64'):
+            # Si hay imagen en base64, subirla a Supabase Storage
+            image_url = upload_image_to_supabase(data.get('image_base64'), data.get('name', 'product'))
+        
         # Preparar datos del producto - SOLO campos que existen en Supabase
         product_data = {
             'name': data.get('name'),
@@ -193,7 +201,7 @@ def create_product():
             'category': data.get('category'),
             'stock': int(data.get('stock', 0)),
             'is_active': True,
-            'image_url': data.get('image_url', '')  # Usar la imagen del usuario, no placeholder
+            'image_url': image_url
         }
         
         # Validar datos requeridos
@@ -209,12 +217,23 @@ def create_product():
             json=product_data
         )
         
+        print(f"🔍 Supabase Response Status: {response.status_code}")
+        print(f"🔍 Supabase Response Text: {response.text}")
+        
         if response.status_code == 201:
-            return jsonify({
-                'success': True,
-                'message': 'Producto creado exitosamente',
-                'product': response.json()
-            })
+            try:
+                product_response = response.json()
+                return jsonify({
+                    'success': True,
+                    'message': 'Producto creado exitosamente',
+                    'product': product_response
+                })
+            except Exception as e:
+                return jsonify({
+                    'success': True,
+                    'message': 'Producto creado exitosamente',
+                    'product': {'id': 'created'}
+                })
         else:
             return jsonify({
                 'success': False,
@@ -226,6 +245,45 @@ def create_product():
             'success': False,
             'error': f'Error interno: {str(e)}'
         }), 500
+
+def upload_image_to_supabase(image_base64, product_name):
+    """Subir imagen a Supabase Storage"""
+    try:
+        import requests
+        
+        # Configuración de Supabase
+        SUPABASE_URL = 'https://zgqrhzuhrwudckwesybg.supabase.co'
+        SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTI3OTgsImV4cCI6MjA3MTM2ODc5OH0.lUVK99zmOYD7bNTxilJZWHTmYPfZF5YeMJDVUaJ-FsQ'
+        
+        # Generar nombre único para la imagen
+        image_id = str(uuid.uuid4())
+        filename = f"{product_name.replace(' ', '_')}_{image_id}.jpg"
+        
+        # Decodificar imagen base64
+        image_data = base64.b64decode(image_base64.split(',')[1])
+        
+        headers = {
+            'apikey': SUPABASE_KEY,
+            'Authorization': f'Bearer {SUPABASE_KEY}',
+        }
+        
+        # Subir a Supabase Storage
+        response = requests.post(
+            f'{SUPABASE_URL}/storage/v1/object/product-images/{filename}',
+            headers=headers,
+            data=image_data
+        )
+        
+        if response.status_code == 200:
+            # Retornar URL pública de la imagen
+            return f'{SUPABASE_URL}/storage/v1/object/public/product-images/{filename}'
+        else:
+            print(f"Error subiendo imagen: {response.status_code} - {response.text}")
+            return ''
+            
+    except Exception as e:
+        print(f"Error en upload_image_to_supabase: {e}")
+        return ''
 
 @admin.route('/api/products/<product_id>', methods=['PUT'])
 def update_product(product_id):
