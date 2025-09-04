@@ -262,43 +262,45 @@ def upload_image_to_supabase(image_base64, product_name):
         # Decodificar imagen base64
         image_data = base64.b64decode(image_base64.split(',')[1])
         
+        # Determinar el tipo MIME correcto
+        mime_type = 'image/jpeg'  # Por defecto
+        if 'data:image/png' in image_base64:
+            mime_type = 'image/png'
+        elif 'data:image/gif' in image_base64:
+            mime_type = 'image/gif'
+        elif 'data:image/webp' in image_base64:
+            mime_type = 'image/webp'
+        
         headers = {
             'apikey': SUPABASE_KEY,
             'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Content-Type': mime_type,
         }
         
-        # Intentar subir a diferentes buckets hasta que uno funcione
-        buckets_to_try = [
-            'product-images',
-            'public',
-            'images',
-            'avatars'  # Este suele existir por defecto
-        ]
+        # Solo usar el bucket product-images que creaste
+        bucket_name = 'product-images'
+        print(f"🔍 Subiendo a bucket: {bucket_name}")
+        print(f"📸 MIME Type: {mime_type}")
+        print(f"📁 Filename: {filename}")
         
-        for bucket_name in buckets_to_try:
-            print(f"🔍 Intentando subir a bucket: {bucket_name}")
-            
-            response = requests.post(
-                f'{SUPABASE_URL}/storage/v1/object/{bucket_name}/{filename}',
-                headers=headers,
-                data=image_data
-            )
-            
-            print(f"📡 Response Status: {response.status_code}")
-            print(f"📊 Response Text: {response.text}")
-            
-            if response.status_code == 200:
-                # Retornar URL pública de la imagen
-                public_url = f'{SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{filename}'
-                print(f"✅ Imagen subida exitosamente: {public_url}")
-                return public_url
-            else:
-                print(f"❌ Error en bucket {bucket_name}: {response.status_code} - {response.text}")
-                continue
+        response = requests.post(
+            f'{SUPABASE_URL}/storage/v1/object/{bucket_name}/{filename}',
+            headers=headers,
+            data=image_data
+        )
         
-        # Si ningún bucket funcionó, crear una URL temporal
-        print("⚠️ No se pudo subir a ningún bucket, usando URL temporal")
-        return f'https://via.placeholder.com/400x300/007bff/ffffff?text={filename.replace("_", "%20")}'
+        print(f"📡 Response Status: {response.status_code}")
+        print(f"📊 Response Text: {response.text}")
+        
+        if response.status_code == 200:
+            # Retornar URL pública de la imagen
+            public_url = f'{SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{filename}'
+            print(f"✅ Imagen subida exitosamente: {public_url}")
+            return public_url
+        else:
+            print(f"❌ Error en bucket {bucket_name}: {response.status_code} - {response.text}")
+            # Si falla, usar placeholder
+            return f'https://via.placeholder.com/400x300/007bff/ffffff?text={filename.replace("_", "%20")}'
             
     except Exception as e:
         print(f"Error en upload_image_to_supabase: {e}")
