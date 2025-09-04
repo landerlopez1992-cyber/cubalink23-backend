@@ -172,15 +172,23 @@ def create_product():
             'Content-Type': 'application/json'
         }
         
-        # Preparar datos del producto
+        # Preparar datos del producto con nuevas funcionalidades
         product_data = {
             'name': data.get('name'),
             'description': data.get('description', ''),
             'price': float(data.get('price', 0)),
             'category': data.get('category'),
+            'subcategory': data.get('subcategory', ''),
             'stock': int(data.get('stock', 0)),
             'is_active': True,
-            'image_url': data.get('image_url', '')
+            'image_url': data.get('image_url', ''),
+            'shipping_methods': json.dumps(data.get('shipping_methods', [])),
+            'variants': json.dumps(data.get('variants', [])),
+            'additional_data': json.dumps({
+                'shipping_methods': data.get('shipping_methods', []),
+                'variants': data.get('variants', []),
+                'created_by': 'admin_panel'
+            })
         }
         
         response = requests.post(
@@ -223,7 +231,7 @@ def update_product(product_id):
             'Content-Type': 'application/json'
         }
         
-        # Preparar datos actualizados
+        # Preparar datos actualizados con nuevas funcionalidades
         update_data = {}
         if 'name' in data:
             update_data['name'] = data['name']
@@ -233,12 +241,20 @@ def update_product(product_id):
             update_data['price'] = float(data['price'])
         if 'category' in data:
             update_data['category'] = data['category']
+        if 'subcategory' in data:
+            update_data['subcategory'] = data['subcategory']
         if 'stock' in data:
             update_data['stock'] = int(data['stock'])
         if 'is_active' in data:
             update_data['is_active'] = data['is_active']
         if 'image_url' in data:
             update_data['image_url'] = data['image_url']
+        if 'shipping_methods' in data:
+            update_data['shipping_methods'] = json.dumps(data['shipping_methods'])
+        if 'variants' in data:
+            update_data['variants'] = json.dumps(data['variants'])
+        if 'additional_data' in data:
+            update_data['additional_data'] = json.dumps(data['additional_data'])
         
         response = requests.patch(
             f'{SUPABASE_URL}/rest/v1/store_products?id=eq.{product_id}',
