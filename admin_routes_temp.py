@@ -631,12 +631,10 @@ def search_flights():
 
 @admin.route('/api/flights/airports')
 def search_airports():
-    print("🔍 DEBUG: FUNCIÓN INICIADA")
-    print("🔍 DEBUG: FUNCIÓN EJECUTÁNDOSE")
     """🏢 Búsqueda de aeropuertos - Endpoint para app Flutter"""
     try:
         query = request.args.get('q', '')
-        print("🔍 DEBUG: QUERY OBTENIDA"); print(f"Query: {query}")
+        print(f"🔍 Buscando aeropuertos: '{query}'")
         
         if not query:
             return jsonify([])
@@ -655,7 +653,7 @@ def search_airports():
         }
         
         # Usar Place Suggestion API según documentación oficial
-        url = f'https://api.duffel.com/air/airports?search={query}&limit=20'
+        url = f'https://api.duffel.com/air/airports?search={query}air/suggestions?query={query}&limit=20limit=20'
         print(f"🔍 URL Duffel Place Suggestion API: {url}")
         
         response = requests.get(url, headers=headers)
