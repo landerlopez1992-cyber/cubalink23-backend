@@ -1251,10 +1251,19 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
       print('🎯 INICIANDO BÚSQUEDA REAL CON DUFFEL API');
       
       // Extraer códigos IATA
+      print('🔍 DEBUG: Texto del controlador FROM: "${_fromController.text}"');
+      print('🔍 DEBUG: Texto del controlador TO: "${_toController.text}"');
+      
       final fromCode = _extractAirportCode(_fromController.text);
       final toCode = _extractAirportCode(_toController.text);
       
+      print('🔍 DEBUG: Código FROM extraído: $fromCode');
+      print('🔍 DEBUG: Código TO extraído: $toCode');
+      
       if (fromCode == null || toCode == null) {
+        print('❌ ERROR: No se pudieron extraer códigos IATA');
+        print('❌ FROM text: "${_fromController.text}" → code: $fromCode');
+        print('❌ TO text: "${_toController.text}" → code: $toCode');
         throw Exception('Códigos de aeropuerto no válidos');
       }
 
@@ -1377,10 +1386,13 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
 
   // Extraer código IATA del texto del controller
   String? _extractAirportCode(String text) {
+    print('🔍 DEBUG: Extrayendo código IATA de: "$text"');
+    
     // Buscar patrón de 3 letras mayúsculas dentro de paréntesis
     final regexParens = RegExp(r'\(([A-Z]{3})\)');
     var match = regexParens.firstMatch(text);
     if (match != null) {
+      print('✅ Encontrado código IATA en paréntesis: ${match.group(1)}');
       return match.group(1)!;
     }
     
@@ -1388,20 +1400,29 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
     final regex = RegExp(r'\b([A-Z]{3})\b');
     match = regex.firstMatch(text);
     if (match != null) {
+      print('✅ Encontrado código IATA al final: ${match.group(1)}');
       return match.group(1)!;
     }
     
-    // Si no encuentra código IATA, buscar en el texto completo
-    if (text.length >= 3) {
-      // Buscar cualquier secuencia de 3 letras mayúsculas
-      final allCaps = RegExp(r'[A-Z]{3}');
-      match = allCaps.firstMatch(text);
-      if (match != null) {
-        return match.group(0);
-      }
+    // Buscar cualquier secuencia de 3 letras mayúsculas consecutivas
+    final allCaps = RegExp(r'[A-Z]{3}');
+    match = allCaps.firstMatch(text);
+    if (match != null) {
+      print('✅ Encontrado código IATA en texto: ${match.group(0)}');
+      return match.group(0);
     }
     
-    print('⚠️ No se pudo extraer código IATA de: "$text"');
+    // Último recurso: buscar cualquier 3 letras mayúsculas
+    final anyThree = RegExp(r'[A-Z][A-Z][A-Z]');
+    match = anyThree.firstMatch(text);
+    if (match != null) {
+      print('✅ Encontrado código IATA (último recurso): ${match.group(0)}');
+      return match.group(0);
+    }
+    
+    print('❌ No se pudo extraer código IATA de: "$text"');
+    print('❌ Longitud del texto: ${text.length}');
+    print('❌ Caracteres del texto: ${text.codeUnits}');
     return null;
   }
 
