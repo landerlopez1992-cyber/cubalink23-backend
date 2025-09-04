@@ -500,7 +500,13 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                             print('🔍 DEBUG: - iata_code: ${airport['iata_code']}');
                                             print('🔍 DEBUG: - Estructura completa: $airport');
                                             
-                                            _fromController.text = '${airport['display_name']}';
+                                            // Usar el formato correcto: "Nombre del Aeropuerto (IATA_CODE)"
+                                            final airportName = airport['name'] ?? '';
+                                            final iataCode = airport['iata_code'] ?? airport['code'] ?? '';
+                                            final displayText = '$airportName ($iataCode)';
+                                            
+                                            print('🔍 DEBUG: Texto formateado: "$displayText"');
+                                            _fromController.text = displayText;
                                             setState(() {
                                               _showFromDropdown = false;
                                             });
@@ -633,7 +639,13 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                             print('🔍 DEBUG: - iata_code: ${airport['iata_code']}');
                                             print('🔍 DEBUG: - Estructura completa: $airport');
                                             
-                                            _toController.text = '${airport['display_name']}';
+                                            // Usar el formato correcto: "Nombre del Aeropuerto (IATA_CODE)"
+                                            final airportName = airport['name'] ?? '';
+                                            final iataCode = airport['iata_code'] ?? airport['code'] ?? '';
+                                            final displayText = '$airportName ($iataCode)';
+                                            
+                                            print('🔍 DEBUG: Texto formateado: "$displayText"');
+                                            _toController.text = displayText;
                                             setState(() {
                                               _showToDropdown = false;
                                             });
