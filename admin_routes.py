@@ -162,7 +162,20 @@ def create_product():
     try:
         import requests
         
-        data = request.json
+        # Verificar que tenemos datos JSON válidos
+        if not request.is_json:
+            return jsonify({
+                'success': False,
+                'error': 'Content-Type debe ser application/json'
+            }), 400
+            
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'No se recibieron datos JSON'
+            }), 400
+        
         SUPABASE_URL = 'https://zgqrhzuhrwudckwesybg.supabase.co'
         SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTI3OTgsImV4cCI6MjA3MTM2ODc5OH0.lUVK99zmOYD7bNTxilJZWHTmYPfZF5YeMJDVUaJ-FsQ'
         
@@ -172,7 +185,7 @@ def create_product():
             'Content-Type': 'application/json'
         }
         
-        # Preparar datos del producto con nuevas funcionalidades
+        # Preparar datos del producto - SOLO campos que existen en Supabase
         product_data = {
             'name': data.get('name'),
             'description': data.get('description', ''),
@@ -180,8 +193,15 @@ def create_product():
             'category': data.get('category'),
             'stock': int(data.get('stock', 0)),
             'is_active': True,
-            'image_url': data.get('image_url', '')
+            'image_url': data.get('image_url', '')  # Usar la imagen del usuario, no placeholder
         }
+        
+        # Validar datos requeridos
+        if not product_data['name'] or not product_data['category']:
+            return jsonify({
+                'success': False,
+                'error': 'Nombre y categoría son requeridos'
+            }), 400
         
         response = requests.post(
             f'{SUPABASE_URL}/rest/v1/store_products',
@@ -204,7 +224,7 @@ def create_product():
     except Exception as e:
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': f'Error interno: {str(e)}'
         }), 500
 
 @admin.route('/api/products/<product_id>', methods=['PUT'])

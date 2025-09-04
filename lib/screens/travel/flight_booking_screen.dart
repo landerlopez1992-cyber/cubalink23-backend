@@ -37,6 +37,10 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
   List<FlightOffer> _flightOffers = [];
   bool _isLoadingFlights = false;
   String? _errorMessage;
+  
+  // Variables para debounce de búsqueda de aeropuertos
+  Timer? _fromSearchTimer;
+  Timer? _toSearchTimer;
   String? _currentOfferRequestId;
   bool _backendAvailable = false;
   
@@ -248,12 +252,12 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                             child: GestureDetector(
                               onTap: () => setState(() => _airlineType = 'ambos'),
                               child: Container(
-                                padding: EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                                padding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                                 decoration: BoxDecoration(
                                   color: _airlineType == 'ambos'
                                       ? Theme.of(context).colorScheme.primary 
                                       : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -263,9 +267,9 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                       color: _airlineType == 'ambos'
                                           ? Colors.white 
                                           : Colors.grey[600],
-                                      size: 16,
+                                      size: 14,
                                     ),
-                                    SizedBox(height: 4),
+                                    SizedBox(height: 2),
                                     Text(
                                       'Ambos',
                                       style: TextStyle(
@@ -273,7 +277,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                             ? Colors.white 
                                             : Colors.grey[600],
                                         fontWeight: FontWeight.w600,
-                                        fontSize: 12,
+                                        fontSize: 10,
                                       ),
                                       textAlign: TextAlign.center,
                                       maxLines: 1,
@@ -289,12 +293,12 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                             child: GestureDetector(
                               onTap: () => setState(() => _airlineType = 'comerciales'),
                               child: Container(
-                                padding: EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                                padding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                                 decoration: BoxDecoration(
                                   color: _airlineType == 'comerciales'
                                       ? Theme.of(context).colorScheme.primary 
                                       : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -304,9 +308,9 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                       color: _airlineType == 'comerciales'
                                           ? Colors.white 
                                           : Colors.grey[600],
-                                      size: 16,
+                                      size: 14,
                                     ),
-                                    SizedBox(height: 4),
+                                    SizedBox(height: 2),
                                     Text(
                                       'Comerciales',
                                       style: TextStyle(
@@ -314,7 +318,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                           ? Colors.white 
                                           : Colors.grey[600],
                                         fontWeight: FontWeight.w600,
-                                        fontSize: 11,
+                                        fontSize: 9,
                                       ),
                                       textAlign: TextAlign.center,
                                       maxLines: 1,
@@ -330,12 +334,12 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                             child: GestureDetector(
                               onTap: () => setState(() => _airlineType = 'charter'),
                               child: Container(
-                                padding: EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                                padding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                                 decoration: BoxDecoration(
                                   color: _airlineType == 'charter'
                                       ? Theme.of(context).colorScheme.primary 
                                       : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -345,9 +349,9 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                       color: _airlineType == 'charter'
                                           ? Colors.white 
                                           : Colors.grey[600],
-                                      size: 16,
+                                      size: 14,
                                     ),
-                                    SizedBox(height: 4),
+                                    SizedBox(height: 2),
                                     Text(
                                       'Charter',
                                       style: TextStyle(
@@ -355,7 +359,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                           ? Colors.white 
                                           : Colors.grey[600],
                                         fontWeight: FontWeight.w600,
-                                        fontSize: 11,
+                                        fontSize: 9,
                                       ),
                                       textAlign: TextAlign.center,
                                       maxLines: 1,
@@ -430,10 +434,17 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                         color: Colors.grey[800],
                                       ),
                                       onChanged: (value) {
+                                        // Cancelar búsqueda anterior
+                                        _fromSearchTimer?.cancel();
+                                        
                                         if (value.isNotEmpty) {
-                                          _searchAirportsFrom(value);
+                                          // Debounce de 500ms
+                                          _fromSearchTimer = Timer(Duration(milliseconds: 500), () {
+                                            _searchAirportsFrom(value);
+                                          });
                                         } else {
                                           setState(() {
+                                            _fromSearchResults = [];
                                             _showFromDropdown = false;
                                           });
                                         }
@@ -471,6 +482,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                     padding: EdgeInsets.zero,
                                     itemCount: _fromSearchResults.length,
                                     itemBuilder: (context, index) {
+                                      if (index >= _fromSearchResults.length) return SizedBox.shrink();
                                       final airport = _fromSearchResults[index];
                                       return Container(
                                         decoration: BoxDecoration(
@@ -569,10 +581,17 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                         color: Colors.grey[800],
                                       ),
                                       onChanged: (value) {
+                                        // Cancelar búsqueda anterior
+                                        _toSearchTimer?.cancel();
+                                        
                                         if (value.isNotEmpty) {
-                                          _searchAirportsTo(value);
+                                          // Debounce de 500ms
+                                          _toSearchTimer = Timer(Duration(milliseconds: 500), () {
+                                            _searchAirportsTo(value);
+                                          });
                                         } else {
                                           setState(() {
+                                            _toSearchResults = [];
                                             _showToDropdown = false;
                                           });
                                         }
@@ -610,6 +629,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                     padding: EdgeInsets.zero,
                                     itemCount: _toSearchResults.length,
                                     itemBuilder: (context, index) {
+                                      if (index >= _toSearchResults.length) return SizedBox.shrink();
                                       final airport = _toSearchResults[index];
                                       return Container(
                                         decoration: BoxDecoration(
@@ -1350,6 +1370,41 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
         return;
       }
 
+      // Verificar si el resultado contiene datos de vuelos directamente
+      if (searchResult['data'] != null && searchResult['data'] is List) {
+        // El backend ya devolvió los vuelos procesados
+        final flights = searchResult['data'] as List;
+        print('✅ Vuelos obtenidos directamente: ${flights.length}');
+        
+        // Convertir a FlightOffer
+        final flightOffers = flights.map((flight) => FlightOffer.fromDuffelJson(flight)).toList();
+        
+        // 🚫 CERRAR MODAL DE CARGA
+        Navigator.of(context).pop();
+        
+        setState(() {
+          _flightOffers = flightOffers;
+          _isLoadingFlights = false;
+        });
+        
+        // Navegar a resultados
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => FlightResultsScreen(
+              flightOffers: flightOffers,
+              fromAirport: fromCode,
+              toAirport: toCode,
+              departureDate: departureStr,
+              returnDate: returnStr,
+              passengers: _getTotalPassengers(),
+              airlineType: _airlineType,
+            ),
+          ),
+        );
+        return;
+      }
+      
+      // Si no, procesar como antes (offer request)
       final offerRequestId = searchResult['data']['id'] as String;
       _currentOfferRequestId = offerRequestId;
       

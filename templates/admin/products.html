@@ -463,9 +463,10 @@
             // Manejar imagen del producto
             const imageFile = formData.get('image');
             if (imageFile && imageFile.size > 0) {
-                // Por ahora, usar una URL de placeholder hasta implementar upload de archivos
-                productData.image_url = `https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop&t=${Date.now()}`;
-                console.log('📸 Imagen detectada, usando URL placeholder');
+                // TODO: Implementar upload real a Supabase Storage
+                // Por ahora, usar una URL temporal del usuario
+                productData.image_url = `https://via.placeholder.com/400x300/007bff/ffffff?text=${encodeURIComponent(productData.name)}`;
+                console.log('📸 Imagen detectada, usando placeholder personalizado');
             } else {
                 productData.image_url = '';
                 console.log('📸 No hay imagen, enviando vacío');
@@ -540,7 +541,155 @@
         }
         
         function editProduct(productId) {
-            alert('Función de editar producto: ' + productId + ' (Por implementar)');
+            // Buscar el producto en la lista actual
+            fetch('/admin/api/products')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.products) {
+                        const product = data.products.find(p => p.id === productId);
+                        if (product) {
+                            showEditProductModal(product);
+                        } else {
+                            alert('Producto no encontrado');
+                        }
+                    } else {
+                        alert('Error al cargar datos del producto');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error de conexión al cargar producto');
+                });
+        }
+        
+        function showEditProductModal(product) {
+            // Crear modal de edición dinámicamente
+            const modalHtml = `
+                <div class="modal fade" id="editProductModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Editar Producto: ${product.name}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="editProductForm">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Nombre del Producto</label>
+                                                <input type="text" class="form-control" name="name" value="${product.name}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Categoría</label>
+                                                <select class="form-select" name="category" required>
+                                                    <option value="">Seleccionar categoría</option>
+                                                    <option value="Alimentos" ${product.category === 'Alimentos' ? 'selected' : ''}>Alimentos</option>
+                                                    <option value="Materiales" ${product.category === 'Materiales' ? 'selected' : ''}>Materiales</option>
+                                                    <option value="Ferretería" ${product.category === 'Ferretería' ? 'selected' : ''}>Ferretería</option>
+                                                    <option value="Farmacia" ${product.category === 'Farmacia' ? 'selected' : ''}>Farmacia</option>
+                                                    <option value="Electrónicos" ${product.category === 'Electrónicos' ? 'selected' : ''}>Electrónicos</option>
+                                                    <option value="Ropa" ${product.category === 'Ropa' ? 'selected' : ''}>Ropa</option>
+                                                    <option value="Hogar" ${product.category === 'Hogar' ? 'selected' : ''}>Hogar</option>
+                                                    <option value="Deportes" ${product.category === 'Deportes' ? 'selected' : ''}>Deportes</option>
+                                                    <option value="Motos" ${product.category === 'Motos' ? 'selected' : ''}>Motos</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Precio</label>
+                                                <input type="number" class="form-control" name="price" value="${product.price}" step="0.01" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Stock</label>
+                                                <input type="number" class="form-control" name="stock" value="${product.stock}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Descripción</label>
+                                                <textarea class="form-control" name="description" rows="3">${product.description || ''}</textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Estado</label>
+                                                <select class="form-select" name="is_active">
+                                                    <option value="true" ${product.is_active ? 'selected' : ''}>Activo</option>
+                                                    <option value="false" ${!product.is_active ? 'selected' : ''}>Inactivo</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary" onclick="updateProduct('${product.id}')">Guardar Cambios</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remover modal anterior si existe
+            const existingModal = document.getElementById('editProductModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Agregar nuevo modal al DOM
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('editProductModal'));
+            modal.show();
+        }
+        
+        function updateProduct(productId) {
+            const form = document.getElementById('editProductForm');
+            const formData = new FormData(form);
+            
+            const productData = {
+                name: formData.get('name'),
+                description: formData.get('description'),
+                price: parseFloat(formData.get('price')),
+                stock: parseInt(formData.get('stock')),
+                category: formData.get('category'),
+                is_active: formData.get('is_active') === 'true'
+            };
+            
+            // Mostrar spinner en el botón
+            const submitBtn = document.querySelector('#editProductModal .btn-primary');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
+            submitBtn.disabled = true;
+            
+            // Enviar actualización a la API
+            fetch(`/admin/api/products/${productId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(productData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Producto actualizado correctamente');
+                    // Cerrar modal y recargar datos
+                    bootstrap.Modal.getInstance(document.getElementById('editProductModal')).hide();
+                    loadProductsData();
+                } else {
+                    alert('Error al actualizar producto: ' + (data.error || 'Error desconocido'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error de conexión al actualizar producto');
+            })
+            .finally(() => {
+                // Restaurar botón
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
         }
         
         function deleteProduct(productId) {
