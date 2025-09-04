@@ -355,24 +355,31 @@
         });
 
         function loadProductsData() {
+            console.log('🔄 Iniciando carga de productos...');
             // Mostrar spinner de carga
             document.getElementById('products-table').innerHTML = 
                 '<tr><td colspan="7" class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Cargando...</span></div></td></tr>';
             
             // Cargar productos reales desde la API
             fetch('/admin/api/products')
-                .then(response => response.json())
+                .then(response => {
+                    console.log('📡 Respuesta GET productos:', response.status);
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('📊 Datos de productos:', data);
                     if (data.success && data.products) {
+                        console.log(`✅ ${data.products.length} productos cargados`);
                         displayProducts(data.products);
                         updateStats(data.products);
                     } else {
-                        showError('Error al cargar productos');
+                        console.error('❌ Error en respuesta:', data.error);
+                        showError('Error al cargar productos: ' + (data.error || 'Error desconocido'));
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    showError('Error de conexión al cargar productos');
+                    console.error('❌ Error de conexión al cargar productos:', error);
+                    showError('Error de conexión al cargar productos: ' + error.message);
                 });
         }
         
@@ -386,6 +393,12 @@
             
             tbody.innerHTML = products.map(product => `
                 <tr>
+                    <td>
+                        ${product.image_url ? 
+                            `<img src="${product.image_url}" alt="${product.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">` : 
+                            '<div style="width: 50px; height: 50px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-image text-muted"></i></div>'
+                        }
+                    </td>
                     <td>${product.name}</td>
                     <td>${product.description || 'Sin descripción'}</td>
                     <td>${product.category}</td>
@@ -447,6 +460,17 @@
                 is_active: true
             };
             
+            // Manejar imagen del producto
+            const imageFile = formData.get('image');
+            if (imageFile && imageFile.size > 0) {
+                // Por ahora, usar una URL de placeholder hasta implementar upload de archivos
+                productData.image_url = `https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop&t=${Date.now()}`;
+                console.log('📸 Imagen detectada, usando URL placeholder');
+            } else {
+                productData.image_url = '';
+                console.log('📸 No hay imagen, enviando vacío');
+            }
+            
             // Procesar métodos de envío
             const shippingMethods = [];
             const shippingCheckboxes = form.querySelectorAll('input[name="shipping_methods"]:checked');
@@ -482,21 +506,31 @@
                 },
                 body: JSON.stringify(productData)
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('📡 Respuesta del servidor:', response.status);
+                return response.json();
+            })
             .then(data => {
+                console.log('📊 Datos de respuesta:', data);
                 if (data.success) {
+                    console.log('✅ Producto creado exitosamente');
                     alert('Producto agregado correctamente');
                     // Cerrar modal y recargar datos
                     bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
                     form.reset();
-                    loadProductsData();
+                    // Pequeña pausa antes de recargar para asegurar que el producto esté en DB
+                    setTimeout(() => {
+                        console.log('🔄 Recargando lista de productos...');
+                        loadProductsData();
+                    }, 500);
                 } else {
+                    console.error('❌ Error del servidor:', data.error);
                     alert('Error al agregar producto: ' + (data.error || 'Error desconocido'));
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                alert('Error de conexión al agregar producto');
+                console.error('❌ Error de conexión:', error);
+                alert('Error de conexión al agregar producto: ' + error.message);
             })
             .finally(() => {
                 // Restaurar botón
