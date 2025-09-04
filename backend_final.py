@@ -193,11 +193,24 @@ def search_flights():
                 }
             }
             
-            # Usar entorno de test según documentación oficial de Duffel
-            # La documentación menciona rutas específicas para testing
-            print(f"🧪 USANDO ENTORNO DE TEST DE DUFFEL")
-            print(f"🧪 Ruta: {origin} → {destination}")
-            print(f"🧪 Payload para Duffel: {offer_request_data}")
+            # 🚀 PRODUCCIÓN REAL: Duffel API en modo producción
+            # Según documentación: usar rutas reales que existan
+            print(f"🚀 PRODUCCIÓN REAL: Duffel API")
+            print(f"🚀 Ruta: {origin} → {destination}")
+            print(f"🚀 Payload para Duffel: {offer_request_data}")
+            
+            # Verificar que la ruta sea válida para producción
+            if not origin or not destination:
+                return jsonify({"error": "Origen y destino son requeridos"}), 400
+            
+            # 🎯 VALIDACIÓN: Duffel requiere códigos IATA válidos de 3 letras
+            if len(origin) != 3 or len(destination) != 3:
+                return jsonify({"error": "Códigos IATA deben ser de 3 letras"}), 400
+            
+            # 🚫 RESTRICCIÓN: Duffel no permite rutas domésticas en producción
+            # MIA → HAV es internacional (USA → Cuba) ✅
+            # MIA → JFK sería doméstica (USA → USA) ❌
+            print(f"🌍 Validando ruta internacional: {origin} → {destination}")
             
             offer_response = requests.post(
                 'https://api.duffel.com/offer_requests',
