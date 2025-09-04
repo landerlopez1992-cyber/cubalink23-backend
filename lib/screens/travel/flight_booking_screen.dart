@@ -493,6 +493,13 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                             style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                                           ),
                                           onTap: () {
+                                            print('🔍 DEBUG: Aeropuerto FROM seleccionado:');
+                                            print('🔍 DEBUG: - display_name: ${airport['display_name']}');
+                                            print('🔍 DEBUG: - name: ${airport['name']}');
+                                            print('🔍 DEBUG: - code: ${airport['code']}');
+                                            print('🔍 DEBUG: - iata_code: ${airport['iata_code']}');
+                                            print('🔍 DEBUG: - Estructura completa: $airport');
+                                            
                                             _fromController.text = '${airport['display_name']}';
                                             setState(() {
                                               _showFromDropdown = false;
@@ -619,6 +626,13 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                             style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                                           ),
                                           onTap: () {
+                                            print('🔍 DEBUG: Aeropuerto TO seleccionado:');
+                                            print('🔍 DEBUG: - display_name: ${airport['display_name']}');
+                                            print('🔍 DEBUG: - name: ${airport['name']}');
+                                            print('🔍 DEBUG: - code: ${airport['code']}');
+                                            print('🔍 DEBUG: - iata_code: ${airport['iata_code']}');
+                                            print('🔍 DEBUG: - Estructura completa: $airport');
+                                            
                                             _toController.text = '${airport['display_name']}';
                                             setState(() {
                                               _showToDropdown = false;
