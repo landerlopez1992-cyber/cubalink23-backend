@@ -76,6 +76,61 @@ def system():
     """Configuración del sistema"""
     return render_template('admin/system.html', config=ADMIN_CONFIG)
 
+@admin.route('/orders')
+def orders():
+    """Gestión de órdenes"""
+    return render_template('admin/orders.html', config=ADMIN_CONFIG)
+
+@admin.route('/banners')
+def banners():
+    """Gestión de banners"""
+    return render_template('admin/banners.html', config=ADMIN_CONFIG)
+
+@admin.route('/vendors')
+def vendors():
+    """Gestión de vendedores"""
+    return render_template('admin/vendors.html', config=ADMIN_CONFIG)
+
+@admin.route('/drivers')
+def drivers():
+    """Gestión de repartidores"""
+    return render_template('admin/drivers.html', config=ADMIN_CONFIG)
+
+@admin.route('/vehicles')
+def vehicles():
+    """Gestión de vehículos"""
+    return render_template('admin/vehicles.html', config=ADMIN_CONFIG)
+
+@admin.route('/support-chat')
+def support_chat():
+    """Chat de soporte"""
+    return render_template('admin/support_chat.html', config=ADMIN_CONFIG)
+
+@admin.route('/alerts')
+def alerts():
+    """Gestión de alertas"""
+    return render_template('admin/alerts.html', config=ADMIN_CONFIG)
+
+@admin.route('/wallet')
+def wallet():
+    """Gestión de billetera"""
+    return render_template('admin/wallet.html', config=ADMIN_CONFIG)
+
+@admin.route('/payment-methods')
+def payment_methods():
+    """Métodos de pago"""
+    return render_template('admin/payment_methods.html', config=ADMIN_CONFIG)
+
+@admin.route('/payroll')
+def payroll():
+    """Gestión de nómina"""
+    return render_template('admin/payroll.html', config=ADMIN_CONFIG)
+
+@admin.route('/system-rules')
+def system_rules():
+    """Reglas del sistema"""
+    return render_template('admin/system_rules.html', config=ADMIN_CONFIG)
+
 @admin.route('/api/config', methods=['GET', 'POST'])
 def api_config():
     """API para configurar la app Flutter"""
