@@ -239,12 +239,23 @@
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Categoría</label>
-                                    <select class="form-select" name="category" required>
+                                    <select class="form-select" name="category" id="categorySelect" required onchange="loadSubcategories()">
                                         <option value="">Seleccionar categoría</option>
-                                        <option value="electronics">Electrónicos</option>
-                                        <option value="clothing">Ropa</option>
-                                        <option value="food">Comida</option>
-                                        <option value="services">Servicios</option>
+                                        <option value="Alimentos">Alimentos</option>
+                                        <option value="Materiales">Materiales</option>
+                                        <option value="Ferretería">Ferretería</option>
+                                        <option value="Farmacia">Farmacia</option>
+                                        <option value="Electrónicos">Electrónicos</option>
+                                        <option value="Ropa">Ropa</option>
+                                        <option value="Hogar">Hogar</option>
+                                        <option value="Deportes">Deportes</option>
+                                        <option value="Motos">Motos</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Subcategoría</label>
+                                    <select class="form-select" name="subcategory" id="subcategorySelect">
+                                        <option value="">Seleccionar subcategoría</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">
@@ -262,9 +273,76 @@
                                     <textarea class="form-control" name="description" rows="3"></textarea>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Imagen</label>
-                                    <input type="file" class="form-control" name="image" accept="image/*">
+                                    <label class="form-label">Imagen del Producto</label>
+                                    <input type="file" class="form-control" name="image" id="productImage" accept="image/*" onchange="previewImage(this)">
+                                    <div id="imagePreview" class="mt-2" style="display: none;">
+                                        <img id="previewImg" src="" alt="Vista previa" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+                                        <button type="button" class="btn btn-sm btn-danger ms-2" onclick="removeImage()">Eliminar</button>
+                                    </div>
                                 </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Métodos de Envío -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="mb-3">Métodos de Envío Disponibles</h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="shipping_methods" value="standard" id="shipping_standard">
+                                            <label class="form-check-label" for="shipping_standard">
+                                                Envío Estándar
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="shipping_methods" value="express" id="shipping_express">
+                                            <label class="form-check-label" for="shipping_express">
+                                                Envío Express
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="shipping_methods" value="pickup" id="shipping_pickup">
+                                            <label class="form-check-label" for="shipping_pickup">
+                                                Recogida en Tienda
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Variantes del Producto -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <h6 class="mb-3">Variantes del Producto</h6>
+                                <div id="variantsContainer">
+                                    <div class="variant-item mb-2">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <select class="form-select" name="variant_type[]">
+                                                    <option value="">Seleccionar tipo</option>
+                                                    <option value="size">Talla</option>
+                                                    <option value="color">Color</option>
+                                                    <option value="capacity">Capacidad</option>
+                                                    <option value="weight">Peso</option>
+                                                    <option value="material">Material</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <input type="text" class="form-control" name="variant_value[]" placeholder="Valor de la variante (ej: Rojo, Grande, 500ml)">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVariant(this)">Eliminar</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="addVariant()">+ Agregar Variante</button>
                             </div>
                         </div>
                     </form>
@@ -285,15 +363,73 @@
         });
 
         function loadProductsData() {
-            // Simular carga de datos
-            document.getElementById('total-products').textContent = '0';
-            document.getElementById('total-categories').textContent = '0';
-            document.getElementById('total-sales').textContent = '$0';
-            document.getElementById('avg-rating').textContent = '0.0';
-            
-            // Simular tabla vacía
+            // Mostrar spinner de carga
             document.getElementById('products-table').innerHTML = 
-                '<tr><td colspan="7" class="text-center">No hay productos registrados</td></tr>';
+                '<tr><td colspan="7" class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Cargando...</span></div></td></tr>';
+            
+            // Cargar productos reales desde la API
+            fetch('/admin/api/products')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.products) {
+                        displayProducts(data.products);
+                        updateStats(data.products);
+                    } else {
+                        showError('Error al cargar productos');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showError('Error de conexión al cargar productos');
+                });
+        }
+        
+        function displayProducts(products) {
+            const tbody = document.getElementById('products-table');
+            
+            if (products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">No hay productos registrados</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = products.map(product => `
+                <tr>
+                    <td>${product.name}</td>
+                    <td>${product.description || 'Sin descripción'}</td>
+                    <td>${product.category}</td>
+                    <td>$${product.price}</td>
+                    <td>${product.stock}</td>
+                    <td>
+                        <span class="badge ${product.is_active ? 'bg-success' : 'bg-danger'}">
+                            ${product.is_active ? 'Activo' : 'Inactivo'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editProduct('${product.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct('${product.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function updateStats(products) {
+            const totalProducts = products.length;
+            const categories = [...new Set(products.map(p => p.category))];
+            const totalSales = products.reduce((sum, p) => sum + (p.price * p.stock), 0);
+            
+            document.getElementById('total-products').textContent = totalProducts;
+            document.getElementById('total-categories').textContent = categories.length;
+            document.getElementById('total-sales').textContent = `$${totalSales.toFixed(2)}`;
+            document.getElementById('avg-rating').textContent = '4.5'; // Placeholder
+        }
+        
+        function showError(message) {
+            document.getElementById('products-table').innerHTML = 
+                `<tr><td colspan="7" class="text-center text-danger">${message}</td></tr>`;
         }
 
         function refreshProducts() {
@@ -308,12 +444,161 @@
             const form = document.getElementById('addProductForm');
             const formData = new FormData(form);
             
-            // Aquí iría la lógica para agregar producto
-            alert('Producto agregado correctamente');
+            // Convertir FormData a objeto JSON
+            const productData = {
+                name: formData.get('name'),
+                description: formData.get('description'),
+                price: parseFloat(formData.get('price')),
+                stock: parseInt(formData.get('stock')),
+                category: formData.get('category'),
+                is_active: true
+            };
             
-            // Cerrar modal y recargar datos
-            bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
-            loadProductsData();
+            // Mostrar spinner en el botón
+            const submitBtn = document.querySelector('#addProductModal .btn-primary');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
+            submitBtn.disabled = true;
+            
+            // Enviar producto a la API
+            fetch('/admin/api/products', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(productData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Producto agregado correctamente');
+                    // Cerrar modal y recargar datos
+                    bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+                    form.reset();
+                    loadProductsData();
+                } else {
+                    alert('Error al agregar producto: ' + (data.error || 'Error desconocido'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error de conexión al agregar producto');
+            })
+            .finally(() => {
+                // Restaurar botón
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        }
+        
+        function editProduct(productId) {
+            alert('Función de editar producto: ' + productId + ' (Por implementar)');
+        }
+        
+        function deleteProduct(productId) {
+            if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+                fetch(`/admin/api/products/${productId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Producto eliminado correctamente');
+                        loadProductsData();
+                    } else {
+                        alert('Error al eliminar producto: ' + (data.error || 'Error desconocido'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error de conexión al eliminar producto');
+                });
+            }
+        }
+        
+        // Funciones para las nuevas funcionalidades
+        function loadSubcategories() {
+            const categorySelect = document.getElementById('categorySelect');
+            const subcategorySelect = document.getElementById('subcategorySelect');
+            const selectedCategory = categorySelect.value;
+            
+            // Limpiar subcategorías
+            subcategorySelect.innerHTML = '<option value="">Seleccionar subcategoría</option>';
+            
+            if (!selectedCategory) return;
+            
+            // Definir subcategorías según la categoría seleccionada
+            const subcategories = {
+                'Alimentos': ['Carnes', 'Lácteos', 'Frutas & Verduras', 'Panadería', 'Mariscos', 'Congelados'],
+                'Materiales': ['Construcción', 'Pintura', 'Madera', 'Metal'],
+                'Ferretería': ['Herramientas', 'Tornillos', 'Clavos', 'Candados'],
+                'Farmacia': ['Medicamentos', 'Vitaminas', 'Primeros Auxilios', 'Cuidado Personal'],
+                'Electrónicos': ['Teléfonos', 'Computadoras', 'Accesorios', 'Electrodomésticos'],
+                'Ropa': ['Hombres', 'Mujeres', 'Niños', 'Accesorios'],
+                'Hogar': ['Muebles', 'Decoración', 'Cocina', 'Baño'],
+                'Deportes': ['Fútbol', 'Béisbol', 'Natación', 'Fitness'],
+                'Motos': ['Motos Eléctricas', 'Motos Gasolina']
+            };
+            
+            const categorySubcategories = subcategories[selectedCategory] || [];
+            categorySubcategories.forEach(subcategory => {
+                const option = document.createElement('option');
+                option.value = subcategory;
+                option.textContent = subcategory;
+                subcategorySelect.appendChild(option);
+            });
+        }
+        
+        function previewImage(input) {
+            const preview = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('previewImg');
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        function removeImage() {
+            const preview = document.getElementById('imagePreview');
+            const input = document.getElementById('productImage');
+            preview.style.display = 'none';
+            input.value = '';
+        }
+        
+        function addVariant() {
+            const container = document.getElementById('variantsContainer');
+            const variantHtml = `
+                <div class="variant-item mb-2">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <select class="form-select" name="variant_type[]">
+                                <option value="">Seleccionar tipo</option>
+                                <option value="size">Talla</option>
+                                <option value="color">Color</option>
+                                <option value="capacity">Capacidad</option>
+                                <option value="weight">Peso</option>
+                                <option value="material">Material</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" name="variant_value[]" placeholder="Valor de la variante (ej: Rojo, Grande, 500ml)">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVariant(this)">Eliminar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', variantHtml);
+        }
+        
+        function removeVariant(button) {
+            button.closest('.variant-item').remove();
         }
     </script>
 </body>
