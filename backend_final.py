@@ -214,7 +214,7 @@ def search_flights():
             print(f"🌍 Validando ruta internacional: {origin} → {destination}")
             
             offer_response = requests.post(
-                'https://api.duffel.com/offer_requests',
+                'https://api.duffel.com/air/offer_requests',
                 headers=headers,
                 json=offer_request_data,
                 timeout=30
