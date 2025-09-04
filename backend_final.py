@@ -17,6 +17,10 @@ import time
 app = Flask(__name__)
 CORS(app)
 
+# Importar el panel de administración
+from admin_routes import admin
+app.register_blueprint(admin)
+
 # Configuración
 PORT = int(os.environ.get('PORT', 10000))
 DUFFEL_API_KEY = os.environ.get('DUFFEL_API_KEY')
