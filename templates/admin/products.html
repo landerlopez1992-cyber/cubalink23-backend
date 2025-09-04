@@ -444,15 +444,37 @@
             const form = document.getElementById('addProductForm');
             const formData = new FormData(form);
             
-            // Convertir FormData a objeto JSON
+            // Convertir FormData a objeto JSON con nuevas funcionalidades
             const productData = {
                 name: formData.get('name'),
                 description: formData.get('description'),
                 price: parseFloat(formData.get('price')),
                 stock: parseInt(formData.get('stock')),
                 category: formData.get('category'),
+                subcategory: formData.get('subcategory'),
                 is_active: true
             };
+            
+            // Procesar métodos de envío
+            const shippingMethods = [];
+            const shippingCheckboxes = form.querySelectorAll('input[name="shipping_methods"]:checked');
+            shippingCheckboxes.forEach(checkbox => {
+                shippingMethods.push(checkbox.value);
+            });
+            productData.shipping_methods = shippingMethods;
+            
+            // Procesar variantes
+            const variantTypes = formData.getAll('variant_type[]');
+            const variantValues = formData.getAll('variant_value[]');
+            productData.variants = [];
+            for (let i = 0; i < variantTypes.length; i++) {
+                if (variantTypes[i] && variantValues[i]) {
+                    productData.variants.push({
+                        type: variantTypes[i],
+                        value: variantValues[i]
+                    });
+                }
+            }
             
             // Mostrar spinner en el botón
             const submitBtn = document.querySelector('#addProductModal .btn-primary');
