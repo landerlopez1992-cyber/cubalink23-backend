@@ -301,6 +301,13 @@ def update_product(product_id):
             'Content-Type': 'application/json'
         }
         
+        # Manejar imagen del producto
+        if data.get('image_base64'):
+            # Si hay imagen en base64, subirla a Supabase Storage
+            image_url = upload_image_to_supabase(data.get('image_base64'), data.get('name', 'product'))
+            if image_url:
+                data['image_url'] = image_url
+        
         # Preparar datos actualizados con nuevas funcionalidades
         update_data = {}
         if 'name' in data:
@@ -324,7 +331,11 @@ def update_product(product_id):
             json=update_data
         )
         
-        if response.status_code == 200:
+        print(f"🔍 Update Response Status: {response.status_code}")
+        print(f"🔍 Update Response Text: {response.text}")
+        
+        # Supabase devuelve 204 para actualizaciones exitosas
+        if response.status_code in [200, 204]:
             return jsonify({
                 'success': True,
                 'message': 'Producto actualizado exitosamente'
