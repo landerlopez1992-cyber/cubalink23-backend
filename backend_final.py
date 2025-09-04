@@ -204,11 +204,31 @@ def search_flights():
             print(f"📡 Offer request response: {offer_response.text}")
             print(f"📡 Offer request headers: {dict(offer_response.headers)}")
             
-            if offer_response.status_code != 201:
+            # DEBUGGING MEJORADO: Mostrar toda la información de la respuesta
+            print(f"📡 DUFFEL RESPONSE STATUS: {offer_response.status_code}")
+            print(f"📡 DUFFEL RESPONSE HEADERS: {dict(offer_response.headers)}")
+            print(f"📡 DUFFEL RESPONSE BODY: {offer_response.text}")
+            print(f"📡 DUFFEL REQUEST PAYLOAD: {offer_request_data}")
+            
+            if offer_response.status_code not in [200, 201]:
                 print(f"❌ Error creando offer request: {offer_response.status_code}")
                 print(f"❌ Response: {offer_response.text}")
                 print(f"❌ Request payload: {offer_request_data}")
-                return jsonify({"error": f"Error creando offer request: {offer_response.text}"}), 500
+                
+                # Enviar error específico de Duffel al frontend
+                try:
+                    error_data = offer_response.json()
+                    error_message = error_data.get('errors', [{}])[0].get('message', 'Error desconocido de Duffel')
+                    return jsonify({
+                        "error": f"Duffel API Error: {error_message}",
+                        "duffel_status": offer_response.status_code,
+                        "duffel_response": offer_response.text
+                    }), 500
+                except:
+                    return jsonify({
+                        "error": f"Error creando offer request: {offer_response.text}",
+                        "duffel_status": offer_response.status_code
+                    }), 500
             
             offer_request = offer_response.json()
             offer_request_id = offer_request['data']['id']
