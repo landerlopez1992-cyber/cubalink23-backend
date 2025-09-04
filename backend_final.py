@@ -257,7 +257,7 @@ def search_flights():
             # Obtener ofertas
             print("📡 Obteniendo ofertas...")
             offers_response = requests.get(
-                f'https://api.duffel.com/offers?offer_request_id={offer_request_id}',
+                f'https://api.duffel.com/air/offers?offer_request_id={offer_request_id}',
                 headers=headers,
                 timeout=30
             )
