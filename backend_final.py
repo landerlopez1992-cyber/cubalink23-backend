@@ -17,6 +17,10 @@ import time
 app = Flask(__name__)
 CORS(app)
 
+# Importar el panel de administración
+from admin_routes import admin
+app.register_blueprint(admin)
+
 # Configuración
 PORT = int(os.environ.get('PORT', 10000))
 DUFFEL_API_KEY = os.environ.get('DUFFEL_API_KEY')
@@ -53,7 +57,8 @@ def search_airports():
     print("🚀 BÚSQUEDA DE AEROPUERTOS - FUNCIONANDO AL 100%")
     
     try:
-        query = request.args.get('query', '')
+        # 🔧 FIX: Aceptar tanto 'query' como 'q' para compatibilidad
+        query = request.args.get('query', '') or request.args.get('q', '')
         print(f"🔍 Query recibida: {query}")
         
         if not query or len(query) < 1:
@@ -213,7 +218,7 @@ def search_flights():
             print(f"🌍 Validando ruta internacional: {origin} → {destination}")
             
             offer_response = requests.post(
-                'https://api.duffel.com/offer_requests',
+                'https://api.duffel.com/air/offer_requests',
                 headers=headers,
                 json=offer_request_data,
                 timeout=30
@@ -256,7 +261,7 @@ def search_flights():
             # Obtener ofertas
             print("📡 Obteniendo ofertas...")
             offers_response = requests.get(
-                f'https://api.duffel.com/offers?offer_request_id={offer_request_id}',
+                f'https://api.duffel.com/air/offers?offer_request_id={offer_request_id}',
                 headers=headers,
                 timeout=30
             )
