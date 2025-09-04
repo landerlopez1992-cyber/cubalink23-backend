@@ -1391,6 +1391,17 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
       return match.group(1)!;
     }
     
+    // Si no encuentra código IATA, buscar en el texto completo
+    if (text.length >= 3) {
+      // Buscar cualquier secuencia de 3 letras mayúsculas
+      final allCaps = RegExp(r'[A-Z]{3}');
+      match = allCaps.firstMatch(text);
+      if (match != null) {
+        return match.group(0);
+      }
+    }
+    
+    print('⚠️ No se pudo extraer código IATA de: "$text"');
     return null;
   }
 
