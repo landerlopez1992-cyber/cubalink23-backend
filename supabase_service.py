@@ -5,11 +5,8 @@ import os
 from datetime import datetime
 from dotenv import load_dotenv
 
-# Cargar variables de entorno (solo en desarrollo)
-try:
-    load_dotenv()
-except:
-    pass  # En producción (Render.com) las variables están en el entorno del sistema
+# En producción (Render.com) no cargar archivo .env
+# Las variables de entorno se configuran directamente en el dashboard
 
 class SupabaseService:
     def __init__(self):
