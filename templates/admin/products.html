@@ -164,155 +164,184 @@
 
     <!-- Add Product Modal -->
     <div class="modal fade" id="addProductModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Agregar Producto</h5>
+                    <h5 class="modal-title"><i class="fas fa-plus"></i> Agregar Producto</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <form id="addProductForm">
-                        <div class="row">
+                        <!-- Primera fila: Información básica -->
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Nombre del Producto</label>
+                                <input type="text" class="form-control" name="name" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Categoría</label>
+                                <select class="form-select" name="category" id="categorySelect" required onchange="loadSubcategories()">
+                                    <option value="">Seleccionar categoría</option>
+                                    <option value="Electrónicos">Electrónicos</option>
+                                    <option value="Ropa">Ropa</option>
+                                    <option value="Comida">Comida</option>
+                                    <option value="Servicios">Servicios</option>
+                                    <option value="Motos">Motos</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Subcategoría</label>
+                                <select class="form-select" name="subcategory" id="subcategorySelect" required>
+                                    <option value="">Primero selecciona una categoría</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Precio ($)</label>
+                                <input type="number" class="form-control" name="price" step="0.01" required>
+                            </div>
+                        </div>
+
+                        <!-- Segunda fila: Stock, peso y envío -->
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Stock</label>
+                                <input type="number" class="form-control" name="stock" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Peso (kg)</label>
+                                <input type="number" class="form-control" name="weight" step="0.01" placeholder="Opcional">
+                                <small class="text-muted">Para cálculo de envío</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Envío Adicional ($)</label>
+                                <input type="number" class="form-control" name="shipping_cost" step="0.01" placeholder="0.00">
+                                <small class="text-muted">Preparación y manejo</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Imagen del Producto</label>
+                                <input type="file" class="form-control" name="image" id="productImage" accept="image/*" onchange="previewImage(this)">
+                            </div>
+                        </div>
+
+                        <!-- Tercera fila: Descripción -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="form-label">Descripción</label>
+                                <textarea class="form-control" name="description" rows="2" placeholder="Descripción del producto..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Cuarta fila: Métodos de envío -->
+                        <div class="row mb-3">
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Nombre del Producto</label>
-                                    <input type="text" class="form-control" name="name" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Categoría</label>
-                                    <select class="form-select" name="category" id="categorySelect" required onchange="loadSubcategories()">
-                                        <option value="">Seleccionar categoría</option>
-                                        <option value="Electrónicos">Electrónicos</option>
-                                        <option value="Ropa">Ropa</option>
-                                        <option value="Comida">Comida</option>
-                                        <option value="Servicios">Servicios</option>
-                                        <option value="Motos">Motos</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Subcategoría</label>
-                                    <select class="form-select" name="subcategory" id="subcategorySelect" required>
-                                        <option value="">Primero selecciona una categoría</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Precio</label>
-                                    <input type="number" class="form-control" name="price" step="0.01" required>
+                                <label class="form-label">Métodos de Envío</label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="shipping_methods" value="express" id="express">
+                                            <label class="form-check-label" for="express">
+                                                <i class="fas fa-shipping-fast text-success"></i> Express (3-8 días)
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="shipping_methods" value="maritime" id="maritime">
+                                            <label class="form-check-label" for="maritime">
+                                                <i class="fas fa-ship text-primary"></i> Marítimo (4-6 semanas)
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Stock</label>
-                                    <input type="number" class="form-control" name="stock" required>
+                                <div id="imagePreview" class="mt-2" style="display: none;">
+                                    <img id="previewImg" src="" alt="Preview" style="max-width: 150px; max-height: 100px; border-radius: 5px; border: 2px solid #dee2e6;">
                                 </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Peso (kg)</label>
-                                    <input type="number" class="form-control" name="weight" step="0.01" placeholder="Opcional">
-                                    <small class="text-muted">Peso del producto para cálculo de envío</small>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Precio de Envío Adicional</label>
-                                    <input type="number" class="form-control" name="shipping_cost" step="0.01" placeholder="0.00">
-                                    <small class="text-muted">Costo adicional por preparación y manejo</small>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Descripción</label>
-                                    <textarea class="form-control" name="description" rows="3"></textarea>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Métodos de Envío</label>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="shipping_methods" value="express" id="express">
-                                        <label class="form-check-label" for="express">
-                                            Envío Express (3 a 8 días)
-                                        </label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="shipping_methods" value="maritime" id="maritime">
-                                        <label class="form-check-label" for="maritime">
-                                            Envío Marítimo (4 a 6 semanas)
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Etiquetas del Producto</label>
-                                    <div class="row">
-                                        <div class="col-md-4">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" name="tags" value="NUEVO" id="tag_nuevo">
-                                                <label class="form-check-label badge bg-success" for="tag_nuevo">
-                                                    NUEVO
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" name="tags" value="12% OFF" id="tag_off">
-                                                <label class="form-check-label badge bg-danger" for="tag_off">
-                                                    12% OFF
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" name="tags" value="CALIENTE" id="tag_caliente">
-                                                <label class="form-check-label badge bg-warning" for="tag_caliente">
-                                                    CALIENTE
-                                                </label>
-                                            </div>
+                            </div>
+                        </div>
+
+                        <!-- Quinta fila: Etiquetas -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="form-label">Etiquetas del Producto</label>
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="tags" value="NUEVO" id="tag_nuevo">
+                                            <label class="form-check-label badge bg-success w-100" for="tag_nuevo">
+                                                NUEVO
+                                            </label>
                                         </div>
                                     </div>
-                                    <div class="row mt-2">
-                                        <div class="col-md-4">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" name="tags" value="LIMITADO" id="tag_limitado">
-                                                <label class="form-check-label badge bg-info" for="tag_limitado">
-                                                    LIMITADO
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" name="tags" value="ENVÍO GRATIS" id="tag_envio_gratis">
-                                                <label class="form-check-label badge bg-primary" for="tag_envio_gratis">
-                                                    ENVÍO GRATIS
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" name="tags" value="MEJOR VENDIDO" id="tag_bestseller">
-                                                <label class="form-check-label badge bg-dark" for="tag_bestseller">
-                                                    MEJOR VENDIDO
-                                                </label>
-                                            </div>
+                                    <div class="col-md-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="tags" value="12% OFF" id="tag_off">
+                                            <label class="form-check-label badge bg-danger w-100" for="tag_off">
+                                                12% OFF
+                                            </label>
                                         </div>
                                     </div>
-                                    <div class="mt-2">
-                                        <label class="form-label">Etiqueta Personalizada</label>
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" id="customTag" placeholder="Ej: 50% OFF, EXCLUSIVO">
-                                            <button type="button" class="btn btn-outline-primary" onclick="addCustomTag()">
-                                                <i class="fas fa-plus"></i> Agregar
-                                            </button>
+                                    <div class="col-md-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="tags" value="CALIENTE" id="tag_caliente">
+                                            <label class="form-check-label badge bg-warning w-100" for="tag_caliente">
+                                                CALIENTE
+                                            </label>
                                         </div>
-                                        <div id="customTagsContainer" class="mt-2"></div>
                                     </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Imagen del Producto</label>
-                                    <input type="file" class="form-control" name="image" id="productImage" accept="image/*" onchange="previewImage(this)">
-                                    <div id="imagePreview" class="mt-2" style="display: none;">
-                                        <img id="previewImg" src="" alt="Preview" style="max-width: 200px; max-height: 150px; border-radius: 5px;">
+                                    <div class="col-md-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="tags" value="LIMITADO" id="tag_limitado">
+                                            <label class="form-check-label badge bg-info w-100" for="tag_limitado">
+                                                LIMITADO
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="tags" value="ENVÍO GRATIS" id="tag_envio_gratis">
+                                            <label class="form-check-label badge bg-primary w-100" for="tag_envio_gratis">
+                                                ENVÍO GRATIS
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="tags" value="MEJOR VENDIDO" id="tag_bestseller">
+                                            <label class="form-check-label badge bg-dark w-100" for="tag_bestseller">
+                                                MEJOR VENDIDO
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Sexta fila: Etiqueta personalizada -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Etiqueta Personalizada</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="customTag" placeholder="Ej: 50% OFF, EXCLUSIVO">
+                                    <button type="button" class="btn btn-outline-primary" onclick="addCustomTag()">
+                                        <i class="fas fa-plus"></i> Agregar
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div id="customTagsContainer" class="mt-4"></div>
                             </div>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="addProduct()">Agregar Producto</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="addProduct()">
+                        <i class="fas fa-save"></i> Agregar Producto
+                    </button>
                 </div>
             </div>
         </div>
@@ -320,7 +349,7 @@
 
     <!-- Edit Product Modal -->
     <div class="modal fade" id="editProductModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Editar Producto</h5>
@@ -578,6 +607,8 @@
             const category = document.getElementById('categorySelect').value;
             const subcategorySelect = document.getElementById('subcategorySelect');
             
+            console.log('Cargando subcategorías para:', category);
+            
             subcategorySelect.innerHTML = '<option value="">Seleccionar subcategoría</option>';
             
             if (category === 'Motos') {
@@ -612,6 +643,10 @@
                     <option value="Entretenimiento">Entretenimiento</option>
                 `;
             }
+            
+            // Habilitar el select de subcategoría
+            subcategorySelect.disabled = false;
+            console.log('Subcategorías cargadas:', subcategorySelect.innerHTML);
         }
 
         // Cargar subcategorías para edición
@@ -690,9 +725,28 @@
 
         // Mostrar modal de agregar producto
         function showAddProductModal() {
+            // Limpiar formulario
             document.getElementById('addProductForm').reset();
+            document.getElementById('subcategorySelect').innerHTML = '<option value="">Primero selecciona una categoría</option>';
+            document.getElementById('subcategorySelect').disabled = true;
             document.getElementById('imagePreview').style.display = 'none';
-            new bootstrap.Modal(document.getElementById('addProductModal')).show();
+            document.getElementById('customTagsContainer').innerHTML = '';
+            
+            // Limpiar checkboxes de etiquetas
+            document.querySelectorAll('input[name="tags"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // Limpiar checkboxes de métodos de envío
+            document.querySelectorAll('input[name="shipping_methods"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            console.log('Modal de agregar producto inicializado');
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('addProductModal'));
+            modal.show();
         }
 
         // Agregar producto

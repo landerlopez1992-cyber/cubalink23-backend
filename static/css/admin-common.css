@@ -5,6 +5,107 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Mejoras para el layout del formulario */
+.modal-xl {
+    max-width: 95%;
+}
+
+.modal-body {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #e0e0e0;
+    margin-bottom: 5px;
+}
+
+.form-control, .form-select {
+    background-color: #16213e;
+    border: 1px solid #0f3460;
+    color: #e0e0e0;
+    border-radius: 8px;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: #16213e;
+    border-color: #007bff;
+    color: #e0e0e0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-control::placeholder {
+    color: #6c757d;
+}
+
+/* Mejoras para las etiquetas */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.5em 0.75em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.badge:hover {
+    transform: scale(1.05);
+    opacity: 0.8;
+}
+
+/* Mejoras para los checkboxes */
+.form-check-input:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.form-check-label {
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Mejoras para los botones */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Mejoras para la tabla */
+.table {
+    color: #e0e0e0;
+}
+
+.table th {
+    background-color: #16213e;
+    border-color: #0f3460;
+    color: #e0e0e0;
+    font-weight: 600;
+}
+
+.table td {
+    border-color: #0f3460;
+    vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(15, 52, 96, 0.3);
+}
+
+/* Mejoras para el preview de imagen */
+#imagePreview img {
+    transition: all 0.3s ease;
+}
+
+#imagePreview img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
 .sidebar {
     min-height: 100vh;
     background-color: #16213e;
