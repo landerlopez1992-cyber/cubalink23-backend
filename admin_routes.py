@@ -12,6 +12,39 @@ from database import local_db
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
 
+def upload_image_to_supabase_storage(image_data, filename):
+    """Subir imagen a Supabase Storage"""
+    try:
+        # Configuración de Supabase
+        SUPABASE_URL = 'https://zgqrhzuhrwudckwesybg.supabase.co'
+        SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTc5Mjc5OCwiZXhwIjoyMDcxMzY4Nzk4fQ.wq_9zKkOWXHOXbRJrGZeVhERcJhcKlK5-PFVe5x8IUU'
+        
+        headers = {
+            'apikey': SUPABASE_SERVICE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY,
+            'Content-Type': 'application/octet-stream'
+        }
+        
+        # Subir imagen al bucket product-images
+        response = requests.post(
+            f'{SUPABASE_URL}/storage/v1/object/product-images/{filename}',
+            headers=headers,
+            data=image_data
+        )
+        
+        if response.status_code == 200:
+            # URL pública de la imagen
+            public_url = f'{SUPABASE_URL}/storage/v1/object/public/product-images/{filename}'
+            print(f"✅ Imagen subida exitosamente: {public_url}")
+            return public_url
+        else:
+            print(f"❌ Error subiendo imagen: {response.status_code} - {response.text}")
+            return None
+            
+    except Exception as e:
+        print(f"❌ Error en upload_image_to_supabase_storage: {e}")
+        return None
+
 # Configuración para subida de archivos
 UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -122,28 +155,26 @@ def add_product():
         else:
             data = request.form.to_dict()
         
-        # Manejar imagen desde JSON (base64)
+        # Manejar imagen desde JSON (base64) - Subir a Supabase Storage
         if 'image_base64' in data and data['image_base64']:
             try:
                 import base64
+                import uuid
                 from datetime import datetime
                 
                 # Decodificar imagen base64
                 image_data = base64.b64decode(data['image_base64'])
                 filename = data.get('image_name', 'product_image.jpg')
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                filename = "{}_{}".format(timestamp, filename)
+                unique_id = str(uuid.uuid4())[:8]
+                filename = f"{timestamp}_{unique_id}_{filename}"
                 
-                # Crear directorio si no existe
-                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-                file_path = os.path.join(UPLOAD_FOLDER, filename)
-                
-                # Guardar imagen
-                with open(file_path, 'wb') as f:
-                    f.write(image_data)
-                
-                # URL absoluta de la imagen para que sea accesible desde Flutter
-                data['image_url'] = 'https://cubalink23-backend.onrender.com/static/uploads/{}'.format(filename)
+                # Subir a Supabase Storage
+                image_url = upload_image_to_supabase_storage(image_data, filename)
+                if image_url:
+                    data['image_url'] = image_url
+                else:
+                    print("Error subiendo imagen a Supabase Storage")
                 
             except Exception as e:
                 print(f"Error procesando imagen base64: {e}")
@@ -197,28 +228,26 @@ def update_product(product_id):
     try:
         data = request.json
         
-        # Manejar imagen desde JSON (base64) si se proporciona
+        # Manejar imagen desde JSON (base64) - Subir a Supabase Storage
         if 'image_base64' in data and data['image_base64']:
             try:
                 import base64
+                import uuid
                 from datetime import datetime
                 
                 # Decodificar imagen base64
                 image_data = base64.b64decode(data['image_base64'])
                 filename = data.get('image_name', 'product_image.jpg')
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                filename = "{}_{}".format(timestamp, filename)
+                unique_id = str(uuid.uuid4())[:8]
+                filename = f"{timestamp}_{unique_id}_{filename}"
                 
-                # Crear directorio si no existe
-                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-                file_path = os.path.join(UPLOAD_FOLDER, filename)
-                
-                # Guardar imagen
-                with open(file_path, 'wb') as f:
-                    f.write(image_data)
-                
-                # URL absoluta de la imagen para que sea accesible desde Flutter
-                data['image_url'] = 'https://cubalink23-backend.onrender.com/static/uploads/{}'.format(filename)
+                # Subir a Supabase Storage
+                image_url = upload_image_to_supabase_storage(image_data, filename)
+                if image_url:
+                    data['image_url'] = image_url
+                else:
+                    print("Error subiendo imagen a Supabase Storage")
                 
             except Exception as e:
                 print(f"Error procesando imagen base64: {e}")
