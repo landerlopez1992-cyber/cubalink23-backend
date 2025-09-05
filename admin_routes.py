@@ -739,11 +739,7 @@ def upload_banner_image_to_supabase(image_base64, banner_title):
         upload_headers = {
             'apikey': SERVICE_KEY,
             'Authorization': f'Bearer {SERVICE_KEY}',
-        }
-        
-        # Subir archivo usando multipart/form-data
-        files = {
-            'file': (filename, image_data, mime_type)
+            'Content-Type': mime_type,
         }
         
         print(f"🔍 Subiendo banner: {filename}")
@@ -752,7 +748,7 @@ def upload_banner_image_to_supabase(image_base64, banner_title):
         response = requests.post(
             f'{SUPABASE_URL}/storage/v1/object/banners/{filename}',
             headers=upload_headers,
-            files=files
+            data=image_data
         )
         
         print(f"📡 Response Status: {response.status_code}")
