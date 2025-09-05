@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: cubalink23-backend
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: DUFFEL_API_TOKEN
+        value: duffel_live_Rj6u0G0cT2hUeIw53ou2HRTNNf0tXl6oP-pVzcGvI7e
+      - key: PORT
+        value: 10000
