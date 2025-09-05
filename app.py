@@ -32,6 +32,15 @@ except ImportError:
     AUTO_SETUP_AVAILABLE = False
     print("⚠️ setup_database.py no disponible - configuración manual requerida")
 
+# Importar configuración automática de bucket de imágenes
+try:
+    from setup_images_bucket import setup_product_images_bucket, verify_bucket_exists
+    IMAGE_SETUP_AVAILABLE = True
+    print("✅ Configuración automática de imágenes disponible")
+except ImportError:
+    IMAGE_SETUP_AVAILABLE = False
+    print("⚠️ setup_images_bucket.py no disponible - configuración manual requerida")
+
 # Duffel API REAL Configuration
 DUFFEL_API_TOKEN = 'duffel_live_Rj6u0G0cT2hUeIw53ou2HRTNNf0tXl6oP-pVzcGvI7e'
 DUFFEL_API_URL = 'https://api.duffel.com/air'
@@ -908,9 +917,20 @@ def initialize_database():
         try:
             setup_user_carts_table()
         except Exception as e:
-            print(f"⚠️ Error en configuración automática: {e}")
+            print(f"⚠️ Error en configuración automática de DB: {e}")
     else:
         print("📋 Configuración manual de DB requerida")
+
+def initialize_images():
+    """Inicializar bucket de imágenes automáticamente"""
+    if IMAGE_SETUP_AVAILABLE:
+        print("📸 Inicializando configuración de imágenes...")
+        try:
+            setup_product_images_bucket()
+        except Exception as e:
+            print(f"⚠️ Error en configuración automática de imágenes: {e}")
+    else:
+        print("📋 Configuración manual de imágenes requerida")
 
 # Endpoint para configurar base de datos manualmente
 @app.route('/setup-database', methods=['GET', 'POST'])
@@ -944,14 +964,49 @@ def setup_database_endpoint():
             'status': 'manual_required'
         })
 
+# Endpoint para configurar imágenes manualmente
+@app.route('/setup-images', methods=['GET', 'POST'])
+def setup_images_endpoint():
+    """Endpoint para configurar el bucket de imágenes"""
+    if IMAGE_SETUP_AVAILABLE:
+        try:
+            result = setup_product_images_bucket()
+            if result:
+                return jsonify({
+                    'success': True,
+                    'message': 'Bucket product-images configurado exitosamente',
+                    'status': 'configured'
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': 'Error configurando bucket product-images',
+                    'status': 'error'
+                })
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': f'Error: {str(e)}',
+                'status': 'error'
+            })
+    else:
+        return jsonify({
+            'success': False,
+            'message': 'Configuración automática de imágenes no disponible',
+            'status': 'manual_required'
+        })
+
 if __name__ == '__main__':
     print('🌐 Iniciando Duffel API Backend con API REAL...')
     print('🔑 Token configurado: {}'.format(bool(DUFFEL_API_TOKEN)))
     print('🌐 API URL: {}'.format(DUFFEL_API_URL))
 
-    # Inicializar base de datos al iniciar
+    # Inicializar base de datos e imágenes al iniciar
     print('📊 Configurando base de datos...')
     initialize_database()
+    
+    print('📸 Configurando sistema de imágenes...')
+    initialize_images()
 
     # Obtener puerto de variable de entorno (para Render.com)
     port = int(os.environ.get('PORT', 3005))

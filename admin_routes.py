@@ -6,6 +6,17 @@ import sqlite3
 import base64
 import uuid
 
+# Importar sistema mejorado de upload de imágenes
+try:
+    from improved_image_upload import ImprovedImageUploader
+    IMAGE_UPLOADER = ImprovedImageUploader()
+    IMPROVED_UPLOAD_AVAILABLE = True
+    print("✅ Sistema mejorado de upload de imágenes disponible")
+except ImportError:
+    IMAGE_UPLOADER = None
+    IMPROVED_UPLOAD_AVAILABLE = False
+    print("⚠️ Sistema mejorado de upload no disponible - usando método básico")
+
 admin = Blueprint('admin', __name__, url_prefix='/admin')
 
 # Configuración del panel
@@ -308,7 +319,18 @@ def create_product():
         }), 500
 
 def upload_image_to_supabase(image_base64, product_name):
-    """Subir imagen a Supabase Storage con manejo mejorado de errores"""
+    """Subir imagen a Supabase Storage con sistema mejorado o básico"""
+    
+    # Usar sistema mejorado si está disponible
+    if IMPROVED_UPLOAD_AVAILABLE and IMAGE_UPLOADER:
+        try:
+            print("📸 Usando sistema mejorado de upload...")
+            return IMAGE_UPLOADER.upload_image_to_supabase(image_base64, product_name)
+        except Exception as e:
+            print(f"⚠️ Error en sistema mejorado, usando método básico: {e}")
+    
+    # Fallback al método básico
+    print("📸 Usando método básico de upload...")
     try:
         import requests
         
