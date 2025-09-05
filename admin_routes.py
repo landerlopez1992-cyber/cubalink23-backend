@@ -92,13 +92,22 @@ def get_products():
         try:
             products = supabase_service.get_products()
             if products:
-                return jsonify(products)
-        except:
+                return jsonify({
+                    'success': True,
+                    'products': products,
+                    'total': len(products)
+                })
+        except Exception as supabase_error:
+            print(f"❌ Error Supabase: {supabase_error}")
             pass
         
         # Si falla Supabase, usar base de datos local
         products = local_db.get_products()
-        return jsonify(products)
+        return jsonify({
+            'success': True,
+            'products': products,
+            'total': len(products)
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -133,11 +142,20 @@ def add_product():
         # Intentar agregar a Supabase primero
         try:
             product = supabase_service.add_product(data)
-            return jsonify(product)
-        except:
+            return jsonify({
+                'success': True,
+                'message': 'Producto agregado correctamente',
+                'product': product
+            })
+        except Exception as supabase_error:
+            print(f"❌ Error Supabase add_product: {supabase_error}")
             # Si falla Supabase, usar base de datos local
             product = local_db.add_product(data)
-            return jsonify(product)
+            return jsonify({
+                'success': True,
+                'message': 'Producto agregado correctamente (local)',
+                'product': product
+            })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
