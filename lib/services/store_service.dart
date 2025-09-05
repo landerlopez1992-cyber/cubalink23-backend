@@ -853,6 +853,7 @@ CREATE POLICY "Allow authenticated users to manage products" ON store_products
         .from('store_products')
         .select('*')
         .eq('is_active', true)
+        .eq('approval_status', 'approved') // Solo productos aprobados
         .order('name');
 
       print('📊 Respuesta de productos: $response');
@@ -1205,5 +1206,144 @@ CREATE POLICY "Allow authenticated users to manage products" ON store_products
         updatedAt: DateTime.now(),
       ),
     ];
+  }
+
+  // ==================== SISTEMA DE APROBACIÓN ====================
+
+  /// Obtener productos pendientes de aprobación (solo para admins)
+  Future<List<StoreProduct>> getPendingProducts() async {
+    try {
+      print('⏳ Obteniendo productos pendientes de aprobación...');
+      
+      if (_client == null) {
+        print('⚠️ Supabase no disponible');
+        return [];
+      }
+      
+      final response = await _client!
+          .from('store_products')
+          .select('*')
+          .eq('approval_status', 'pending')
+          .order('created_at', ascending: false);
+
+      if (response.isNotEmpty) {
+        return response.map((item) => StoreProduct.fromJson(item)).toList();
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching pending products: $e');
+      return [];
+    }
+  }
+
+  /// Obtener productos de un vendedor específico (incluyendo pendientes)
+  Future<List<StoreProduct>> getVendorProducts(String vendorId) async {
+    try {
+      print('🛒 Obteniendo productos del vendedor: $vendorId');
+      
+      if (_client == null) {
+        print('⚠️ Supabase no disponible');
+        return [];
+      }
+      
+      final response = await _client!
+          .from('store_products')
+          .select('*')
+          .eq('vendor_id', vendorId)
+          .order('created_at', ascending: false);
+
+      if (response.isNotEmpty) {
+        return response.map((item) => StoreProduct.fromJson(item)).toList();
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching vendor products: $e');
+      return [];
+    }
+  }
+
+  /// Crear producto como vendedor (estado pending)
+  Future<bool> createVendorProduct(StoreProduct product) async {
+    try {
+      print('🛒 Creando producto como vendedor: ${product.name}');
+      
+      if (_client == null) {
+        print('⚠️ Supabase no disponible');
+        return false;
+      }
+
+      final productData = product.toJson();
+      // Forzar estado pending para productos de vendedores
+      productData['approval_status'] = 'pending';
+      productData['vendor_id'] = product.vendorId;
+
+      final response = await _client!
+          .from('store_products')
+          .insert(productData);
+
+      print('✅ Producto creado como pendiente de aprobación');
+      return true;
+    } catch (e) {
+      print('❌ Error creating vendor product: $e');
+      return false;
+    }
+  }
+
+  /// Aprobar producto (solo para admins)
+  Future<bool> approveProduct(String productId, String adminId, {String? notes}) async {
+    try {
+      print('✅ Aprobando producto: $productId');
+      
+      if (_client == null) {
+        print('⚠️ Supabase no disponible');
+        return false;
+      }
+
+      final response = await _client!
+          .from('store_products')
+          .update({
+            'approval_status': 'approved',
+            'approved_at': DateTime.now().toIso8601String(),
+            'approved_by': adminId,
+            'approval_notes': notes,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', productId);
+
+      print('✅ Producto aprobado exitosamente');
+      return true;
+    } catch (e) {
+      print('❌ Error approving product: $e');
+      return false;
+    }
+  }
+
+  /// Rechazar producto (solo para admins)
+  Future<bool> rejectProduct(String productId, String adminId, {String? notes}) async {
+    try {
+      print('❌ Rechazando producto: $productId');
+      
+      if (_client == null) {
+        print('⚠️ Supabase no disponible');
+        return false;
+      }
+
+      final response = await _client!
+          .from('store_products')
+          .update({
+            'approval_status': 'rejected',
+            'approved_at': DateTime.now().toIso8601String(),
+            'approved_by': adminId,
+            'approval_notes': notes,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', productId);
+
+      print('✅ Producto rechazado exitosamente');
+      return true;
+    } catch (e) {
+      print('❌ Error rejecting product: $e');
+      return false;
+    }
   }
 }

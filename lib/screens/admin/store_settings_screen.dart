@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cubalink23/services/store_service.dart';
+import 'package:cubalink23/services/auth_service.dart';
 import 'package:cubalink23/models/product_category.dart';
 import 'package:cubalink23/models/store_product.dart';
 // import 'package:cloud_firestore/cloud_firestore.dart'; // Commented out for compilation
@@ -11,6 +12,15 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class StoreSettingsScreen extends StatefulWidget {
+  final bool isVendorMode;
+  final StoreProduct? editingProduct;
+  
+  const StoreSettingsScreen({
+    Key? key,
+    this.isVendorMode = false,
+    this.editingProduct,
+  }) : super(key: key);
+
   @override
   _StoreSettingsScreenState createState() => _StoreSettingsScreenState();
 }
@@ -18,6 +28,7 @@ class StoreSettingsScreen extends StatefulWidget {
 class _StoreSettingsScreenState extends State<StoreSettingsScreen> with TickerProviderStateMixin {
   late TabController _tabController;
   final StoreService _storeService = StoreService();
+  final AuthService _authService = AuthService();
   final ImagePicker _imagePicker = ImagePicker();
   
   List<ProductCategory> _categories = [];
@@ -1011,6 +1022,7 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> with TickerPr
                     unit: unitController.text.trim().isNotEmpty ? unitController.text.trim() : 'unidad',
                     categoryId: selectedCategory,
                     subCategoryId: selectedSubcategory.isNotEmpty ? selectedSubcategory : null,
+                    vendorId: widget.isVendorMode ? _authService.currentUser?.id : null,
                     isAvailable: isAvailable,
                     stock: int.tryParse(stockController.text) ?? 0,
                     availableProvinces: selectedProvinces,
@@ -1037,7 +1049,13 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> with TickerPr
                   } else {
                     print('➕ Creando nuevo producto...');
                     try {
-                      success = await _storeService.createProduct(productToSave);
+                      if (widget.isVendorMode) {
+                        // Usar método específico para vendedores (estado pending)
+                        success = await _storeService.createVendorProduct(productToSave);
+                      } else {
+                        // Usar método normal para admins (estado approved)
+                        success = await _storeService.createProduct(productToSave);
+                      }
                     } catch (createError) {
                       errorMessage = createError.toString();
                       success = false;
@@ -1062,7 +1080,11 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> with TickerPr
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              isEditing ? '✅ Producto actualizado exitosamente' : '✅ Producto creado exitosamente',
+                              isEditing 
+                                  ? '✅ Producto actualizado exitosamente' 
+                                  : widget.isVendorMode 
+                                      ? '✅ Producto enviado para aprobación' 
+                                      : '✅ Producto creado exitosamente',
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -1090,7 +1112,11 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> with TickerPr
                         ],
                       ),
                       content: Text(
-                        isEditing ? 'El producto ha sido actualizado correctamente.' : 'El producto ha sido creado correctamente.',
+                        isEditing 
+                            ? 'El producto ha sido actualizado correctamente.' 
+                            : widget.isVendorMode 
+                                ? 'Tu producto ha sido enviado para revisión. Será publicado una vez que sea aprobado por el administrador.' 
+                                : 'El producto ha sido creado correctamente.',
                       ),
                       actions: [
                         TextButton(

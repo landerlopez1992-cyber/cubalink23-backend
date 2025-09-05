@@ -9,6 +9,7 @@ import 'package:cubalink23/screens/profile/addresses_screen.dart';
 import 'package:cubalink23/screens/profile/order_tracking_screen.dart';
 import 'package:cubalink23/screens/vendor/vendor_dashboard_screen.dart';
 import 'package:cubalink23/screens/delivery/delivery_dashboard_screen.dart';
+import 'package:cubalink23/services/cart_service.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({Key? key}) : super(key: key);
@@ -756,6 +757,10 @@ class _AccountScreenState extends State<AccountScreen> {
 
     if (shouldLogout == true) {
       try {
+        // ARREGLO: Limpiar carrito antes de cerrar sesión
+        final cartService = CartService();
+        cartService.clearCartOnLogout();
+        
         // Cerrar sesión en Supabase
         await AuthServiceBypass.instance.signOut();
         
