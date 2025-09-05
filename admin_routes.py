@@ -5,7 +5,7 @@ import requests
 from datetime import datetime
 import sqlite3
 from supabase_service import supabase_service
-from supabase_storage_service import storage_service
+# from supabase_storage_service import storage_service  # No disponible en este directorio
 from auth_routes import require_auth
 from werkzeug.utils import secure_filename
 from database import local_db
@@ -113,23 +113,18 @@ def add_product():
         if 'image' in request.files:
             file = request.files['image']
             if file and allowed_file(file.filename):
-                # Subir imagen a Supabase Storage
-                image_url = storage_service.upload_image(file, bucket_name='product-images', folder='products')
-                if image_url:
-                    data['image_url'] = image_url
-                else:
-                    # Fallback: guardar localmente si falla Supabase
-                    filename = secure_filename(file.filename)
-                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                    filename = "{}_{}".format(timestamp, filename)
-                    
-                    # Crear directorio si no existe
-                    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-                    file_path = os.path.join(UPLOAD_FOLDER, filename)
-                    file.save(file_path)
-                    
-                    # URL de la imagen local
-                    data['image_url'] = '/static/uploads/{}'.format(filename)
+                # Fallback: guardar localmente (storage_service no disponible)
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = "{}_{}".format(timestamp, filename)
+                
+                # Crear directorio si no existe
+                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+                file_path = os.path.join(UPLOAD_FOLDER, filename)
+                file.save(file_path)
+                
+                # URL de la imagen local
+                data['image_url'] = '/static/uploads/{}'.format(filename)
         
         # Validar datos requeridos
         if not data.get('name') or not data.get('price'):
