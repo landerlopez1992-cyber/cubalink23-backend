@@ -1053,11 +1053,51 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> with TickerPr
                   
                   await _loadData(); // Recargar datos
                   
+                  // ARREGLO: Mostrar mensaje de éxito más visible
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(isEditing ? '✅ Producto actualizado exitosamente' : '✅ Producto creado exitosamente'),
+                      content: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              isEditing ? '✅ Producto actualizado exitosamente' : '✅ Producto creado exitosamente',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
                       backgroundColor: Colors.green,
-                      duration: Duration(seconds: 3),
+                      duration: Duration(seconds: 4),
+                      behavior: SnackBarBehavior.floating,
+                      margin: EdgeInsets.all(16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  );
+                  
+                  // ARREGLO: Mostrar también un dialog de confirmación
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.green),
+                          SizedBox(width: 8),
+                          Text('Éxito'),
+                        ],
+                      ),
+                      content: Text(
+                        isEditing ? 'El producto ha sido actualizado correctamente.' : 'El producto ha sido creado correctamente.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('Continuar'),
+                        ),
+                      ],
                     ),
                   );
                 } catch (e) {
@@ -1070,11 +1110,28 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> with TickerPr
                   if (userFriendlyError.contains('Las tablas de Supabase no están configuradas')) {
                     _showSupabaseSetupDialog(context);
                   } else {
+                    // ARREGLO: Mostrar error más visible
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Error: $userFriendlyError'),
+                        content: Row(
+                          children: [
+                            Icon(Icons.error, color: Colors.white),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Error: $userFriendlyError',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          ],
+                        ),
                         backgroundColor: Colors.red,
-                        duration: Duration(seconds: 5),
+                        duration: Duration(seconds: 6),
+                        behavior: SnackBarBehavior.floating,
+                        margin: EdgeInsets.all(16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                         action: SnackBarAction(
                           label: 'Ver Solución',
                           textColor: Colors.white,
