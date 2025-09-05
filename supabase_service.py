@@ -119,10 +119,11 @@ class SupabaseService:
     def get_products(self):
         """Obtener productos con imágenes"""
         try:
-            response = requests.get(f'{self.supabase_url}/rest/v1/products?select=*', headers=self.headers)
+            response = requests.get(f'{self.supabase_url}/rest/v1/store_products?select=*', headers=self.headers)
             if response.status_code == 200:
                 return response.json()
             else:
+                print(f"Error getting products: {response.status_code} - {response.text}")
                 return []
         except Exception as e:
             print("Error getting products: " + str(e))
@@ -143,7 +144,7 @@ class SupabaseService:
             }
             
             response = requests.post(
-                f'{self.supabase_url}/rest/v1/products',
+                f'{self.supabase_url}/rest/v1/store_products',
                 headers=self.headers,
                 json=product_data
             )
@@ -160,7 +161,7 @@ class SupabaseService:
         """Actualizar producto"""
         try:
             response = requests.patch(
-                f'{self.supabase_url}/rest/v1/products?id=eq.{product_id}',
+                f'{self.supabase_url}/rest/v1/store_products?id=eq.{product_id}',
                 headers=self.headers,
                 json=data
             )
@@ -177,7 +178,7 @@ class SupabaseService:
         """Eliminar producto"""
         try:
             response = requests.delete(
-                f'{self.supabase_url}/rest/v1/products?id=eq.{product_id}',
+                f'{self.supabase_url}/rest/v1/store_products?id=eq.{product_id}',
                 headers=self.headers
             )
             
@@ -408,7 +409,7 @@ class SupabaseService:
                 headers=self.headers
             )
             products_response = requests.get(
-                f'{self.supabase_url}/rest/v1/products?select=count',
+                f'{self.supabase_url}/rest/v1/store_products?select=count',
                 headers=self.headers
             )
             orders_response = requests.get(
