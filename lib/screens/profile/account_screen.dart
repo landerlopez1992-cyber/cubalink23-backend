@@ -7,6 +7,8 @@ import 'package:cubalink23/models/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cubalink23/screens/profile/addresses_screen.dart';
 import 'package:cubalink23/screens/profile/order_tracking_screen.dart';
+import 'package:cubalink23/screens/vendor/vendor_dashboard_screen.dart';
+import 'package:cubalink23/screens/delivery/delivery_dashboard_screen.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({Key? key}) : super(key: key);
@@ -305,6 +307,10 @@ class _AccountScreenState extends State<AccountScreen> {
                         ),
                         SizedBox(height: 32),
 
+                        // Sección Roles de Usuario
+                        _buildUserRolesSection(),
+                        SizedBox(height: 24),
+
                         // Sección Opciones de Cuenta
                         Text(
                           'Opciones de Cuenta',
@@ -481,6 +487,162 @@ class _AccountScreenState extends State<AccountScreen> {
         }
       }
     }
+  }
+
+  Widget _buildUserRolesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Mis Roles',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+        SizedBox(height: 16),
+        
+        // Verificar roles del usuario
+        if (_hasVendorRole()) ...[
+          _buildRoleCard(
+            icon: Icons.store,
+            title: 'Vendedor',
+            subtitle: 'Gestiona tus productos y ventas',
+            color: Color(0xFF2E7D32),
+            onTap: _goToVendorDashboard,
+          ),
+          SizedBox(height: 12),
+        ],
+        
+        if (_hasDeliveryRole()) ...[
+          _buildRoleCard(
+            icon: Icons.delivery_dining,
+            title: 'Repartidor',
+            subtitle: 'Gestiona tus entregas y ganancias',
+            color: Color(0xFF1976D2),
+            onTap: _goToDeliveryDashboard,
+          ),
+          SizedBox(height: 12),
+        ],
+        
+        if (!_hasVendorRole() && !_hasDeliveryRole()) ...[
+          Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.grey[600]),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'No tienes roles especiales asignados',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildRoleCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.1),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, color: color, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  bool _hasVendorRole() {
+    // TODO: Verificar rol de vendedor desde la base de datos
+    // Por ahora, verificar si el email es landerlopez1992@gmail.com
+    return currentUser?.email == 'landerlopez1992@gmail.com';
+  }
+
+  bool _hasDeliveryRole() {
+    // TODO: Verificar rol de repartidor desde la base de datos
+    // Por ahora, verificar si el email es tallercell0133@gmail.com
+    return currentUser?.email == 'tallercell0133@gmail.com';
+  }
+
+  void _goToVendorDashboard() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => VendorDashboardScreen()),
+    );
+  }
+
+  void _goToDeliveryDashboard() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => DeliveryDashboardScreen()),
+    );
   }
 
   Widget _buildOptionTile({
