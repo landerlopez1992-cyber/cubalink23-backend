@@ -752,9 +752,9 @@ def upload_banner_image_to_supabase(image_base64, banner_title):
         import base64
         import uuid
         
-        # Configuración de Supabase con Service Key
+        # Configuración de Supabase con Anon Key (para Storage)
         SUPABASE_URL = 'https://zgqrhzuhrwudckwesybg.supabase.co'
-        SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTc5Mjc5OCwiZXhwIjoyMDcxMzY4Nzk4fQ.kUgRPYHRuWJVPfD8iVA7GDuOlj9Xwp6eQ2gH7FJqJ9s'
+        ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTI3OTgsImV4cCI6MjA3MTM2ODc5OH0.lUVK99zmOYD7bNTxilJZWHTmYPfZF5YeMJDVUaJ-FsQ'
         
         # Generar nombre único para la imagen
         image_id = str(uuid.uuid4())
@@ -775,10 +775,10 @@ def upload_banner_image_to_supabase(image_base64, banner_title):
             mime_type = 'image/webp'
             filename = filename.replace('.jpg', '.webp')
         
-        # Headers para upload con Service Key
+        # Headers para upload con Anon Key
         upload_headers = {
-            'apikey': SERVICE_KEY,
-            'Authorization': f'Bearer {SERVICE_KEY}',
+            'apikey': ANON_KEY,
+            'Authorization': f'Bearer {ANON_KEY}',
             'Content-Type': mime_type,
         }
         
