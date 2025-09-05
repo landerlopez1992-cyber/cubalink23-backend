@@ -10,11 +10,10 @@ from dotenv import load_dotenv
 
 class SupabaseService:
     def __init__(self):
-        # Configuración de Supabase desde variables de entorno
-        self.supabase_url = os.getenv('SUPABASE_URL', 'https://your-project.supabase.co')
-        self.supabase_key = os.getenv('SUPABASE_ANON_KEY', 'your-anon-key')
-        self.supabase_service_key = os.getenv('SUPABASE_SERVICE_KEY', 'your-service-key')
-        
+        # Configuración de Supabase - MISMAS credenciales que usa Flutter
+        self.supabase_url = 'https://zgqrhzuhrwudckwesybg.supabase.co'
+        self.supabase_key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTI3OTgsImV4cCI6MjA3MTM2ODc5OH0.lUVK99zmOYD7bNTxilJZWHTmYPfZF5YeMJDVUaJ-FsQ'
+        self.supabase_service_key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTc5Mjc5OCwiZXhwIjoyMDcxMzY4Nzk4fQ.wq_9zKkOWXHOXbRJrGZeVhERcJhcKlK5-PFVe5x8IUU'
         
         self.headers = {
             'apikey': self.supabase_service_key,
