@@ -116,10 +116,41 @@ def get_products():
 def add_product():
     """Agregar nuevo producto con imagen"""
     try:
-        data = request.form.to_dict()
+        # Detectar si es JSON (desde frontend) o FormData (desde formulario HTML)
+        if request.is_json:
+            data = request.json
+        else:
+            data = request.form.to_dict()
         
-        # Manejar subida de imagen
-        if 'image' in request.files:
+        # Manejar imagen desde JSON (base64)
+        if 'image_base64' in data and data['image_base64']:
+            try:
+                import base64
+                from datetime import datetime
+                
+                # Decodificar imagen base64
+                image_data = base64.b64decode(data['image_base64'])
+                filename = data.get('image_name', 'product_image.jpg')
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = "{}_{}".format(timestamp, filename)
+                
+                # Crear directorio si no existe
+                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+                file_path = os.path.join(UPLOAD_FOLDER, filename)
+                
+                # Guardar imagen
+                with open(file_path, 'wb') as f:
+                    f.write(image_data)
+                
+                # URL de la imagen local
+                data['image_url'] = '/static/uploads/{}'.format(filename)
+                
+            except Exception as e:
+                print(f"Error procesando imagen base64: {e}")
+                # Continuar sin imagen si hay error
+        
+        # Manejar subida de imagen desde FormData
+        elif 'image' in request.files:
             file = request.files['image']
             if file and allowed_file(file.filename):
                 # Fallback: guardar localmente (storage_service no disponible)
@@ -165,6 +196,33 @@ def update_product(product_id):
     """Actualizar producto"""
     try:
         data = request.json
+        
+        # Manejar imagen desde JSON (base64) si se proporciona
+        if 'image_base64' in data and data['image_base64']:
+            try:
+                import base64
+                from datetime import datetime
+                
+                # Decodificar imagen base64
+                image_data = base64.b64decode(data['image_base64'])
+                filename = data.get('image_name', 'product_image.jpg')
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = "{}_{}".format(timestamp, filename)
+                
+                # Crear directorio si no existe
+                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+                file_path = os.path.join(UPLOAD_FOLDER, filename)
+                
+                # Guardar imagen
+                with open(file_path, 'wb') as f:
+                    f.write(image_data)
+                
+                # URL de la imagen local
+                data['image_url'] = '/static/uploads/{}'.format(filename)
+                
+            except Exception as e:
+                print(f"Error procesando imagen base64: {e}")
+                # Continuar sin imagen si hay error
         
         # Validar datos requeridos
         if not data.get('name') or not data.get('price'):
