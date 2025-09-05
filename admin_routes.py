@@ -657,44 +657,28 @@ def search_airports():
         }
         
         # Usar Place Suggestion API según documentación oficial
-        url = f'https://api.duffel.com/air/airports?search={query}&limit=20'
+        url = f'https://api.duffel.com/places/suggestions?query={query}&limit=20'
         print(f"🔍 URL Duffel Place Suggestion API: {url}")
         
         response = requests.get(url, headers=headers)
         
         if response.status_code == 200:
             data = response.json()
-            airports = data.get('data', [])
-            print(f"🔍 Total aeropuertos obtenidos: {len(airports)}")
+            places = data.get('data', [])
+            print(f"🔍 Total places obtenidos: {len(places)}")
             
-            # FILTRADO MANUAL: Solo aeropuertos que coincidan con búsqueda
-            filtered_airports = []
-            query_lower = query.lower()
-            
-            for airport in airports:
-                # Verificar si coincide con IATA, nombre, ciudad
-                iata_code = airport.get('iata_code', '').lower()
-                name = airport.get('name', '').lower()
-                city = airport.get('city_name', '').lower()
-                
-                if (query_lower in iata_code or 
-                    query_lower in name or 
-                    query_lower in city or
-                    iata_code.startswith(query_lower)):
-                    filtered_airports.append(airport)
-            
-            print(f"🔍 Filtrados {len(filtered_airports)} de {len(airports)} aeropuertos")
-            
-            # Transformar a formato Flutter
+            # Transformar directamente - solo aeropuertos
             formatted_airports = []
-            for airport in filtered_airports:
-                formatted_airports.append({
-                    'iata_code': airport.get('iata_code', ''),
-                    'name': airport.get('name', ''),
-                    'city': airport.get('city_name', ''),
-                    'country': airport.get('iata_country_code', ''),
-                    'time_zone': airport.get('time_zone', '')
-                })
+            for place in places:
+                # Solo aeropuertos (type: 'airport')
+                if place.get('type') == 'airport':
+                    formatted_airports.append({
+                        'iata_code': place.get('iata_code', ''),
+                        'name': place.get('name', ''),
+                        'city': place.get('city_name', ''),
+                        'country': place.get('iata_country_code', ''),
+                        'time_zone': place.get('time_zone', '')
+                    })
             
             print(f"✈️ Aeropuertos encontrados: {len(formatted_airports)}")
             return jsonify(formatted_airports)
