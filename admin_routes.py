@@ -91,12 +91,32 @@ def get_products():
             products = supabase_service.get_products()
             if products:
                 return jsonify(products)
-        except:
+        except Exception as supabase_error:
+            print(f"❌ Error Supabase: {supabase_error}")
             pass
         
         # Si falla Supabase, usar base de datos local
         products = local_db.get_products()
         return jsonify(products)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@admin.route('/debug/supabase')
+def debug_supabase():
+    """Debug endpoint para verificar variables de entorno"""
+    try:
+        import os
+        from dotenv import load_dotenv
+        load_dotenv()
+        
+        debug_info = {
+            'SUPABASE_URL': os.getenv('SUPABASE_URL', 'NOT_SET'),
+            'SUPABASE_ANON_KEY': os.getenv('SUPABASE_ANON_KEY', 'NOT_SET')[:20] + '...' if os.getenv('SUPABASE_ANON_KEY') else 'NOT_SET',
+            'SUPABASE_SERVICE_KEY': os.getenv('SUPABASE_SERVICE_KEY', 'NOT_SET')[:20] + '...' if os.getenv('SUPABASE_SERVICE_KEY') else 'NOT_SET',
+            'supabase_service_url': supabase_service.supabase_url,
+            'supabase_service_key': supabase_service.supabase_service_key[:20] + '...' if supabase_service.supabase_service_key else 'NOT_SET'
+        }
+        return jsonify(debug_info)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
