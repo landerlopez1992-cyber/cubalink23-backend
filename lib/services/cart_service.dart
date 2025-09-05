@@ -373,6 +373,29 @@ class CartService extends ChangeNotifier {
     _saveToSupabase();
   }
 
+  /// ARREGLO: Limpiar carrito al cerrar sesión
+  void clearCartOnLogout() {
+    print('🚪 Limpiando carrito al cerrar sesión...');
+    _items.clear();
+    notifyListeners();
+    // No guardamos en Supabase porque el usuario se está desconectando
+    print('✅ Carrito limpiado localmente');
+  }
+
+  /// ARREGLO: Cambiar de usuario (limpiar carrito anterior y cargar nuevo)
+  Future<void> switchUser() async {
+    print('🔄 Cambiando de usuario...');
+    
+    // Primero limpiar carrito actual
+    _items.clear();
+    notifyListeners();
+    
+    // Luego cargar carrito del nuevo usuario
+    await initializeCart();
+    
+    print('✅ Cambio de usuario completado');
+  }
+
   Future<void> _saveToSupabase() async {
     try {
       final client = SupabaseConfig.client;
