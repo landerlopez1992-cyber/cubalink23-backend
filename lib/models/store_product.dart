@@ -8,6 +8,7 @@ class StoreProduct {
   final String imageUrl;
   final String categoryId;
   final String? subCategoryId;
+  final String? vendorId;
   final String unit; // lb, kg, unidad, etc.
   final double weight; // peso en kg
   final bool isAvailable;
@@ -26,6 +27,7 @@ class StoreProduct {
     required this.imageUrl,
     required this.categoryId,
     this.subCategoryId,
+    this.vendorId,
     required this.unit,
     required this.weight,
     this.isAvailable = true,
@@ -46,6 +48,7 @@ class StoreProduct {
       imageUrl: _parseFirstImage(json['imageUrl'] ?? json['image_url'] ?? json['images']),
       categoryId: json['categoryId'] ?? json['category_id'] ?? json['category'] ?? '',
       subCategoryId: json['subCategoryId'] ?? json['subcategory_id'] ?? json['sub_category_id'],
+      vendorId: json['vendorId'] ?? json['vendor_id'],
       unit: json['unit'] ?? 'unidad',
       weight: (json['weight'] ?? 0.0).toDouble(),
       isAvailable: json['isAvailable'] ?? json['is_active'] ?? json['is_available'] ?? true,
@@ -165,6 +168,8 @@ class StoreProduct {
       'category_id': categoryId, // Snake case for Supabase
       'subCategoryId': subCategoryId,
       'sub_category_id': subCategoryId, // Snake case for Supabase
+      'vendorId': vendorId,
+      'vendor_id': vendorId, // Snake case for Supabase
       'unit': unit,
       'weight': weight,
       'isAvailable': isAvailable,
@@ -202,6 +207,7 @@ class StoreProduct {
     String? imageUrl,
     String? categoryId,
     String? subCategoryId,
+    String? vendorId,
     String? unit,
     double? weight,
     bool? isAvailable,
@@ -220,6 +226,7 @@ class StoreProduct {
       imageUrl: imageUrl ?? this.imageUrl,
       categoryId: categoryId ?? this.categoryId,
       subCategoryId: subCategoryId ?? this.subCategoryId,
+      vendorId: vendorId ?? this.vendorId,
       unit: unit ?? this.unit,
       weight: weight ?? this.weight,
       isAvailable: isAvailable ?? this.isAvailable,

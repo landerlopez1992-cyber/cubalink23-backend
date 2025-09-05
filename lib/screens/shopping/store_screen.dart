@@ -5,6 +5,7 @@ import 'package:cubalink23/services/store_service.dart';
 import 'package:cubalink23/services/cart_service.dart';
 import 'package:cubalink23/screens/shopping/store_category_screen.dart';
 import 'package:cubalink23/screens/shopping/product_details_screen.dart';
+import 'package:cubalink23/widgets/vendor_logo.dart';
 
 class StoreScreen extends StatefulWidget {
   @override
@@ -484,10 +485,15 @@ class _StoreScreenState extends State<StoreScreen> {
                       : _buildAppLogoPlaceholder(),
                   ),
                 ),
+                // Logo del vendedor
+                VendorLogo(
+                  vendorId: product.vendorId,
+                  size: 20.0,
+                ),
                 if (!product.isAvailable)
                   Positioned(
                     top: 8,
-                    left: 8,
+                    right: 8,
                     child: Container(
                       padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
