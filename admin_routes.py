@@ -1,9 +1,11 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session, current_app
 import json
 import os
+import requests
 from datetime import datetime
 import sqlite3
 from supabase_service import supabase_service
+from supabase_storage_service import storage_service
 from auth_routes import require_auth
 from werkzeug.utils import secure_filename
 from database import local_db
@@ -91,32 +93,12 @@ def get_products():
             products = supabase_service.get_products()
             if products:
                 return jsonify(products)
-        except Exception as supabase_error:
-            print(f"❌ Error Supabase: {supabase_error}")
+        except:
             pass
         
         # Si falla Supabase, usar base de datos local
         products = local_db.get_products()
         return jsonify(products)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@admin.route('/debug/supabase')
-def debug_supabase():
-    """Debug endpoint para verificar variables de entorno"""
-    try:
-        import os
-        from dotenv import load_dotenv
-        load_dotenv()
-        
-        debug_info = {
-            'SUPABASE_URL': os.getenv('SUPABASE_URL', 'NOT_SET'),
-            'SUPABASE_ANON_KEY': os.getenv('SUPABASE_ANON_KEY', 'NOT_SET')[:20] + '...' if os.getenv('SUPABASE_ANON_KEY') else 'NOT_SET',
-            'SUPABASE_SERVICE_KEY': os.getenv('SUPABASE_SERVICE_KEY', 'NOT_SET')[:20] + '...' if os.getenv('SUPABASE_SERVICE_KEY') else 'NOT_SET',
-            'supabase_service_url': supabase_service.supabase_url,
-            'supabase_service_key': supabase_service.supabase_service_key[:20] + '...' if supabase_service.supabase_service_key else 'NOT_SET'
-        }
-        return jsonify(debug_info)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -131,17 +113,23 @@ def add_product():
         if 'image' in request.files:
             file = request.files['image']
             if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                filename = "{}_{}".format(timestamp, filename)
-                
-                # Crear directorio si no existe
-                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-                file_path = os.path.join(UPLOAD_FOLDER, filename)
-                file.save(file_path)
-                
-                # URL de la imagen
-                data['image_url'] = '/static/uploads/{}'.format(filename)
+                # Subir imagen a Supabase Storage
+                image_url = storage_service.upload_image(file, bucket_name='product-images', folder='products')
+                if image_url:
+                    data['image_url'] = image_url
+                else:
+                    # Fallback: guardar localmente si falla Supabase
+                    filename = secure_filename(file.filename)
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    filename = "{}_{}".format(timestamp, filename)
+                    
+                    # Crear directorio si no existe
+                    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+                    file_path = os.path.join(UPLOAD_FOLDER, filename)
+                    file.save(file_path)
+                    
+                    # URL de la imagen local
+                    data['image_url'] = '/static/uploads/{}'.format(filename)
         
         # Validar datos requeridos
         if not data.get('name') or not data.get('price'):
@@ -517,6 +505,234 @@ def get_flights():
         return jsonify(flights)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+# ===== ENDPOINTS PARA APP FLUTTER =====
+
+@admin.route('/api/flights/search', methods=['POST'])
+def search_flights():
+    """🔍 Búsqueda de vuelos - Endpoint para app Flutter (SOLO DUFFEL)"""
+    try:
+        data = request.get_json()
+        
+        # Extraer parámetros
+        origin = data.get('origin')
+        destination = data.get('destination') 
+        departure_date = data.get('departure_date')
+        passengers = data.get('passengers', 1)
+        airline_type = data.get('airline_type', 'comerciales')
+        
+        print(f"🔍 Búsqueda DUFFEL: {origin} → {destination} | Tipo: {airline_type}")
+        
+        flights = []
+        
+        # API KEY REAL de Duffel desde variables de entorno
+        api_token = os.environ.get('DUFFEL_API_KEY')
+        if not api_token:
+            return jsonify({
+                'success': False,
+                'error': 'DUFFEL_API_KEY no configurada en variables de entorno',
+                'data': []
+            }), 500
+        
+        # SOLO usar Duffel API (evitar charter que necesita bs4)
+        if airline_type in ['comerciales', 'ambos']:
+            # Búsqueda directa con Duffel API
+            headers = {
+                'Accept': 'application/json',
+                'Authorization': f'Bearer {api_token}',
+                'Duffel-Version': 'v2',
+                'Content-Type': 'application/json'
+            }
+            
+            # Crear request de ofertas
+            offer_request_data = {
+                'data': {
+                    'slices': [{
+                        'origin': origin,
+                        'destination': destination,
+                        'departure_date': departure_date
+                    }],
+                    'passengers': [{'type': 'adult'}] * passengers,
+                    'cabin_class': 'economy'
+                }
+            }
+            
+            # Crear offer request
+            response = requests.post(
+                'https://api.duffel.com/air/offer_requests',
+                headers=headers,
+                json=offer_request_data
+            )
+            
+            if response.status_code == 201:
+                offer_request = response.json()['data']
+                
+                # Obtener ofertas
+                offers_response = requests.get(
+                    f"https://api.duffel.com/air/offers?offer_request_id={offer_request['id']}&limit=20",
+                    headers=headers
+                )
+                
+                if offers_response.status_code == 200:
+                    offers_data = offers_response.json()
+                    offers = offers_data.get('data', [])
+                    
+                    # Transformar a formato Flutter
+                    for offer in offers:
+                        if offer.get('slices') and len(offer['slices']) > 0:
+                            slice_data = offer['slices'][0]
+                            if slice_data.get('segments') and len(slice_data['segments']) > 0:
+                                first_segment = slice_data['segments'][0]
+                                
+                                # Obtener información de aerolínea
+                                airline_name = 'Aerolínea'
+                                airline_code = ''
+                                airline_logo = ''
+                                
+                                if first_segment.get('marketing_carrier'):
+                                    carrier = first_segment['marketing_carrier']
+                                    airline_name = carrier.get('name', 'Aerolínea')
+                                    airline_code = carrier.get('iata_code', '')
+                                    if carrier.get('logo_symbol_url'):
+                                        # Convertir SVG a PNG para compatibilidad con Android
+                                        svg_url = carrier['logo_symbol_url']
+                                        airline_logo = svg_url.replace('.svg', '.png')
+                                
+                                flight_data = {
+                                    'id': offer['id'],
+                                    'airline': airline_name,
+                                    'airline_code': airline_code,
+                                    'airline_logo': airline_logo,
+                                    'departureTime': first_segment.get('departing_at', ''),
+                                    'arrivalTime': first_segment.get('arriving_at', ''),
+                                    'duration': slice_data.get('duration', ''),
+                                    'stops': len(slice_data['segments']) - 1,
+                                    'price': float(offer.get('total_amount', '0')),
+                                    'currency': offer.get('total_currency', 'USD'),
+                                    'origin_airport': first_segment.get('origin', {}).get('iata_code', origin),
+                                    'destination_airport': first_segment.get('destination', {}).get('iata_code', destination)
+                                }
+                                flights.append(flight_data)
+            
+            print(f"✈️ Vuelos Duffel encontrados: {len(flights)}")
+        
+        # TODO: Charter flights require bs4 - disabled until dependency fixed
+        if airline_type == 'charter':
+            print("⚠️ Vuelos charter temporalmente deshabilitados")
+        
+        print(f"🎯 Total vuelos encontrados: {len(flights)}")
+        
+        return jsonify({
+            'success': True,
+            'data': flights,
+            'total': len(flights)
+        })
+        
+    except Exception as e:
+        print(f"❌ Error en búsqueda de vuelos: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'data': []
+        }), 500
+
+@admin.route('/api/flights/airports')
+def search_airports():
+    print("🔍 DEBUG: FUNCIÓN INICIADA")
+    print("🔍 DEBUG: FUNCIÓN EJECUTÁNDOSE")
+    """🏢 Búsqueda de aeropuertos - Endpoint para app Flutter"""
+    try:
+        query = request.args.get('q', '')
+        print("🔍 DEBUG: QUERY OBTENIDA"); print(f"Query: {query}")
+        
+        if not query:
+            return jsonify([])
+        
+        # API KEY REAL de Duffel desde variables de entorno
+        api_token = os.environ.get('DUFFEL_API_KEY')
+        if not api_token:
+            print("❌ DUFFEL_API_KEY no configurada")
+            return jsonify([])
+        
+        # Búsqueda directa con Duffel API
+        headers = {
+            'Accept': 'application/json',
+            'Authorization': f'Bearer {api_token}',
+            'Duffel-Version': 'v2'
+        }
+        
+        # Usar Place Suggestion API según documentación oficial
+        url = f'https://api.duffel.com/air/airports?search={query}&limit=20'
+        print(f"🔍 URL Duffel Place Suggestion API: {url}")
+        
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code == 200:
+            data = response.json()
+            airports = data.get('data', [])
+            print(f"🔍 Total aeropuertos obtenidos: {len(airports)}")
+            
+            # FILTRADO MANUAL: Solo aeropuertos que coincidan con búsqueda
+            filtered_airports = []
+            query_lower = query.lower()
+            
+            for airport in airports:
+                # Verificar si coincide con IATA, nombre, ciudad
+                iata_code = airport.get('iata_code', '').lower()
+                name = airport.get('name', '').lower()
+                city = airport.get('city_name', '').lower()
+                
+                if (query_lower in iata_code or 
+                    query_lower in name or 
+                    query_lower in city or
+                    iata_code.startswith(query_lower)):
+                    filtered_airports.append(airport)
+            
+            print(f"🔍 Filtrados {len(filtered_airports)} de {len(airports)} aeropuertos")
+            
+            # Transformar a formato Flutter
+            formatted_airports = []
+            for airport in filtered_airports:
+                formatted_airports.append({
+                    'iata_code': airport.get('iata_code', ''),
+                    'name': airport.get('name', ''),
+                    'city': airport.get('city_name', ''),
+                    'country': airport.get('iata_country_code', ''),
+                    'time_zone': airport.get('time_zone', '')
+                })
+            
+            print(f"✈️ Aeropuertos encontrados: {len(formatted_airports)}")
+            return jsonify(formatted_airports)
+        else:
+            print("❌ No se encontraron aeropuertos en Duffel API")
+            return jsonify([])
+        
+    except Exception as e:
+        print(f"❌ Error en búsqueda de aeropuertos: {str(e)}")
+        return jsonify([])
+
+@admin.route('/api/flights/airlines')
+def get_airlines():
+    """🏢 Obtener aerolíneas disponibles - Endpoint para app Flutter"""
+    try:
+        # Aerolíneas populares disponibles
+        airlines = [
+            {'code': 'AA', 'name': 'American Airlines'},
+            {'code': 'LA', 'name': 'LATAM Airlines'},
+            {'code': 'CM', 'name': 'Copa Airlines'},
+            {'code': 'DL', 'name': 'Delta Air Lines'},
+            {'code': 'UA', 'name': 'United Airlines'},
+            {'code': 'AC', 'name': 'Air Canada'},
+            {'code': 'CU', 'name': 'Cubana de Aviación'}
+        ]
+        
+        return jsonify(airlines)
+        
+    except Exception as e:
+        print(f"❌ Error obteniendo aerolíneas: {str(e)}")
+        return jsonify([])
+
+
 
 @admin.route('/api/routes')
 @require_auth
