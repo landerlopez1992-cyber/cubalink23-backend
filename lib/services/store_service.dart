@@ -861,7 +861,35 @@ CREATE POLICY "Allow authenticated users to manage products" ON store_products
       for (final item in response) {
         try {
           print('🔄 Procesando producto: ${item['name']}');
-          products.add(StoreProduct.fromMap(item));
+          
+          // ARREGLO: Mapear correctamente las imágenes
+          String imageUrl = '';
+          if (item['image_url'] != null && item['image_url'].toString().isNotEmpty) {
+            imageUrl = item['image_url'].toString();
+          } else if (item['images'] != null && item['images'] is List && item['images'].isNotEmpty) {
+            imageUrl = item['images'][0].toString();
+          }
+          
+          // Crear producto con imagen corregida
+          final product = StoreProduct(
+            id: item['id']?.toString() ?? '',
+            name: item['name'] ?? '',
+            description: item['description'] ?? '',
+            price: (item['price'] ?? 0.0).toDouble(),
+            imageUrl: imageUrl, // Usar imagen corregida
+            categoryId: item['category'] ?? item['category_id'] ?? '',
+            unit: item['unit'] ?? 'unidad',
+            weight: (item['weight'] ?? 0.0).toDouble(),
+            isAvailable: item['is_active'] ?? true,
+            stock: item['stock'] ?? 0,
+            availableProvinces: List<String>.from(item['available_provinces'] ?? []),
+            deliveryMethod: 'express',
+            createdAt: item['created_at'] != null ? DateTime.parse(item['created_at']) : null,
+          );
+          
+          products.add(product);
+          print('✅ Producto procesado: ${product.name} - Imagen: ${product.imageUrl}');
+          
         } catch (e) {
           print('⚠️ Error parsing product: $e');
         }

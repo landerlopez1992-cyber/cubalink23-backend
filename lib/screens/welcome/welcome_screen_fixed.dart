@@ -48,6 +48,10 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
       _bestSellers = _getDefaultProductsMap();
     });
     
+    // ARREGLO: Configurar CartService y cargar carrito
+    _cartService.addListener(_updateCartCount);
+    _initializeCart();
+    
     // Cargar datos en background SIN BLOQUEAR la UI
     _loadDataInBackground();
     
@@ -276,11 +280,24 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
     super.dispose();
   }
 
+  /// ARREGLO: Inicializar carrito correctamente
+  Future<void> _initializeCart() async {
+    try {
+      print('🛒 Inicializando carrito en WelcomeScreen...');
+      await _cartService.initializeCart();
+      _updateCartCount();
+      print('✅ Carrito inicializado: ${_cartService.itemCount} items');
+    } catch (e) {
+      print('❌ Error inicializando carrito: $e');
+    }
+  }
+
   void _updateCartCount() {
     if (mounted) {
       setState(() {
         _cartItemsCount = _cartService.itemCount;
       });
+      print('🛒 Carrito actualizado: $_cartItemsCount productos');
     }
   }
 
@@ -335,10 +352,25 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
     );
   }
 
+  /// ARREGLO: Mejorar _loadCartItemsCount
   Future<void> _loadCartItemsCount() async {
-    setState(() {
-      _cartItemsCount = _cartService.itemCount;
-    });
+    try {
+      print('🛒 Cargando conteo de carrito...');
+      
+      // Asegurar que el carrito esté cargado
+      if (_cartService.itemCount == 0) {
+        await _cartService.loadFromSupabase();
+      }
+      
+      if (mounted) {
+        setState(() {
+          _cartItemsCount = _cartService.itemCount;
+        });
+        print('✅ Conteo de carrito actualizado: $_cartItemsCount');
+      }
+    } catch (e) {
+      print('❌ Error cargando conteo de carrito: $e');
+    }
   }
 
   Future<void> _checkForceUpdate() async {
@@ -1457,14 +1489,14 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
                   );
                 },
                 child: Container(
-                  width: 150,
+                  width: 160,
                   margin: EdgeInsets.only(right: 12),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withOpacity( 0.2),
+                        color: Colors.grey.withOpacity(0.2),
                         blurRadius: 8,
                         offset: Offset(0, 3),
                       ),
@@ -1478,11 +1510,39 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
                         child: Container(
                           height: 100,
                           width: double.infinity,
-                          child: Image.network(
-                            product.imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                          ),
+                          child: product.imageUrl.isNotEmpty
+                              ? Image.network(
+                                  product.imageUrl,
+                                  fit: BoxFit.cover,
+                                  loadingBuilder: (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Container(
+                                      color: Colors.grey.shade100,
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          value: loadingProgress.expectedTotalBytes != null
+                                              ? loadingProgress.cumulativeBytesLoaded /
+                                                  loadingProgress.expectedTotalBytes!
+                                              : null,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                        color: Colors.grey.shade200,
+                                        child: Icon(
+                                          Icons.restaurant,
+                                          size: 40,
+                                          color: Colors.grey.shade400,
+                                        ),
+                                      ),
+                                )
+                              : Container(
                                   color: Colors.grey.shade200,
                                   child: Icon(
                                     Icons.restaurant,
@@ -1490,7 +1550,6 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
                                     color: Colors.grey.shade400,
                                   ),
                                 ),
-                          ),
                         ),
                       ),
                       Expanded(
@@ -1534,11 +1593,11 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
                                     ],
                                   ),
                                   Container(
-                                    width: 32,
-                                    height: 32,
+                                    width: 36,
+                                    height: 36,
                                     decoration: BoxDecoration(
                                       color: Theme.of(context).colorScheme.primary,
-                                      shape: BoxShape.circle,
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: IconButton(
                                       padding: EdgeInsets.zero,
