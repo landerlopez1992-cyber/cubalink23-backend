@@ -5,8 +5,11 @@ import os
 from datetime import datetime
 from dotenv import load_dotenv
 
-# Cargar variables de entorno
-load_dotenv()
+# Cargar variables de entorno (solo en desarrollo)
+try:
+    load_dotenv()
+except:
+    pass  # En producción (Render.com) las variables están en el entorno del sistema
 
 class SupabaseService:
     def __init__(self):
@@ -14,6 +17,11 @@ class SupabaseService:
         self.supabase_url = os.getenv('SUPABASE_URL', 'https://your-project.supabase.co')
         self.supabase_key = os.getenv('SUPABASE_ANON_KEY', 'your-anon-key')
         self.supabase_service_key = os.getenv('SUPABASE_SERVICE_KEY', 'your-service-key')
+        
+        # Debug: verificar valores obtenidos
+        print(f"🔍 DEBUG SupabaseService:")
+        print(f"   SUPABASE_URL: {self.supabase_url}")
+        print(f"   SUPABASE_ANON_KEY: {self.supabase_key[:20]}..." if self.supabase_key else "   SUPABASE_ANON_KEY: None")
         
         self.headers = {
             'apikey': self.supabase_key,
