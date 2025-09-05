@@ -17,6 +17,13 @@ import time
 app = Flask(__name__)
 CORS(app)
 
+# Importar servicios necesarios
+try:
+    from supabase_storage_service import storage_service
+    print("✅ Servicio de storage importado correctamente")
+except ImportError as e:
+    print(f"⚠️ No se pudo importar storage service: {e}")
+
 # Importar el panel de administración
 from admin_routes import admin
 app.register_blueprint(admin)
