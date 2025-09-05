@@ -6,6 +6,7 @@ import 'package:cubalink23/screens/shopping/shipping_screen.dart';
 import 'package:cubalink23/screens/shopping/favorites_screen.dart';
 import 'package:cubalink23/services/auth_guard_service.dart';
 import 'package:cubalink23/widgets/vendor_logo.dart';
+import 'package:cubalink23/widgets/weight_shipping_display.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({Key? key}) : super(key: key);
@@ -23,6 +24,79 @@ class _CartScreenState extends State<CartScreen> {
     super.initState();
     _cartService.addListener(_onCartChanged);
     _checkAuthAndLoadCart();
+  }
+
+  /// Obtener peso en libras del item del carrito
+  double _getWeightInLb(CartItem item) {
+    // Primero intentar usar weightLb si está disponible (más preciso)
+    if (item.weightLb != null) {
+      return item.weightLb as double;
+    }
+    
+    // Fallback al peso original
+    if (item.weight is double) {
+      // Asumir que ya está en libras si es double
+      return item.weight as double;
+    } else if (item.weight is String) {
+      // Intentar parsear el peso desde string
+      final weightStr = item.weight.toString().toLowerCase();
+      final weightRegex = RegExp(r'(\d+(?:\.\d+)?)');
+      final match = weightRegex.firstMatch(weightStr);
+      
+      if (match != null) {
+        final value = double.tryParse(match.group(1)!) ?? 1.1;
+        
+        if (weightStr.contains('lb') || weightStr.contains('pound')) {
+          return value; // Ya está en libras
+        } else if (weightStr.contains('kg')) {
+          return value * 2.20462; // Convert kg to lbs
+        } else if (weightStr.contains('oz') || weightStr.contains('ounce')) {
+          return value * 0.0625; // Convert oz to lbs
+        } else if (weightStr.contains('g') && !weightStr.contains('kg')) {
+          return value * 0.00220462; // Convert g to lbs
+        }
+      }
+    }
+    return 1.1; // Default weight en libras
+  }
+
+  /// Verificar si es un vendedor externo (Amazon, Walmart, etc.)
+  bool _isExternalVendor(String? vendorId) {
+    if (vendorId == null) return false;
+    return ['amazon', 'walmart', 'ebay', 'homedepot', 'shein'].contains(vendorId.toLowerCase());
+  }
+
+  /// Construir widget de peso para productos de la tienda (solo peso, sin envío)
+  Widget _buildStoreProductWeight(CartItem item) {
+    final weightLb = _getWeightInLb(item);
+    
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.fitness_center,
+            size: 14,
+            color: Colors.grey[600],
+          ),
+          SizedBox(width: 4),
+          Text(
+            '${weightLb.toStringAsFixed(1)} lb',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[700],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _checkAuthAndLoadCart() async {
@@ -370,6 +444,27 @@ class _CartScreenState extends State<CartScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
+                  
+                  // Weight and shipping information (solo para productos de Amazon/Walmart)
+                  if (item.weight != null && _isExternalVendor(item.vendorId))
+                    Padding(
+                      padding: EdgeInsets.only(top: 4),
+                      child: WeightShippingDisplay(
+                        weightLb: _getWeightInLb(item),
+                        originalWeight: item.weight.toString(),
+                        destination: 'cuba',
+                        vendorId: item.vendorId,
+                        showShippingCost: true,
+                      ),
+                    ),
+                  
+                  // Solo mostrar peso para productos de la tienda (sin envío)
+                  if (item.weight != null && !_isExternalVendor(item.vendorId))
+                    Padding(
+                      padding: EdgeInsets.only(top: 4),
+                      child: _buildStoreProductWeight(item),
+                    ),
+                  
                   SizedBox(height: 8),
                   
                   // Precio y controles

@@ -5,6 +5,8 @@ import 'package:cubalink23/services/cart_service.dart';
 import 'package:cubalink23/services/favorites_service.dart';
 import 'package:cubalink23/models/amazon_product.dart';
 import 'package:cubalink23/models/walmart_product.dart';
+import 'package:cubalink23/widgets/weight_shipping_display.dart';
+import 'package:cubalink23/services/shipping_calculator.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   final String? productId;
@@ -53,6 +55,31 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   void initState() {
     super.initState();
     _checkFavoriteStatus();
+  }
+
+  /// Obtener peso en libras del producto
+  double _getWeightInLb() {
+    if (widget.walmartProduct?.weight != null) {
+      // Convertir de kg a libras
+      return widget.walmartProduct!.getEstimatedWeightKg() * 2.20462;
+    } else if (widget.amazonProduct?.weight != null) {
+      // Convertir de kg a libras
+      return (widget.amazonProduct!.weightKg ?? 0.5) * 2.20462;
+    }
+    return 1.1; // Default weight en libras (0.5 kg = 1.1 lb)
+  }
+
+  /// Obtener ID del vendedor
+  String? _getVendorId() {
+    if (widget.isFromAmazon) return 'amazon';
+    if (widget.isFromWalmart) return 'walmart';
+    return 'admin'; // Default to admin/store
+  }
+
+  /// Verificar si es un vendedor externo (Amazon, Walmart, etc.)
+  bool _isExternalVendor(String? vendorId) {
+    if (vendorId == null) return false;
+    return ['amazon', 'walmart', 'ebay', 'homedepot', 'shein'].contains(vendorId.toLowerCase());
   }
   
   void _checkFavoriteStatus() async {
@@ -301,26 +328,16 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                     ),
                                 ],
                               ),
-                              // Weight indicator
+                              // Weight and shipping information
                               if (weight != null)
                                 Padding(
                                   padding: EdgeInsets.only(top: 8),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.fitness_center,
-                                        size: 16,
-                                        color: Colors.grey[600],
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        'Peso: $weight',
-                                        style: TextStyle(
-                                          color: Colors.grey[600],
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ],
+                                  child: WeightShippingDisplay(
+                                    weightLb: _getWeightInLb(),
+                                    originalWeight: weight,
+                                    destination: 'cuba',
+                                    vendorId: _getVendorId(),
+                                    showShippingCost: true,
                                   ),
                                 ),
                             ],
@@ -541,23 +558,41 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   }
 
   void _addToCart() {
+    // Calcular precio final para productos de Amazon/Walmart
+    double finalPrice = widget.productPrice ?? widget.product?['price']?.toDouble() ?? 0.0;
+    String? vendorId = _getVendorId();
+    
+    if (_isExternalVendor(vendorId)) {
+      final weightLb = _getWeightInLb();
+      final priceCalculation = ProductCostCalculator.calculateFinalPrice(
+        basePrice: finalPrice,
+        vendorId: vendorId!,
+        weightLb: weightLb,
+        zipCode: '33470', // Nuestra bodega
+      );
+      finalPrice = priceCalculation.finalPrice;
+    }
+    
     Map<String, dynamic> cartItem = {
       'id': widget.productId ?? widget.product?['id'] ?? 'unknown',
       'title': widget.productTitle ?? widget.product?['title'] ?? widget.product?['name'] ?? 'Producto',
-      'price': widget.productPrice ?? widget.product?['price']?.toDouble() ?? 0.0,
+      'price': finalPrice, // Precio final ya incluye envío y taxes
       'imageUrl': widget.productImage ?? widget.product?['image'] ?? widget.product?['imageUrl'] ?? '',
       'store': widget.isFromWalmart ? 'Walmart' : widget.isFromAmazon ? 'Amazon' : widget.product?['store'] ?? 'Tienda',
       'brand': widget.productBrand ?? widget.product?['brand'] ?? 'Desconocido',
       'quantity': _quantity,
+      'vendorId': vendorId, // Agregar vendorId para identificar el vendedor
     };
 
     // Add weight information if available
     if (widget.walmartProduct?.weight != null) {
       cartItem['weight'] = widget.walmartProduct!.weight;
-      cartItem['weightKg'] = widget.walmartProduct!.getEstimatedWeightKg();
+      cartItem['weightLb'] = widget.walmartProduct!.getEstimatedWeightKg() * 2.20462; // Convert to lbs
     } else if (widget.amazonProduct?.weight != null) {
       cartItem['weight'] = widget.amazonProduct!.weight;
-      cartItem['weightKg'] = 0.5; // Default weight for Amazon products
+      cartItem['weightLb'] = widget.amazonProduct!.weightKg != null 
+          ? widget.amazonProduct!.weightKg! * 2.20462 // Convert kg to lbs
+          : 1.1; // Default weight in lbs
     }
 
     // Add rating and reviews if available

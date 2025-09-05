@@ -23,6 +23,15 @@ app.register_blueprint(admin)
 from collections_routes import collections_bp
 app.register_blueprint(collections_bp, url_prefix='/admin')
 
+# Importar configuración automática de base de datos
+try:
+    from setup_database import setup_user_carts_table, verify_table_exists
+    AUTO_SETUP_AVAILABLE = True
+    print("✅ Configuración automática de DB disponible")
+except ImportError:
+    AUTO_SETUP_AVAILABLE = False
+    print("⚠️ setup_database.py no disponible - configuración manual requerida")
+
 # Duffel API REAL Configuration
 DUFFEL_API_TOKEN = 'duffel_live_Rj6u0G0cT2hUeIw53ou2HRTNNf0tXl6oP-pVzcGvI7e'
 DUFFEL_API_URL = 'https://api.duffel.com/air'
@@ -892,10 +901,57 @@ def _get_simulated_seat_map():
         ]
     }]
 
+def initialize_database():
+    """Inicializar base de datos automáticamente"""
+    if AUTO_SETUP_AVAILABLE:
+        print("🚀 Inicializando configuración de base de datos...")
+        try:
+            setup_user_carts_table()
+        except Exception as e:
+            print(f"⚠️ Error en configuración automática: {e}")
+    else:
+        print("📋 Configuración manual de DB requerida")
+
+# Endpoint para configurar base de datos manualmente
+@app.route('/setup-database', methods=['GET', 'POST'])
+def setup_database_endpoint():
+    """Endpoint para configurar la base de datos"""
+    if AUTO_SETUP_AVAILABLE:
+        try:
+            result = setup_user_carts_table()
+            if result:
+                return jsonify({
+                    'success': True,
+                    'message': 'Tabla user_carts creada exitosamente',
+                    'status': 'configured'
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': 'Error creando tabla user_carts',
+                    'status': 'error'
+                })
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': f'Error: {str(e)}',
+                'status': 'error'
+            })
+    else:
+        return jsonify({
+            'success': False,
+            'message': 'Configuración automática no disponible',
+            'status': 'manual_required'
+        })
+
 if __name__ == '__main__':
-    print('�� Iniciando Duffel API Backend con API REAL...')
+    print('🌐 Iniciando Duffel API Backend con API REAL...')
     print('🔑 Token configurado: {}'.format(bool(DUFFEL_API_TOKEN)))
     print('🌐 API URL: {}'.format(DUFFEL_API_URL))
+
+    # Inicializar base de datos al iniciar
+    print('📊 Configurando base de datos...')
+    initialize_database()
 
     # Obtener puerto de variable de entorno (para Render.com)
     port = int(os.environ.get('PORT', 3005))
