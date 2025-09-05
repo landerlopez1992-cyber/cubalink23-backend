@@ -47,9 +47,58 @@
                 </button>
             </div>
 
+            <!-- Banner 1 - Pantalla de Bienvenida -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Banner 1 - Pantalla de Bienvenida</h5>
+                    <div class="d-flex align-items-center">
+                        <label class="form-label me-2 mb-0">Tiempo de rotación:</label>
+                        <select class="form-select me-3" id="banner1RotationSpeed" style="width: auto;">
+                            <option value="3000">3 segundos</option>
+                            <option value="5000" selected>5 segundos</option>
+                            <option value="7000">7 segundos</option>
+                            <option value="10000">10 segundos</option>
+                        </select>
+                        <button class="btn btn-primary btn-sm" onclick="addBanner('banner1')">
+                            <i class="fas fa-plus me-1"></i>Agregar Foto
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row" id="banner1Container">
+                        <!-- Las fotos del Banner 1 se cargarán aquí -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Banner 2 - Pantalla de Vuelos -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Banner 2 - Pantalla de Vuelos</h5>
+                    <div class="d-flex align-items-center">
+                        <label class="form-label me-2 mb-0">Tiempo de rotación:</label>
+                        <select class="form-select me-3" id="banner2RotationSpeed" style="width: auto;">
+                            <option value="3000">3 segundos</option>
+                            <option value="5000" selected>5 segundos</option>
+                            <option value="7000">7 segundos</option>
+                            <option value="10000">10 segundos</option>
+                        </select>
+                        <button class="btn btn-primary btn-sm" onclick="addBanner('banner2')">
+                            <i class="fas fa-plus me-1"></i>Agregar Foto
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row" id="banner2Container">
+                        <!-- Las fotos del Banner 2 se cargarán aquí -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de todos los banners -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">Banners Activos</h5>
+                    <h5 class="mb-0">Todos los Banners</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -60,6 +109,7 @@
                                     <th>Título</th>
                                     <th>Tipo</th>
                                     <th>Orden</th>
+                                    <th>Rotación</th>
                                     <th>Estado</th>
                                     <th>Acciones</th>
                                 </tr>
@@ -97,8 +147,17 @@
                                 <div class="mb-3">
                                     <label for="bannerType" class="form-label">Tipo de Banner</label>
                                     <select class="form-select" id="bannerType" name="banner_type" required>
-                                        <option value="welcome">Pantalla de Bienvenida</option>
-                                        <option value="flights">Sección de Vuelos</option>
+                                        <option value="banner1">Banner 1 - Pantalla de Bienvenida</option>
+                                        <option value="banner2">Banner 2 - Pantalla de Vuelos</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="rotationSpeed" class="form-label">Tiempo de Rotación (ms)</label>
+                                    <select class="form-select" id="rotationSpeed" name="rotation_speed">
+                                        <option value="3000">3 segundos</option>
+                                        <option value="5000" selected>5 segundos</option>
+                                        <option value="7000">7 segundos</option>
+                                        <option value="10000">10 segundos</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">
@@ -164,22 +223,28 @@
             const tbody = document.getElementById('bannersTable');
             tbody.innerHTML = '';
 
+            // Mostrar banners en contenedores específicos
+            displayBannerContainer('banner1');
+            displayBannerContainer('banner2');
+
+            // Mostrar todos los banners en la tabla
             banners.forEach(banner => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>
-                        <img src="${banner.image_url}" alt="${banner.title}" class="banner-image">
+                        <img src="${banner.image_url}" alt="${banner.title}" class="banner-image" style="width: 60px; height: 40px; object-fit: cover;">
                     </td>
                     <td>${banner.title}</td>
                     <td>
-                        <span class="badge ${banner.banner_type === 'welcome' ? 'bg-success' : 'bg-info'}">
-                            ${banner.banner_type === 'welcome' ? 'Bienvenida' : 'Vuelos'}
+                        <span class="badge ${banner.banner_type === 'banner1' ? 'bg-success' : 'bg-info'}">
+                            ${banner.banner_type === 'banner1' ? 'Banner 1' : 'Banner 2'}
                         </span>
                     </td>
-                    <td>${banner.order}</td>
+                    <td>${banner.display_order}</td>
+                    <td>${banner.rotation_speed}ms</td>
                     <td>
-                        <span class="badge ${banner.active ? 'bg-success' : 'bg-danger'}">
-                            ${banner.active ? 'Activo' : 'Inactivo'}
+                        <span class="badge ${banner.is_active ? 'bg-success' : 'bg-danger'}">
+                            ${banner.is_active ? 'Activo' : 'Inactivo'}
                         </span>
                     </td>
                     <td>
@@ -193,6 +258,55 @@
                 `;
                 tbody.appendChild(row);
             });
+        }
+
+        function displayBannerContainer(bannerType) {
+            const container = document.getElementById(`${bannerType}Container`);
+            container.innerHTML = '';
+
+            const bannerTypeBanners = banners.filter(banner => banner.banner_type === bannerType && banner.is_active);
+            
+            if (bannerTypeBanners.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12 text-center text-muted py-4">
+                        <i class="fas fa-image fa-3x mb-3"></i>
+                        <p>No hay fotos para este banner. Haz clic en "Agregar Foto" para comenzar.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            bannerTypeBanners.forEach((banner, index) => {
+                const col = document.createElement('div');
+                col.className = 'col-md-3 mb-3';
+                col.innerHTML = `
+                    <div class="card">
+                        <img src="${banner.image_url}" class="card-img-top" style="height: 150px; object-fit: cover;" alt="${banner.title}">
+                        <div class="card-body p-2">
+                            <h6 class="card-title mb-1">${banner.title}</h6>
+                            <small class="text-muted">Orden: ${banner.display_order}</small>
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="editBanner('${banner.id}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteBanner('${banner.id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(col);
+            });
+        }
+
+        function addBanner(bannerType) {
+            // Pre-seleccionar el tipo de banner
+            document.getElementById('bannerType').value = bannerType;
+            
+            // Abrir modal
+            const modal = new bootstrap.Modal(document.getElementById('addBannerModal'));
+            modal.show();
         }
 
         function setupImagePreview() {
@@ -216,14 +330,44 @@
             const formData = new FormData(form);
 
             // Agregar el estado del checkbox
-            formData.append('active', document.getElementById('bannerActive').checked);
+            formData.append('is_active', document.getElementById('bannerActive').checked);
+            formData.append('auto_rotate', true);
 
             const url = editingBannerId ? `/admin/api/banners/${editingBannerId}` : '/admin/api/banners';
             const method = editingBannerId ? 'PUT' : 'POST';
 
+            // Convertir FormData a JSON para el backend
+            const jsonData = {
+                title: formData.get('title'),
+                description: formData.get('description'),
+                banner_type: formData.get('banner_type'),
+                display_order: parseInt(formData.get('order')),
+                is_active: formData.get('is_active') === 'true',
+                auto_rotate: true,
+                rotation_speed: parseInt(formData.get('rotation_speed'))
+            };
+
+            // Si hay imagen, convertirla a base64
+            const imageFile = formData.get('image');
+            if (imageFile && imageFile.size > 0) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    jsonData.image_base64 = e.target.result;
+                    sendBannerData(url, method, jsonData);
+                };
+                reader.readAsDataURL(imageFile);
+            } else {
+                sendBannerData(url, method, jsonData);
+            }
+        });
+
+        function sendBannerData(url, method, data) {
             fetch(url, {
                 method: method,
-                body: formData
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
             })
             .then(response => response.json())
             .then(data => {
@@ -232,14 +376,14 @@
                     closeModal();
                     showAlert('Banner guardado exitosamente', 'success');
                 } else {
-                    showAlert('Error al guardar el banner', 'danger');
+                    showAlert('Error al guardar el banner: ' + (data.error || 'Error desconocido'), 'danger');
                 }
             })
             .catch(error => {
                 console.error('Error saving banner:', error);
                 showAlert('Error al guardar el banner', 'danger');
             });
-        });
+        }
 
         function editBanner(bannerId) {
             const banner = banners.find(b => b.id === bannerId);
@@ -249,8 +393,9 @@
                 document.getElementById('bannerTitle').value = banner.title;
                 document.getElementById('bannerDescription').value = banner.description || '';
                 document.getElementById('bannerType').value = banner.banner_type;
-                document.getElementById('bannerOrder').value = banner.order;
-                document.getElementById('bannerActive').checked = banner.active;
+                document.getElementById('bannerOrder').value = banner.display_order;
+                document.getElementById('rotationSpeed').value = banner.rotation_speed;
+                document.getElementById('bannerActive').checked = banner.is_active;
                 
                 // Mostrar imagen actual
                 const preview = document.getElementById('imagePreview');
@@ -315,6 +460,53 @@
 
         // Limpiar modal al cerrar
         document.getElementById('addBannerModal').addEventListener('hidden.bs.modal', closeModal);
+
+        // Actualizar tiempo de rotación global para Banner 1
+        document.getElementById('banner1RotationSpeed').addEventListener('change', function() {
+            updateBannerRotationSpeed('banner1', this.value);
+        });
+
+        // Actualizar tiempo de rotación global para Banner 2
+        document.getElementById('banner2RotationSpeed').addEventListener('change', function() {
+            updateBannerRotationSpeed('banner2', this.value);
+        });
+
+        function updateBannerRotationSpeed(bannerType, rotationSpeed) {
+            const bannerTypeBanners = banners.filter(banner => banner.banner_type === bannerType);
+            
+            if (bannerTypeBanners.length === 0) {
+                showAlert('No hay banners para actualizar', 'warning');
+                return;
+            }
+
+            // Actualizar todos los banners del mismo tipo
+            const updatePromises = bannerTypeBanners.map(banner => {
+                return fetch(`/admin/api/banners/${banner.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        rotation_speed: parseInt(rotationSpeed)
+                    })
+                });
+            });
+
+            Promise.all(updatePromises)
+                .then(responses => {
+                    const allSuccessful = responses.every(response => response.ok);
+                    if (allSuccessful) {
+                        showAlert(`Tiempo de rotación actualizado para ${bannerType === 'banner1' ? 'Banner 1' : 'Banner 2'}`, 'success');
+                        loadBanners(); // Recargar para mostrar cambios
+                    } else {
+                        showAlert('Error al actualizar algunos banners', 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating rotation speed:', error);
+                    showAlert('Error al actualizar el tiempo de rotación', 'danger');
+                });
+        }
     </script>
 </body>
 </html>
