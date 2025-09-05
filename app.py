@@ -19,6 +19,10 @@ CORS(app)
 from admin_routes import admin
 app.register_blueprint(admin)
 
+# Importar las rutas de colecciones
+from collections_routes import collections_bp
+app.register_blueprint(collections_bp, url_prefix='/admin')
+
 # Duffel API REAL Configuration
 DUFFEL_API_TOKEN = 'duffel_live_Rj6u0G0cT2hUeIw53ou2HRTNNf0tXl6oP-pVzcGvI7e'
 DUFFEL_API_URL = 'https://api.duffel.com/air'
