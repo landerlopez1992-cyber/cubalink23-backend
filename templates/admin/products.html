@@ -29,6 +29,9 @@
                     <a class="nav-link active" href="/admin/products">
                         <i class="fas fa-box me-2"></i> Productos
                     </a>
+                    <a class="nav-link" href="/admin/collections">
+                        <i class="fas fa-layer-group me-2"></i> Colecciones
+                    </a>
                     <a class="nav-link" href="/admin/orders">
                         <i class="fas fa-shopping-cart me-2"></i> Órdenes
                     </a>
@@ -78,6 +81,38 @@
                         </button>
                         <button class="btn btn-success" onclick="showAddProductModal()">
                             <i class="fas fa-plus"></i> Agregar Producto
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search and Filter -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="searchProducts" placeholder="Buscar productos..." onkeyup="filterProducts()">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="filterCategory" onchange="filterProducts()">
+                            <option value="">Todas las categorías</option>
+                            <option value="Electrónicos">Electrónicos</option>
+                            <option value="Ropa">Ropa</option>
+                            <option value="Comida">Comida</option>
+                            <option value="Servicios">Servicios</option>
+                            <option value="Motos">Motos</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="filterStatus" onchange="filterProducts()">
+                            <option value="">Todos los estados</option>
+                            <option value="active">Activos</option>
+                            <option value="inactive">Inactivos</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                            <i class="fas fa-times"></i> Limpiar
                         </button>
                     </div>
                 </div>
@@ -959,6 +994,36 @@
         // Actualizar productos
         function refreshProducts() {
             loadProductsData();
+        }
+
+        // Filter products
+        function filterProducts() {
+            const searchTerm = document.getElementById('searchProducts').value.toLowerCase();
+            const categoryFilter = document.getElementById('filterCategory').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+            
+            let filtered = allProducts.filter(product => {
+                const matchesSearch = product.name.toLowerCase().includes(searchTerm) ||
+                                    (product.description && product.description.toLowerCase().includes(searchTerm));
+                
+                const matchesCategory = !categoryFilter || product.category === categoryFilter;
+                
+                const matchesStatus = !statusFilter || 
+                                    (statusFilter === 'active' && product.is_active) ||
+                                    (statusFilter === 'inactive' && !product.is_active);
+                
+                return matchesSearch && matchesCategory && matchesStatus;
+            });
+            
+            displayProducts(filtered);
+        }
+
+        // Clear all filters
+        function clearFilters() {
+            document.getElementById('searchProducts').value = '';
+            document.getElementById('filterCategory').value = '';
+            document.getElementById('filterStatus').value = '';
+            displayProducts(allProducts);
         }
 
         // Mostrar mensaje de éxito
