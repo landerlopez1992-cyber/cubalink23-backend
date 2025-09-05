@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# DEPLOY FORCE: 2025-09-05 01:40 - Debug variables de entorno
 from flask import Flask, render_template, jsonify
 from flask_cors import CORS
 import os
