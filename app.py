@@ -35,6 +35,16 @@ def health_check():
         'timestamp': datetime.now().isoformat()
     })
 
+@app.route('/debug/env')
+def debug_env():
+    """Debug endpoint para verificar variables de entorno"""
+    import os
+    return jsonify({
+        'SUPABASE_URL': os.getenv('SUPABASE_URL', 'NOT_SET'),
+        'SUPABASE_ANON_KEY': os.getenv('SUPABASE_ANON_KEY', 'NOT_SET')[:20] + '...' if os.getenv('SUPABASE_ANON_KEY') else 'NOT_SET',
+        'SUPABASE_SERVICE_KEY': os.getenv('SUPABASE_SERVICE_KEY', 'NOT_SET')[:20] + '...' if os.getenv('SUPABASE_SERVICE_KEY') else 'NOT_SET'
+    })
+
 @app.route('/api/test')
 def test():
     """Endpoint de prueba"""
