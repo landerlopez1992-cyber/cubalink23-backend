@@ -111,6 +111,24 @@ def get_products():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@admin.route('/test/products')
+def test_products():
+    """Endpoint de prueba para verificar Supabase sin autenticación"""
+    try:
+        products = supabase_service.get_products()
+        return jsonify({
+            'success': True,
+            'products': products,
+            'total': len(products),
+            'debug': 'Test endpoint - no auth required'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'debug': 'Test endpoint - no auth required'
+        }), 500
+
 @admin.route('/api/products', methods=['POST'])
 @require_auth
 def add_product():
