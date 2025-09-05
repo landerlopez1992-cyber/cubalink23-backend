@@ -138,13 +138,16 @@
                                         <th>Subcategoría</th>
                                         <th>Precio</th>
                                         <th>Stock</th>
+                                        <th>Peso</th>
+                                        <th>Envío</th>
+                                        <th>Etiquetas</th>
                                         <th>Estado</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="products-table">
                                     <tr>
-                                        <td colspan="8" class="text-center">
+                                        <td colspan="11" class="text-center">
                                             <div class="spinner-border" role="status">
                                                 <span class="visually-hidden">Cargando...</span>
                                             </div>
@@ -203,6 +206,16 @@
                                     <input type="number" class="form-control" name="stock" required>
                                 </div>
                                 <div class="mb-3">
+                                    <label class="form-label">Peso (kg)</label>
+                                    <input type="number" class="form-control" name="weight" step="0.01" placeholder="Opcional">
+                                    <small class="text-muted">Peso del producto para cálculo de envío</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Precio de Envío Adicional</label>
+                                    <input type="number" class="form-control" name="shipping_cost" step="0.01" placeholder="0.00">
+                                    <small class="text-muted">Costo adicional por preparación y manejo</small>
+                                </div>
+                                <div class="mb-3">
                                     <label class="form-label">Descripción</label>
                                     <textarea class="form-control" name="description" rows="3"></textarea>
                                 </div>
@@ -219,6 +232,71 @@
                                         <label class="form-check-label" for="maritime">
                                             Envío Marítimo (4 a 6 semanas)
                                         </label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Etiquetas del Producto</label>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="tags" value="NUEVO" id="tag_nuevo">
+                                                <label class="form-check-label badge bg-success" for="tag_nuevo">
+                                                    NUEVO
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="tags" value="12% OFF" id="tag_off">
+                                                <label class="form-check-label badge bg-danger" for="tag_off">
+                                                    12% OFF
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="tags" value="CALIENTE" id="tag_caliente">
+                                                <label class="form-check-label badge bg-warning" for="tag_caliente">
+                                                    CALIENTE
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="tags" value="LIMITADO" id="tag_limitado">
+                                                <label class="form-check-label badge bg-info" for="tag_limitado">
+                                                    LIMITADO
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="tags" value="ENVÍO GRATIS" id="tag_envio_gratis">
+                                                <label class="form-check-label badge bg-primary" for="tag_envio_gratis">
+                                                    ENVÍO GRATIS
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="tags" value="MEJOR VENDIDO" id="tag_bestseller">
+                                                <label class="form-check-label badge bg-dark" for="tag_bestseller">
+                                                    MEJOR VENDIDO
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <label class="form-label">Etiqueta Personalizada</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="customTag" placeholder="Ej: 50% OFF, EXCLUSIVO">
+                                            <button type="button" class="btn btn-outline-primary" onclick="addCustomTag()">
+                                                <i class="fas fa-plus"></i> Agregar
+                                            </button>
+                                        </div>
+                                        <div id="customTagsContainer" class="mt-2"></div>
                                     </div>
                                 </div>
                                 <div class="mb-3">
@@ -285,6 +363,16 @@
                                     <input type="number" class="form-control" name="stock" id="editStock" required>
                                 </div>
                                 <div class="mb-3">
+                                    <label class="form-label">Peso (kg)</label>
+                                    <input type="number" class="form-control" name="weight" id="editWeight" step="0.01" placeholder="Opcional">
+                                    <small class="text-muted">Peso del producto para cálculo de envío</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Precio de Envío Adicional</label>
+                                    <input type="number" class="form-control" name="shipping_cost" id="editShippingCost" step="0.01" placeholder="0.00">
+                                    <small class="text-muted">Costo adicional por preparación y manejo</small>
+                                </div>
+                                <div class="mb-3">
                                     <label class="form-label">Descripción</label>
                                     <textarea class="form-control" name="description" id="editDescription" rows="3"></textarea>
                                 </div>
@@ -301,6 +389,71 @@
                                         <label class="form-check-label" for="editMaritime">
                                             Envío Marítimo (4 a 6 semanas)
                                         </label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Etiquetas del Producto</label>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="tags" value="NUEVO" id="editTagNuevo">
+                                                <label class="form-check-label badge bg-success" for="editTagNuevo">
+                                                    NUEVO
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="tags" value="12% OFF" id="editTagOff">
+                                                <label class="form-check-label badge bg-danger" for="editTagOff">
+                                                    12% OFF
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="tags" value="CALIENTE" id="editTagCaliente">
+                                                <label class="form-check-label badge bg-warning" for="editTagCaliente">
+                                                    CALIENTE
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="tags" value="LIMITADO" id="editTagLimitado">
+                                                <label class="form-check-label badge bg-info" for="editTagLimitado">
+                                                    LIMITADO
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="tags" value="ENVÍO GRATIS" id="editTagEnvioGratis">
+                                                <label class="form-check-label badge bg-primary" for="editTagEnvioGratis">
+                                                    ENVÍO GRATIS
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="tags" value="MEJOR VENDIDO" id="editTagBestseller">
+                                                <label class="form-check-label badge bg-dark" for="editTagBestseller">
+                                                    MEJOR VENDIDO
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <label class="form-label">Etiqueta Personalizada</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="editCustomTag" placeholder="Ej: 50% OFF, EXCLUSIVO">
+                                            <button type="button" class="btn btn-outline-primary" onclick="addEditCustomTag()">
+                                                <i class="fas fa-plus"></i> Agregar
+                                            </button>
+                                        </div>
+                                        <div id="editCustomTagsContainer" class="mt-2"></div>
                                     </div>
                                 </div>
                                 <div class="mb-3">
@@ -361,7 +514,7 @@
             const tbody = document.getElementById('products-table');
             
             if (productsList.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center">No hay productos registrados</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="11" class="text-center">No hay productos registrados</td></tr>';
                 return;
             }
 
@@ -380,6 +533,14 @@
                     <td><span class="badge bg-secondary">${product.subcategory || 'Sin subcategoría'}</span></td>
                     <td>$${product.price}</td>
                     <td>${product.stock}</td>
+                    <td>${product.weight ? product.weight + ' kg' : '-'}</td>
+                    <td>${product.shipping_cost ? '$' + product.shipping_cost : '-'}</td>
+                    <td>
+                        ${product.tags && product.tags.length > 0 ? 
+                            product.tags.map(tag => `<span class="badge bg-info me-1">${tag}</span>`).join('') : 
+                            '-'
+                        }
+                    </td>
                     <td>
                         <span class="badge ${product.is_active ? 'bg-success' : 'bg-danger'}">
                             ${product.is_active ? 'Activo' : 'Inactivo'}
@@ -545,6 +706,18 @@
                 shippingMethods.push(checkbox.value);
             });
             
+            // Obtener etiquetas seleccionadas
+            const tags = [];
+            document.querySelectorAll('input[name="tags"]:checked').forEach(checkbox => {
+                tags.push(checkbox.value);
+            });
+            
+            // Obtener etiquetas personalizadas
+            const customTags = document.querySelectorAll('#customTagsContainer .badge');
+            customTags.forEach(tag => {
+                tags.push(tag.textContent);
+            });
+            
             // Convertir imagen a base64 si existe
             let imageBase64 = '';
             const imageFile = formData.get('image');
@@ -559,7 +732,10 @@
                 category: formData.get('category'),
                 subcategory: formData.get('subcategory'),
                 stock: parseInt(formData.get('stock')),
+                weight: parseFloat(formData.get('weight')) || null,
+                shipping_cost: parseFloat(formData.get('shipping_cost')) || 0,
                 shipping_methods: shippingMethods,
+                tags: tags,
                 image_base64: imageBase64
             };
             
@@ -576,7 +752,7 @@
                 
                 if (result.success) {
                     showSuccess('Producto agregado exitosamente');
-                    bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+            bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
                     loadProductsData();
                 } else {
                     showError('Error al agregar producto: ' + result.error);
@@ -600,6 +776,8 @@
             document.getElementById('editDescription').value = product.description || '';
             document.getElementById('editPrice').value = product.price;
             document.getElementById('editStock').value = product.stock;
+            document.getElementById('editWeight').value = product.weight || '';
+            document.getElementById('editShippingCost').value = product.shipping_cost || '';
             
             // Categoría
             document.getElementById('editCategorySelect').value = product.category || '';
@@ -630,6 +808,18 @@
                 shippingMethods.push(checkbox.value);
             });
             
+            // Obtener etiquetas seleccionadas
+            const tags = [];
+            document.querySelectorAll('#editProductForm input[name="tags"]:checked').forEach(checkbox => {
+                tags.push(checkbox.value);
+            });
+            
+            // Obtener etiquetas personalizadas
+            const customTags = document.querySelectorAll('#editCustomTagsContainer .badge');
+            customTags.forEach(tag => {
+                tags.push(tag.textContent);
+            });
+            
             // Convertir imagen a base64 si existe
             let imageBase64 = '';
             const imageFile = formData.get('image');
@@ -644,7 +834,10 @@
                 category: formData.get('category'),
                 subcategory: formData.get('subcategory'),
                 stock: parseInt(formData.get('stock')),
+                weight: parseFloat(formData.get('weight')) || null,
+                shipping_cost: parseFloat(formData.get('shipping_cost')) || 0,
                 shipping_methods: shippingMethods,
+                tags: tags,
                 image_base64: imageBase64
             };
             
@@ -763,6 +956,78 @@
                 document.body.removeChild(toast);
             });
         }
+
+        // Funciones para etiquetas personalizadas
+        function addCustomTag() {
+            const input = document.getElementById('customTag');
+            const tagText = input.value.trim();
+            
+            if (tagText) {
+                const container = document.getElementById('customTagsContainer');
+                const tagId = 'custom_tag_' + Date.now();
+                
+                const tagHtml = `
+                    <span class="badge bg-secondary me-1 mb-1" id="${tagId}">
+                        ${tagText}
+                        <button type="button" class="btn-close btn-close-white ms-1" onclick="removeCustomTag('${tagId}')" style="font-size: 0.7em;"></button>
+                    </span>
+                `;
+                
+                container.insertAdjacentHTML('beforeend', tagHtml);
+                input.value = '';
+            }
+        }
+
+        function removeCustomTag(tagId) {
+            const tag = document.getElementById(tagId);
+            if (tag) {
+                tag.remove();
+            }
+        }
+
+        function addEditCustomTag() {
+            const input = document.getElementById('editCustomTag');
+            const tagText = input.value.trim();
+            
+            if (tagText) {
+                const container = document.getElementById('editCustomTagsContainer');
+                const tagId = 'edit_custom_tag_' + Date.now();
+                
+                const tagHtml = `
+                    <span class="badge bg-secondary me-1 mb-1" id="${tagId}">
+                        ${tagText}
+                        <button type="button" class="btn-close btn-close-white ms-1" onclick="removeCustomTag('${tagId}')" style="font-size: 0.7em;"></button>
+                    </span>
+                `;
+                
+                container.insertAdjacentHTML('beforeend', tagHtml);
+                input.value = '';
+            }
+        }
+
+        // Permitir agregar etiquetas con Enter
+        document.addEventListener('DOMContentLoaded', function() {
+            const customTagInput = document.getElementById('customTag');
+            const editCustomTagInput = document.getElementById('editCustomTag');
+            
+            if (customTagInput) {
+                customTagInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addCustomTag();
+                    }
+                });
+            }
+            
+            if (editCustomTagInput) {
+                editCustomTagInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addEditCustomTag();
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>

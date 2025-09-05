@@ -254,7 +254,12 @@ def create_product():
             'description': data.get('description', ''),
             'price': float(data.get('price', 0)),
             'category': data.get('category'),
+            'subcategory': data.get('subcategory', ''),
             'stock': int(data.get('stock', 0)),
+            'weight': data.get('weight'),
+            'shipping_cost': float(data.get('shipping_cost', 0)) if data.get('shipping_cost') else 0,
+            'shipping_methods': data.get('shipping_methods', []),
+            'tags': data.get('tags', []),
             'is_active': True,
             'image_url': image_url
         }
@@ -394,8 +399,18 @@ def update_product(product_id):
             update_data['price'] = float(data['price'])
         if 'category' in data:
             update_data['category'] = data['category']
+        if 'subcategory' in data:
+            update_data['subcategory'] = data['subcategory']
         if 'stock' in data:
             update_data['stock'] = int(data['stock'])
+        if 'weight' in data:
+            update_data['weight'] = data['weight']
+        if 'shipping_cost' in data:
+            update_data['shipping_cost'] = float(data['shipping_cost']) if data['shipping_cost'] else 0
+        if 'shipping_methods' in data:
+            update_data['shipping_methods'] = data['shipping_methods']
+        if 'tags' in data:
+            update_data['tags'] = data['tags']
         if 'is_active' in data:
             update_data['is_active'] = data['is_active']
         if 'image_url' in data:
