@@ -9,7 +9,7 @@ from auth_routes import auth
 from dotenv import load_dotenv
 
 # Cargar variables de entorno
-load_dotenv('config.env')
+# load_dotenv('config.env')  # Comentado para usar variables de Render.com
 
 app = Flask(__name__)
 CORS(app)
