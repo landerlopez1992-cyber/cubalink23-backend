@@ -668,12 +668,14 @@ def update_product(product_id):
 
 @admin.route('/api/products/<product_id>', methods=['DELETE'])
 def delete_product(product_id):
-    """Eliminar producto de Supabase"""
+    """Eliminar producto de Supabase y su imagen del Storage"""
     try:
         import requests
+        import os
         
         SUPABASE_URL = 'https://zgqrhzuhrwudckwesybg.supabase.co'
         SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTI3OTgsImV4cCI6MjA3MTM2ODc5OH0.lUVK99zmOYD7bNTxilJZWHTmYPfZF5YeMJDVUaJ-FsQ'
+        SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTc5Mjc5OCwiZXhwIjoyMDcxMzY4Nzk4fQ.kUgRPYHRuWJVPfD8iVA7GDuOlj9Xwp6eQ2gH7FJqJ9s'
         
         headers = {
             'apikey': SUPABASE_KEY,
@@ -681,6 +683,44 @@ def delete_product(product_id):
             'Content-Type': 'application/json'
         }
         
+        # Primero obtener el producto para obtener la URL de la imagen
+        get_response = requests.get(
+            f'{SUPABASE_URL}/rest/v1/store_products?id=eq.{product_id}&select=image_url',
+            headers=headers
+        )
+        
+        if get_response.status_code == 200:
+            products = get_response.json()
+            if products and len(products) > 0:
+                product = products[0]
+                image_url = product.get('image_url', '')
+                
+                # Si la imagen está en Supabase Storage, eliminarla
+                if image_url and 'storage/v1/object/public/product-images/' in image_url:
+                    try:
+                        # Extraer el nombre del archivo de la URL
+                        filename = os.path.basename(image_url)
+                        
+                        # Eliminar la imagen del Storage usando Service Key
+                        storage_headers = {
+                            'apikey': SERVICE_KEY,
+                            'Authorization': f'Bearer {SERVICE_KEY}'
+                        }
+                        
+                        delete_image_response = requests.delete(
+                            f'{SUPABASE_URL}/storage/v1/object/product-images/{filename}',
+                            headers=storage_headers
+                        )
+                        
+                        if delete_image_response.status_code == 200:
+                            print(f"✅ Imagen eliminada del Storage: {filename}")
+                        else:
+                            print(f"⚠️ No se pudo eliminar la imagen del Storage: {delete_image_response.status_code}")
+                            
+                    except Exception as e:
+                        print(f"⚠️ Error eliminando imagen del Storage: {e}")
+        
+        # Eliminar el producto de la base de datos
         response = requests.delete(
             f'{SUPABASE_URL}/rest/v1/store_products?id=eq.{product_id}',
             headers=headers
@@ -833,12 +873,14 @@ def update_banner(banner_id):
 
 @admin.route('/api/banners/<banner_id>', methods=['DELETE'])
 def delete_banner(banner_id):
-    """Eliminar banner de Supabase"""
+    """Eliminar banner de Supabase y su imagen del Storage"""
     try:
         import requests
+        import os
         
         SUPABASE_URL = 'https://zgqrhzuhrwudckwesybg.supabase.co'
         SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTI3OTgsImV4cCI6MjA3MTM2ODc5OH0.lUVK99zmOYD7bNTxilJZWHTmYPfZF5YeMJDVUaJ-FsQ'
+        SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTc5Mjc5OCwiZXhwIjoyMDcxMzY4Nzk4fQ.kUgRPYHRuWJVPfD8iVA7GDuOlj9Xwp6eQ2gH7FJqJ9s'
         
         headers = {
             'apikey': SUPABASE_KEY,
@@ -846,6 +888,44 @@ def delete_banner(banner_id):
             'Content-Type': 'application/json'
         }
         
+        # Primero obtener el banner para obtener la URL de la imagen
+        get_response = requests.get(
+            f'{SUPABASE_URL}/rest/v1/banners?id=eq.{banner_id}&select=image_url',
+            headers=headers
+        )
+        
+        if get_response.status_code == 200:
+            banners = get_response.json()
+            if banners and len(banners) > 0:
+                banner = banners[0]
+                image_url = banner.get('image_url', '')
+                
+                # Si la imagen está en Supabase Storage, eliminarla
+                if image_url and 'storage/v1/object/public/banners/' in image_url:
+                    try:
+                        # Extraer el nombre del archivo de la URL
+                        filename = os.path.basename(image_url)
+                        
+                        # Eliminar la imagen del Storage usando Service Key
+                        storage_headers = {
+                            'apikey': SERVICE_KEY,
+                            'Authorization': f'Bearer {SERVICE_KEY}'
+                        }
+                        
+                        delete_image_response = requests.delete(
+                            f'{SUPABASE_URL}/storage/v1/object/banners/{filename}',
+                            headers=storage_headers
+                        )
+                        
+                        if delete_image_response.status_code == 200:
+                            print(f"✅ Imagen de banner eliminada del Storage: {filename}")
+                        else:
+                            print(f"⚠️ No se pudo eliminar la imagen del Storage: {delete_image_response.status_code}")
+                            
+                    except Exception as e:
+                        print(f"⚠️ Error eliminando imagen del Storage: {e}")
+        
+        # Eliminar el banner de la base de datos
         response = requests.delete(
             f'{SUPABASE_URL}/rest/v1/banners?id=eq.{banner_id}',
             headers=headers

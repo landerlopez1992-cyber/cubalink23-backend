@@ -22,8 +22,9 @@ def fix_store_products_table():
     )
     
     if not supabase_url or not supabase_key:
-        print("❌ Error: Variables de entorno SUPABASE_URL y SUPABASE_SERVICE_KEY no encontradas")
-        return False
+        print("⚠️ Variables de entorno no encontradas, usando valores por defecto")
+        supabase_url = 'https://zgqrhzuhrwudckwesybg.supabase.co'
+        supabase_key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTI3OTgsImV4cCI6MjA3MTM2ODc5OH0.lUVK99zmOYD7bNTxilJZWHTmYPfZF5YeMJDVUaJ-FsQ'
     
     try:
         # Leer el archivo SQL

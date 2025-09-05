@@ -1096,7 +1096,7 @@
                 
                 if (result.success) {
                     showSuccess('Producto agregado exitosamente');
-            bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+                    bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
                     loadProductsData();
                 } else {
                     showError('Error al agregar producto: ' + result.error);
