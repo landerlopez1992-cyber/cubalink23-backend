@@ -588,10 +588,9 @@ def search_flights():
                                     carrier = first_segment['marketing_carrier']
                                     airline_name = carrier.get('name', 'Aerolínea')
                                     airline_code = carrier.get('iata_code', '')
-                                    if carrier.get('logo_symbol_url'):
-                                        # Convertir SVG a PNG para compatibilidad con Android
-                                        svg_url = carrier['logo_symbol_url']
-                                        airline_logo = svg_url.replace('.svg', '.png')
+                                    # Usar daisycon.io para logos (sistema que funcionaba)
+                                    if airline_code:
+                                        airline_logo = f"https://daisycon.io/images/airline/?width=60&height=60&color=ffffff&iata={airline_code}"
                                 
                                 flight_data = {
                                     'id': offer['id'],
