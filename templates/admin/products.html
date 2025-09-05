@@ -352,6 +352,12 @@
         // Cargar datos al iniciar
         document.addEventListener('DOMContentLoaded', function() {
             loadProductsData();
+            
+            // Event listener para el formulario de productos
+            document.getElementById('addProductForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                addProduct();
+            });
         });
 
         function loadProductsData() {
@@ -386,8 +392,15 @@
             
             tbody.innerHTML = products.map(product => `
                 <tr>
+                    <td>
+                        ${product.image_url ? 
+                            `<img src="${product.image_url}" alt="${product.name}" class="product-image" onerror="this.src='https://via.placeholder.com/60x60/007bff/ffffff?text=IMG'">` : 
+                            `<div class="product-image bg-secondary d-flex align-items-center justify-content-center text-white" style="width: 60px; height: 60px; border-radius: 8px;">
+                                <i class="fas fa-image"></i>
+                            </div>`
+                        }
+                    </td>
                     <td>${product.name}</td>
-                    <td>${product.description || 'Sin descripción'}</td>
                     <td>${product.category}</td>
                     <td>$${product.price}</td>
                     <td>${product.stock}</td>
@@ -436,6 +449,10 @@
             const form = document.getElementById('addProductForm');
             const formData = new FormData(form);
             
+            // Detectar si es edición o creación
+            const isEdit = form.getAttribute('data-is-edit') === 'true';
+            const productId = form.getAttribute('data-product-id');
+            
             // Convertir FormData a objeto JSON con nuevas funcionalidades
             const productData = {
                 name: formData.get('name'),
@@ -444,8 +461,28 @@
                 stock: parseInt(formData.get('stock')),
                 category: formData.get('category'),
                 subcategory: formData.get('subcategory'),
-                is_active: true
+                is_active: formData.get('is_active') === 'true'
             };
+            
+            // Manejar imagen si hay una seleccionada
+            const imageFile = formData.get('image');
+            if (imageFile && imageFile.size > 0) {
+                // Convertir imagen a base64 para enviar
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    productData.image_base64 = e.target.result.split(',')[1]; // Remover data:image/...;base64,
+                    productData.image_name = imageFile.name;
+                    sendProductData(productData, isEdit, productId);
+                };
+                reader.readAsDataURL(imageFile);
+            } else {
+                sendProductData(productData, isEdit, productId);
+            }
+        }
+        
+        function sendProductData(productData, isEdit, productId) {
+            const form = document.getElementById('addProductForm');
+            const formData = new FormData(form);
             
             // Procesar métodos de envío
             const shippingMethods = [];
@@ -474,9 +511,13 @@
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
             submitBtn.disabled = true;
             
+            // Determinar URL y método según si es edición o creación
+            const url = isEdit ? `/admin/api/products/${productId}` : '/admin/api/products';
+            const method = isEdit ? 'PUT' : 'POST';
+            
             // Enviar producto a la API
-            fetch('/admin/api/products', {
-                method: 'POST',
+            fetch(url, {
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -485,13 +526,18 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Producto agregado correctamente');
+                    alert(isEdit ? 'Producto actualizado correctamente' : 'Producto agregado correctamente');
                     // Cerrar modal y recargar datos
                     bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
                     form.reset();
+                    // Limpiar atributos de edición
+                    form.removeAttribute('data-is-edit');
+                    form.removeAttribute('data-product-id');
+                    // Restaurar título del modal
+                    document.querySelector('#addProductModal .modal-title').textContent = 'Agregar Producto';
                     loadProductsData();
                 } else {
-                    alert('Error al agregar producto: ' + (data.error || 'Error desconocido'));
+                    alert(`Error al ${isEdit ? 'actualizar' : 'agregar'} producto: ` + (data.error || 'Error desconocido'));
                 }
             })
             .catch(error => {
@@ -506,7 +552,50 @@
         }
         
         function editProduct(productId) {
-            alert('Función de editar producto: ' + productId + ' (Por implementar)');
+            // Buscar el producto en la lista actual
+            const product = products.find(p => p.id === productId);
+            if (!product) {
+                alert('Producto no encontrado');
+                return;
+            }
+            
+            // Llenar el formulario con los datos del producto
+            document.querySelector('#addProductForm input[name="name"]').value = product.name || '';
+            document.querySelector('#addProductForm textarea[name="description"]').value = product.description || '';
+            document.querySelector('#addProductForm select[name="category"]').value = product.category || '';
+            document.querySelector('#addProductForm input[name="price"]').value = product.price || '';
+            document.querySelector('#addProductForm input[name="stock"]').value = product.stock || '';
+            document.querySelector('#addProductForm select[name="is_active"]').value = product.is_active ? 'true' : 'false';
+            
+            // Mostrar imagen existente si la hay
+            if (product.image_url) {
+                const imagePreview = document.getElementById('imagePreview');
+                const previewImg = document.getElementById('previewImg');
+                previewImg.src = product.image_url;
+                imagePreview.style.display = 'block';
+            }
+            
+            // Cargar subcategorías si hay categoría
+            if (product.category) {
+                loadSubcategories();
+                setTimeout(() => {
+                    if (product.sub_category) {
+                        document.querySelector('#addProductForm select[name="sub_category"]').value = product.sub_category;
+                    }
+                }, 100);
+            }
+            
+            // Cambiar título del modal
+            document.querySelector('#addProductModal .modal-title').textContent = 'Editar Producto';
+            
+            // Cambiar el formulario para que haga PUT en lugar de POST
+            const form = document.getElementById('addProductForm');
+            form.setAttribute('data-product-id', productId);
+            form.setAttribute('data-is-edit', 'true');
+            
+            // Mostrar el modal
+            const modal = new bootstrap.Modal(document.getElementById('addProductModal'));
+            modal.show();
         }
         
         function deleteProduct(productId) {
