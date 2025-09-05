@@ -142,8 +142,8 @@ def add_product():
                 with open(file_path, 'wb') as f:
                     f.write(image_data)
                 
-                # URL de la imagen local
-                data['image_url'] = '/static/uploads/{}'.format(filename)
+                # URL absoluta de la imagen para que sea accesible desde Flutter
+                data['image_url'] = 'https://cubalink23-backend.onrender.com/static/uploads/{}'.format(filename)
                 
             except Exception as e:
                 print(f"Error procesando imagen base64: {e}")
@@ -163,8 +163,8 @@ def add_product():
                 file_path = os.path.join(UPLOAD_FOLDER, filename)
                 file.save(file_path)
                 
-                # URL de la imagen local
-                data['image_url'] = '/static/uploads/{}'.format(filename)
+                # URL absoluta de la imagen para que sea accesible desde Flutter
+                data['image_url'] = 'https://cubalink23-backend.onrender.com/static/uploads/{}'.format(filename)
         
         # Validar datos requeridos
         if not data.get('name') or not data.get('price'):
@@ -217,8 +217,8 @@ def update_product(product_id):
                 with open(file_path, 'wb') as f:
                     f.write(image_data)
                 
-                # URL de la imagen local
-                data['image_url'] = '/static/uploads/{}'.format(filename)
+                # URL absoluta de la imagen para que sea accesible desde Flutter
+                data['image_url'] = 'https://cubalink23-backend.onrender.com/static/uploads/{}'.format(filename)
                 
             except Exception as e:
                 print(f"Error procesando imagen base64: {e}")
