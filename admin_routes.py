@@ -258,6 +258,7 @@ def create_product():
             'stock': int(data.get('stock', 0)),
             'weight': data.get('weight'),
             'shipping_cost': float(data.get('shipping_cost', 0)) if data.get('shipping_cost') else 0,
+            'vendor_id': data.get('vendor_id', 'admin'),
             'shipping_methods': data.get('shipping_methods', []),
             'tags': data.get('tags', []),
             'is_active': True,
@@ -415,6 +416,8 @@ def update_product(product_id):
             update_data['weight'] = data['weight']
         if 'shipping_cost' in data:
             update_data['shipping_cost'] = float(data['shipping_cost']) if data['shipping_cost'] else 0
+        if 'vendor_id' in data:
+            update_data['vendor_id'] = data['vendor_id']
         if 'shipping_methods' in data:
             update_data['shipping_methods'] = data['shipping_methods']
         if 'tags' in data:

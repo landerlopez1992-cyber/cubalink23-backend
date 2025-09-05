@@ -106,7 +106,7 @@
                             <option value="Walmart">Walmart</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <select class="form-select" id="filterStatus" onchange="filterProducts()">
                             <option value="">Todos los estados</option>
                             <option value="active">Activos</option>
@@ -114,6 +114,15 @@
                         </select>
                     </div>
                     <div class="col-md-2">
+                        <select class="form-select" id="filterOwner" onchange="filterProducts()">
+                            <option value="">Todos los propietarios</option>
+                            <option value="admin">Tienda/Admin</option>
+                            <option value="vendor">Vendedores</option>
+                            <option value="amazon">Amazon</option>
+                            <option value="walmart">Walmart</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
                         <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
                             <i class="fas fa-times"></i> Limpiar
                         </button>
@@ -259,8 +268,29 @@
                                 <small class="text-muted">Preparación y manejo</small>
                             </div>
                             <div class="col-md-3">
+                                <label class="form-label">Propietario</label>
+                                <select class="form-select" name="vendor_id" id="vendorSelect" required>
+                                    <option value="admin">Tienda/Administrador</option>
+                                    <option value="amazon">Amazon</option>
+                                    <option value="walmart">Walmart</option>
+                                    <option value="vendor_1">Vendedor 1</option>
+                                    <option value="vendor_2">Vendedor 2</option>
+                                    <option value="vendor_3">Vendedor 3</option>
+                                </select>
+                                <small class="text-muted">Quién es el propietario del producto</small>
+                            </div>
+                        </div>
+
+                        <!-- Tercera fila: Imagen -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
                                 <label class="form-label">Imagen del Producto</label>
                                 <input type="file" class="form-control" name="image" id="productImage" accept="image/*" onchange="previewImage(this)">
+                            </div>
+                            <div class="col-md-6">
+                                <div id="imagePreview" style="display: none;">
+                                    <img id="previewImg" style="max-width: 200px; max-height: 150px; border-radius: 5px;">
+                                </div>
                             </div>
                         </div>
 
@@ -393,7 +423,12 @@
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Editar Producto</h5>
+                    <div>
+                        <h5 class="modal-title">Editar Producto</h5>
+                        <div id="editProductOwnerInfo" class="mt-1">
+                            <!-- Información del propietario se llenará dinámicamente -->
+                        </div>
+                    </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -582,6 +617,158 @@
             }
         }
 
+        // Función para generar badge de propietario
+        function getOwnerBadge(product) {
+            const ownerType = getProductOwnerType(product);
+            const ownerInfo = getProductOwnerInfo(product);
+            
+            let badgeClass = '';
+            let icon = '';
+            let tooltip = '';
+            
+            switch (ownerType) {
+                case 'admin':
+                    badgeClass = 'bg-danger';
+                    icon = 'fas fa-crown';
+                    tooltip = 'Producto de la Tienda/Administrador';
+                    break;
+                case 'vendor':
+                    badgeClass = 'bg-warning';
+                    icon = 'fas fa-store';
+                    tooltip = `Vendedor: ${ownerInfo.name}`;
+                    break;
+                case 'amazon':
+                    badgeClass = 'bg-info';
+                    icon = 'fab fa-amazon';
+                    tooltip = 'Producto de Amazon';
+                    break;
+                case 'walmart':
+                    badgeClass = 'bg-success';
+                    icon = 'fas fa-shopping-cart';
+                    tooltip = 'Producto de Walmart';
+                    break;
+                default:
+                    badgeClass = 'bg-secondary';
+                    icon = 'fas fa-question';
+                    tooltip = 'Propietario no identificado';
+            }
+            
+            return `
+                <span class="badge ${badgeClass} position-relative" 
+                      data-bs-toggle="tooltip" 
+                      data-bs-placement="top" 
+                      title="${tooltip}">
+                    <i class="${icon}"></i>
+                </span>
+            `;
+        }
+        
+        // Determinar tipo de propietario del producto
+        function getProductOwnerType(product) {
+            // Si tiene vendor_id específico, es de un vendedor
+            if (product.vendor_id && product.vendor_id !== 'admin' && product.vendor_id !== 'system') {
+                return 'vendor';
+            }
+            
+            // Si la categoría es Amazon
+            if (product.category === 'Amazon' || product.vendor_id === 'amazon') {
+                return 'amazon';
+            }
+            
+            // Si la categoría es Walmart
+            if (product.category === 'Walmart' || product.vendor_id === 'walmart') {
+                return 'walmart';
+            }
+            
+            // Si no tiene vendor_id o es admin/system, es de la tienda
+            if (!product.vendor_id || product.vendor_id === 'admin' || product.vendor_id === 'system') {
+                return 'admin';
+            }
+            
+            return 'unknown';
+        }
+        
+        // Obtener información del propietario
+        function getProductOwnerInfo(product) {
+            const ownerType = getProductOwnerType(product);
+            
+            switch (ownerType) {
+                case 'vendor':
+                    return {
+                        name: product.vendor_name || 'Vendedor',
+                        id: product.vendor_id
+                    };
+                case 'amazon':
+                    return {
+                        name: 'Amazon',
+                        id: 'amazon'
+                    };
+                case 'walmart':
+                    return {
+                        name: 'Walmart',
+                        id: 'walmart'
+                    };
+                case 'admin':
+                    return {
+                        name: 'Tienda Cubalink23',
+                        id: 'admin'
+                    };
+                default:
+                    return {
+                        name: 'Desconocido',
+                        id: 'unknown'
+                    };
+            }
+        }
+        
+        // Mostrar información del propietario en el modal de edición
+        function displayProductOwnerInfo(product) {
+            const ownerType = getProductOwnerType(product);
+            const ownerInfo = getProductOwnerInfo(product);
+            
+            let badgeClass = '';
+            let icon = '';
+            let text = '';
+            
+            switch (ownerType) {
+                case 'admin':
+                    badgeClass = 'bg-danger';
+                    icon = 'fas fa-crown';
+                    text = 'Producto de la Tienda/Administrador';
+                    break;
+                case 'vendor':
+                    badgeClass = 'bg-warning';
+                    icon = 'fas fa-store';
+                    text = `Vendedor: ${ownerInfo.name}`;
+                    break;
+                case 'amazon':
+                    badgeClass = 'bg-info';
+                    icon = 'fab fa-amazon';
+                    text = 'Producto de Amazon';
+                    break;
+                case 'walmart':
+                    badgeClass = 'bg-success';
+                    icon = 'fas fa-shopping-cart';
+                    text = 'Producto de Walmart';
+                    break;
+                default:
+                    badgeClass = 'bg-secondary';
+                    icon = 'fas fa-question';
+                    text = 'Propietario no identificado';
+            }
+            
+            const ownerInfoHtml = `
+                <div class="d-flex align-items-center">
+                    <span class="badge ${badgeClass} me-2">
+                        <i class="${icon}"></i>
+                    </span>
+                    <small class="text-muted">${text}</small>
+                </div>
+            `;
+            
+            document.getElementById('editProductOwnerInfo').innerHTML = ownerInfoHtml;
+        }
+
         // Mostrar productos en la tabla
         function displayProducts(productsList) {
             const tbody = document.getElementById('products-table');
@@ -601,7 +788,17 @@
                             </div>`
                         }
                     </td>
-                    <td>${product.name}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="me-2">
+                                ${getOwnerBadge(product)}
+                            </div>
+                            <div>
+                                <strong>${product.name}</strong>
+                                ${product.vendor_name ? `<br><small class="text-muted">${product.vendor_name}</small>` : ''}
+                            </div>
+                        </div>
+                    </td>
                     <td><span class="badge bg-primary">${product.category || 'Sin categoría'}</span></td>
                     <td><span class="badge bg-secondary">${product.subcategory || 'Sin subcategoría'}</span></td>
                     <td>$${product.price}</td>
@@ -880,6 +1077,7 @@
                 stock: parseInt(formData.get('stock')),
                 weight: parseFloat(formData.get('weight')) || null,
                 shipping_cost: parseFloat(formData.get('shipping_cost')) || 0,
+                vendor_id: formData.get('vendor_id'),
                 shipping_methods: shippingMethods,
                 tags: tags,
                 image_base64: imageBase64
@@ -915,6 +1113,9 @@
             if (!product) return;
             
             currentEditProduct = product;
+            
+            // Mostrar información del propietario
+            displayProductOwnerInfo(product);
             
             // Llenar formulario de edición
             document.getElementById('editProductId').value = product.id;
@@ -982,6 +1183,7 @@
                 stock: parseInt(formData.get('stock')),
                 weight: parseFloat(formData.get('weight')) || null,
                 shipping_cost: parseFloat(formData.get('shipping_cost')) || 0,
+                vendor_id: formData.get('vendor_id'),
                 shipping_methods: shippingMethods,
                 tags: tags,
                 image_base64: imageBase64
@@ -1058,6 +1260,7 @@
             const searchTerm = document.getElementById('searchProducts').value.toLowerCase();
             const categoryFilter = document.getElementById('filterCategory').value;
             const statusFilter = document.getElementById('filterStatus').value;
+            const ownerFilter = document.getElementById('filterOwner').value;
             
             let filtered = products.filter(product => {
                 const matchesSearch = product.name.toLowerCase().includes(searchTerm) ||
@@ -1069,7 +1272,9 @@
                                     (statusFilter === 'active' && product.is_active) ||
                                     (statusFilter === 'inactive' && !product.is_active);
                 
-                return matchesSearch && matchesCategory && matchesStatus;
+                const matchesOwner = !ownerFilter || getProductOwnerType(product) === ownerFilter;
+                
+                return matchesSearch && matchesCategory && matchesStatus && matchesOwner;
             });
             
             displayProducts(filtered);
@@ -1080,6 +1285,7 @@
             document.getElementById('searchProducts').value = '';
             document.getElementById('filterCategory').value = '';
             document.getElementById('filterStatus').value = '';
+            document.getElementById('filterOwner').value = '';
             displayProducts(products);
         }
 
