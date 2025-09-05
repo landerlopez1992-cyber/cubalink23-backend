@@ -8,6 +8,7 @@ class CartItem {
   final String? description;
   final dynamic weight; // Puede ser double (peso real) o String (peso con texto/desconocido)
   final String? category;
+  final String? vendorId; // ID del vendedor (amazon, walmart, admin, etc.)
   final Map<String, dynamic>? additionalData;
 
   const CartItem({
@@ -20,6 +21,7 @@ class CartItem {
     this.description,
     this.weight,
     this.category,
+    this.vendorId,
     this.additionalData,
   });
 
@@ -33,6 +35,7 @@ class CartItem {
     String? description,
     dynamic weight,
     String? category,
+    String? vendorId,
     Map<String, dynamic>? additionalData,
   }) {
     return CartItem(
@@ -45,6 +48,7 @@ class CartItem {
       description: description ?? this.description,
       weight: weight ?? this.weight,
       category: category ?? this.category,
+      vendorId: vendorId ?? this.vendorId,
       additionalData: additionalData ?? this.additionalData,
     );
   }
@@ -62,6 +66,7 @@ class CartItem {
       'description': description,
       'weight': weight,
       'category': category,
+      'vendorId': vendorId,
       'additionalData': additionalData,
       'timestamp': DateTime.now().millisecondsSinceEpoch,
     };
@@ -80,6 +85,7 @@ class CartItem {
       description: json['description'],
       weight: json['weight'], // Mantener como dynamic
       category: json['category'],
+      vendorId: json['vendorId'],
       additionalData: json['additionalData'],
     );
   }

@@ -5,6 +5,7 @@ import 'package:cubalink23/models/cart_item.dart';
 import 'package:cubalink23/screens/shopping/shipping_screen.dart';
 import 'package:cubalink23/screens/shopping/favorites_screen.dart';
 import 'package:cubalink23/services/auth_guard_service.dart';
+import 'package:cubalink23/widgets/vendor_logo.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({Key? key}) : super(key: key);
@@ -297,34 +298,48 @@ class _CartScreenState extends State<CartScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Imagen del producto
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[200]!),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: item.imageUrl.isNotEmpty
-                    ? Image.network(
-                        item.imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Icon(
+            Stack(
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[200]!),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: item.imageUrl.isNotEmpty
+                        ? Image.network(
+                            item.imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                item.type == 'recharge' ? Icons.phone : Icons.image,
+                                color: Colors.grey[400],
+                                size: 32,
+                              );
+                            },
+                          )
+                        : Icon(
                             item.type == 'recharge' ? Icons.phone : Icons.image,
                             color: Colors.grey[400],
                             size: 32,
-                          );
-                        },
-                      )
-                    : Icon(
-                        item.type == 'recharge' ? Icons.phone : Icons.image,
-                        color: Colors.grey[400],
-                        size: 32,
-                      ),
-              ),
+                          ),
+                  ),
+                ),
+                // Logo del vendedor
+                if (item.vendorId != null && item.vendorId!.isNotEmpty)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    child: CartVendorLogo(
+                      vendorId: item.vendorId,
+                      size: 18.0,
+                    ),
+                  ),
+              ],
             ),
             SizedBox(width: 16),
             
