@@ -18,14 +18,10 @@ class SupabaseService:
         self.supabase_key = os.getenv('SUPABASE_ANON_KEY', 'your-anon-key')
         self.supabase_service_key = os.getenv('SUPABASE_SERVICE_KEY', 'your-service-key')
         
-        # Debug: verificar valores obtenidos
-        print(f"🔍 DEBUG SupabaseService:")
-        print(f"   SUPABASE_URL: {self.supabase_url}")
-        print(f"   SUPABASE_ANON_KEY: {self.supabase_key[:20]}..." if self.supabase_key else "   SUPABASE_ANON_KEY: None")
         
         self.headers = {
-            'apikey': self.supabase_key,
-            'Authorization': 'Bearer ' + self.supabase_key,
+            'apikey': self.supabase_service_key,
+            'Authorization': 'Bearer ' + self.supabase_service_key,
             'Content-Type': 'application/json'
         }
     
