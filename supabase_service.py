@@ -16,8 +16,8 @@ class SupabaseService:
         self.supabase_service_key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTc5Mjc5OCwiZXhwIjoyMDcxMzY4Nzk4fQ.wq_9zKkOWXHOXbRJrGZeVhERcJhcKlK5-PFVe5x8IUU'
         
         self.headers = {
-            'apikey': self.supabase_service_key,
-            'Authorization': 'Bearer ' + self.supabase_service_key,
+            'apikey': self.supabase_key,
+            'Authorization': 'Bearer ' + self.supabase_key,
             'Content-Type': 'application/json'
         }
     
