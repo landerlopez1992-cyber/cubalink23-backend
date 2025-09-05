@@ -41,6 +41,15 @@ except ImportError:
     IMAGE_SETUP_AVAILABLE = False
     print("⚠️ setup_images_bucket.py no disponible - configuración manual requerida")
 
+# Importar arreglo automático de tabla store_products
+try:
+    from fix_store_products_schema import fix_store_products_table, verify_table_structure
+    TABLE_FIX_AVAILABLE = True
+    print("✅ Arreglo automático de tabla store_products disponible")
+except ImportError:
+    TABLE_FIX_AVAILABLE = False
+    print("⚠️ fix_store_products_schema.py no disponible - arreglo manual requerido")
+
 # Duffel API REAL Configuration
 DUFFEL_API_TOKEN = 'duffel_live_Rj6u0G0cT2hUeIw53ou2HRTNNf0tXl6oP-pVzcGvI7e'
 DUFFEL_API_URL = 'https://api.duffel.com/air'
@@ -932,6 +941,17 @@ def initialize_images():
     else:
         print("📋 Configuración manual de imágenes requerida")
 
+def fix_store_products():
+    """Arreglar tabla store_products automáticamente"""
+    if TABLE_FIX_AVAILABLE:
+        print("🔧 Arreglando tabla store_products...")
+        try:
+            fix_store_products_table()
+        except Exception as e:
+            print(f"⚠️ Error arreglando tabla store_products: {e}")
+    else:
+        print("📋 Arreglo manual de tabla store_products requerido")
+
 # Endpoint para configurar base de datos manualmente
 @app.route('/setup-database', methods=['GET', 'POST'])
 def setup_database_endpoint():
@@ -996,17 +1016,52 @@ def setup_images_endpoint():
             'status': 'manual_required'
         })
 
+# Endpoint para arreglar tabla store_products manualmente
+@app.route('/fix-store-products', methods=['GET', 'POST'])
+def fix_store_products_endpoint():
+    """Endpoint para arreglar la tabla store_products"""
+    if TABLE_FIX_AVAILABLE:
+        try:
+            result = fix_store_products_table()
+            if result:
+                return jsonify({
+                    'success': True,
+                    'message': 'Tabla store_products arreglada exitosamente',
+                    'status': 'fixed'
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': 'Error arreglando tabla store_products',
+                    'status': 'error'
+                })
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': f'Error: {str(e)}',
+                'status': 'error'
+            })
+    else:
+        return jsonify({
+            'success': False,
+            'message': 'Arreglo automático de tabla store_products no disponible',
+            'status': 'manual_required'
+        })
+
 if __name__ == '__main__':
     print('🌐 Iniciando Duffel API Backend con API REAL...')
     print('🔑 Token configurado: {}'.format(bool(DUFFEL_API_TOKEN)))
     print('🌐 API URL: {}'.format(DUFFEL_API_URL))
 
-    # Inicializar base de datos e imágenes al iniciar
+    # Inicializar base de datos, imágenes y arreglar tabla al iniciar
     print('📊 Configurando base de datos...')
     initialize_database()
     
     print('📸 Configurando sistema de imágenes...')
     initialize_images()
+    
+    print('🔧 Arreglando tabla store_products...')
+    fix_store_products()
 
     # Obtener puerto de variable de entorno (para Render.com)
     port = int(os.environ.get('PORT', 3005))

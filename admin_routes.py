@@ -256,8 +256,15 @@ def create_product():
         # Manejar imagen del producto
         image_url = data.get('image_url', '')
         if data.get('image_base64'):
-            # Si hay imagen en base64, subirla a Supabase Storage
-            image_url = upload_image_to_supabase(data.get('image_base64'), data.get('name', 'product'))
+            try:
+                # Si hay imagen en base64, subirla a Supabase Storage
+                image_url = upload_image_to_supabase(data.get('image_base64'), data.get('name', 'product'))
+                if not image_url:
+                    print("⚠️ Upload de imagen falló, usando placeholder")
+                    image_url = f'https://via.placeholder.com/400x300/007bff/ffffff?text={data.get("name", "Producto").replace(" ", "%20")}'
+            except Exception as e:
+                print(f"❌ Error en upload de imagen: {e}")
+                image_url = f'https://via.placeholder.com/400x300/007bff/ffffff?text={data.get("name", "Producto").replace(" ", "%20")}'
         
         # Preparar datos del producto - SOLO campos que existen en Supabase
         product_data = {
@@ -265,16 +272,26 @@ def create_product():
             'description': data.get('description', ''),
             'price': float(data.get('price', 0)),
             'category': data.get('category'),
-            'subcategory': data.get('subcategory', ''),
             'stock': int(data.get('stock', 0)),
-            'weight': data.get('weight'),
-            'shipping_cost': float(data.get('shipping_cost', 0)) if data.get('shipping_cost') else 0,
-            'vendor_id': data.get('vendor_id', 'admin'),
-            'shipping_methods': data.get('shipping_methods', []),
-            'tags': data.get('tags', []),
-            'is_active': True,
             'image_url': image_url
         }
+        
+        # Agregar campos opcionales solo si existen en la tabla
+        if data.get('subcategory'):
+            product_data['subcategory'] = data.get('subcategory')
+        if data.get('weight'):
+            product_data['weight'] = data.get('weight')
+        if data.get('shipping_cost'):
+            product_data['shipping_cost'] = float(data.get('shipping_cost', 0))
+        if data.get('vendor_id'):
+            product_data['vendor_id'] = data.get('vendor_id', 'admin')
+        if data.get('shipping_methods'):
+            product_data['shipping_methods'] = data.get('shipping_methods', [])
+        if data.get('tags'):
+            product_data['tags'] = data.get('tags', [])
+        
+        # Siempre agregar is_active si la columna existe
+        product_data['is_active'] = True
         
         # Validar datos requeridos
         if not product_data['name'] or not product_data['category']:
