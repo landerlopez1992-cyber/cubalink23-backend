@@ -307,7 +307,7 @@ def create_product():
         }), 500
 
 def upload_image_to_supabase(image_base64, product_name):
-    """Subir imagen a Supabase Storage"""
+    """Subir imagen a Supabase Storage con manejo mejorado de errores"""
     try:
         import requests
         
@@ -337,30 +337,38 @@ def upload_image_to_supabase(image_base64, product_name):
             'Content-Type': mime_type,
         }
         
-        # Solo usar el bucket product-images que creaste
-        bucket_name = 'product-images'
-        print(f"🔍 Subiendo a bucket: {bucket_name}")
-        print(f"📸 MIME Type: {mime_type}")
-        print(f"📁 Filename: {filename}")
+        # Intentar diferentes buckets en orden de prioridad
+        buckets_to_try = ['product-images', 'images', 'public']
         
-        response = requests.post(
-            f'{SUPABASE_URL}/storage/v1/object/{bucket_name}/{filename}',
-            headers=headers,
-            data=image_data
-        )
+        for bucket_name in buckets_to_try:
+            print(f"🔍 Intentando subir a bucket: {bucket_name}")
+            print(f"📸 MIME Type: {mime_type}")
+            print(f"📁 Filename: {filename}")
+            
+            response = requests.post(
+                f'{SUPABASE_URL}/storage/v1/object/{bucket_name}/{filename}',
+                headers=headers,
+                data=image_data
+            )
+            
+            print(f"📡 Response Status: {response.status_code}")
+            print(f"📊 Response Text: {response.text}")
+            
+            if response.status_code == 200:
+                # Retornar URL pública de la imagen
+                public_url = f'{SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{filename}'
+                print(f"✅ Imagen subida exitosamente a {bucket_name}: {public_url}")
+                return public_url
+            elif response.status_code == 404 and "bucket not found" in response.text.lower():
+                print(f"⚠️ Bucket {bucket_name} no existe, probando siguiente...")
+                continue
+            else:
+                print(f"❌ Error en bucket {bucket_name}: {response.status_code} - {response.text}")
+                continue
         
-        print(f"📡 Response Status: {response.status_code}")
-        print(f"📊 Response Text: {response.text}")
-        
-        if response.status_code == 200:
-            # Retornar URL pública de la imagen
-            public_url = f'{SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{filename}'
-            print(f"✅ Imagen subida exitosamente: {public_url}")
-            return public_url
-        else:
-            print(f"❌ Error en bucket {bucket_name}: {response.status_code} - {response.text}")
-            # Si falla, usar placeholder
-            return f'https://via.placeholder.com/400x300/007bff/ffffff?text={filename.replace("_", "%20")}'
+        # Si todos los buckets fallan, usar placeholder
+        print("❌ Todos los buckets fallaron, usando placeholder")
+        return f'https://via.placeholder.com/400x300/007bff/ffffff?text={filename.replace("_", "%20")}'
             
     except Exception as e:
         print(f"Error en upload_image_to_supabase: {e}")

@@ -1,60 +1,109 @@
-# 📁 Crear Bucket de Imágenes en Supabase Storage
+# 🔧 INSTRUCCIONES PARA CONFIGURAR BUCKET DE SUPABASE STORAGE
 
-## 🔧 Pasos para crear el bucket 'product-images':
+## 🎯 PROBLEMA ACTUAL
+Las imágenes de productos no se están guardando en Supabase Storage porque el bucket `product-images` no existe o no está configurado correctamente.
 
-### 1. Ir al Dashboard de Supabase
-- Ve a: https://supabase.com/dashboard/project/zgqrhzuhrwudckwesybg/storage/buckets
+## 📋 PASOS PARA SOLUCIONAR
 
-### 2. Crear Nuevo Bucket
-- Haz clic en **"Create bucket"**
-- Nombre: `product-images`
-- Descripción: `Bucket para imágenes de productos de la tienda`
-- ✅ Marcar **"Public bucket"** (para que las imágenes sean accesibles públicamente)
-- Tamaño máximo de archivo: `50 MB`
-- Tipos de archivo permitidos: `image/jpeg, image/png, image/gif, image/webp`
+### PASO 1: Acceder a Supabase Dashboard
+1. Ve a [https://supabase.com/dashboard](https://supabase.com/dashboard)
+2. Inicia sesión con tu cuenta
+3. Selecciona tu proyecto: `zgqrhzuhrwudckwesybg`
 
-### 3. Configurar Políticas (RLS - Row Level Security)
-Una vez creado el bucket, configurar las siguientes políticas:
+### PASO 2: Crear el Bucket
+1. En el menú lateral, haz clic en **"Storage"**
+2. Haz clic en **"New bucket"**
+3. Configura el bucket:
+   - **Name**: `product-images`
+   - **Public bucket**: ✅ **ACTIVAR** (muy importante)
+   - **File size limit**: `50 MB`
+   - **Allowed MIME types**: 
+     - `image/jpeg`
+     - `image/png`
+     - `image/gif`
+     - `image/webp`
+4. Haz clic en **"Create bucket"**
 
-#### Política de Lectura Pública:
+### PASO 3: Configurar Políticas RLS (Row Level Security)
+1. En la página del bucket `product-images`, ve a la pestaña **"Policies"**
+2. Haz clic en **"New Policy"**
+
+#### Política 1: Lectura Pública
+- **Policy name**: `Public read access`
+- **Policy type**: `SELECT`
+- **Target roles**: `public`
+- **Policy definition**:
 ```sql
--- Permitir lectura pública de todas las imágenes
-CREATE POLICY "Public read access" ON storage.objects 
-FOR SELECT USING (bucket_id = 'product-images');
+bucket_id = 'product-images'
+```
+- Haz clic en **"Save"**
+
+#### Política 2: Escritura para Usuarios Autenticados
+- **Policy name**: `Authenticated users can upload`
+- **Policy type**: `INSERT`
+- **Target roles**: `authenticated`
+- **Policy definition**:
+```sql
+bucket_id = 'product-images'
+```
+- Haz clic en **"Save"**
+
+#### Política 3: Actualización para Usuarios Autenticados
+- **Policy name**: `Authenticated users can update`
+- **Policy type**: `UPDATE`
+- **Target roles**: `authenticated`
+- **Policy definition**:
+```sql
+bucket_id = 'product-images'
+```
+- Haz clic en **"Save"**
+
+### PASO 4: Verificar Configuración
+1. Ve a la pestaña **"Settings"** del bucket
+2. Verifica que:
+   - ✅ **Public bucket**: Activado
+   - ✅ **File size limit**: 50 MB
+   - ✅ **Allowed MIME types**: image/jpeg, image/png, image/gif, image/webp
+
+## 🧪 PROBAR LA CONFIGURACIÓN
+
+Después de completar los pasos anteriores, ejecuta este comando para probar:
+
+```bash
+python3 test_image_upload.py
 ```
 
-#### Política de Escritura para Usuarios Autenticados:
-```sql
--- Permitir subida de imágenes a usuarios autenticados
-CREATE POLICY "Authenticated users can upload" ON storage.objects 
-FOR INSERT WITH CHECK (bucket_id = 'product-images');
-```
+Deberías ver:
+- ✅ Base de datos: OK
+- ✅ Bucket storage: OK  
+- ✅ Subida imagen: OK
 
-#### Política de Actualización:
-```sql
--- Permitir actualización de imágenes
-CREATE POLICY "Authenticated users can update" ON storage.objects 
-FOR UPDATE USING (bucket_id = 'product-images');
-```
+## 🔍 VERIFICAR EN EL PANEL ADMIN
 
-### 4. Verificar Configuración
-- El bucket debe aparecer en la lista
-- Debe tener el ícono 🌐 indicando que es público
-- Las políticas deben estar activas
+1. Ve a [https://cubalink23-backend.onrender.com/admin/products](https://cubalink23-backend.onrender.com/admin/products)
+2. Haz clic en **"Agregar Producto"**
+3. Llena los campos básicos
+4. Selecciona una imagen
+5. Haz clic en **"Agregar Producto"**
+6. Verifica que la imagen aparezca en la tabla
 
-## 🧪 Probar Upload
-Una vez configurado, el sistema intentará subir imágenes a:
-- `https://zgqrhzuhrwudckwesybg.supabase.co/storage/v1/object/product-images/[filename]`
-- URL pública: `https://zgqrhzuhrwudckwesybg.supabase.co/storage/v1/object/public/product-images/[filename]`
+## 🚨 SOLUCIÓN ALTERNATIVA
 
-## 🔄 Buckets Alternativos
-Si `product-images` no funciona, el sistema intentará:
-1. `public`
-2. `images`  
-3. `avatars`
+Si no puedes crear el bucket `product-images`, el sistema automáticamente intentará usar estos buckets en orden:
+1. `product-images` (preferido)
+2. `images` (alternativo)
+3. `public` (fallback)
 
-## 📝 Notas
-- Las imágenes se guardan con nombres únicos usando UUID
-- Formato: `{nombre_producto}_{uuid}.jpg`
-- Conversión automática a base64 desde el frontend
-- Fallback a placeholders si falla el upload
+Si ninguno funciona, usará un placeholder de imagen.
+
+## 📞 SOPORTE
+
+Si tienes problemas:
+1. Verifica que el bucket sea **público**
+2. Verifica que las políticas RLS estén configuradas
+3. Revisa los logs del backend en Render.com
+4. Ejecuta el script de prueba para diagnosticar
+
+---
+
+**Una vez completado, las imágenes se guardarán correctamente en Supabase Storage y se mostrarán en el panel admin y la app móvil.**
