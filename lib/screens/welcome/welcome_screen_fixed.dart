@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io' show Platform;
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:cubalink23/screens/recharge/recharge_home_screen.dart';
 import 'package:cubalink23/screens/travel/flight_booking_screen.dart';
 import 'package:cubalink23/services/auth_service_bypass.dart';
@@ -439,19 +441,56 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
 
   Future<void> _loadBanners() async {
     try {
-      // Implementar banners en Supabase después
-      final banners = <dynamic>[];
-      if (mounted) {
-        setState(() {
-          _bannerUrls = banners.cast<String>();
-        });
+      print('🖼️ Cargando banners desde Supabase...');
+      
+      // Cargar banners reales desde Supabase
+      final response = await http.get(
+        Uri.parse('https://zgqrhzuhrwudckwesybg.supabase.co/rest/v1/banners?banner_type=eq.banner1&is_active=eq.true&select=image_url&order=display_order.asc'),
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTI3OTgsImV4cCI6MjA3MTM2ODc5OH0.lUVK99zmOYD7bNTxilJZWHTmYPfZF5YeMJDVUaJ-FsQ',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTI3OTgsImV4cCI6MjA3MTM2ODc5OH0.lUVK99zmOYD7bNTxilJZWHTmYPfZF5YeMJDVUaJ-FsQ',
+        },
+      );
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> banners = json.decode(response.body);
+        final List<String> bannerUrls = banners.map((banner) => banner['image_url'] as String).toList();
+        
+        print('✅ Banners cargados: ${bannerUrls.length}');
+        
+        if (mounted) {
+          setState(() {
+            _bannerUrls = bannerUrls;
+          });
 
-        if (_bannerUrls.length > 1) {
-          _startBannerAutoScroll();
+          // Auto-scroll banners if there are multiple
+          if (_bannerUrls.length > 1) {
+            _startBannerAutoScroll();
+          }
+        }
+      } else {
+        print('❌ Error cargando banners: ${response.statusCode}');
+        // Usar banners de fallback
+        if (mounted) {
+          setState(() {
+            _bannerUrls = [
+              'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=400&fit=crop&crop=center',
+              'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&h=400&fit=crop&crop=center',
+            ];
+          });
         }
       }
     } catch (e) {
-      print('Error loading banners: $e');
+      print('❌ Error loading banners: $e');
+      // Usar banners de fallback
+      if (mounted) {
+        setState(() {
+          _bannerUrls = [
+            'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=400&fit=crop&crop=center',
+            'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&h=400&fit=crop&crop=center',
+          ];
+        });
+      }
     }
   }
 
