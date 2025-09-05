@@ -101,6 +101,9 @@
                             <option value="Comida">Comida</option>
                             <option value="Servicios">Servicios</option>
                             <option value="Motos">Motos</option>
+                            <option value="Alimentos">Alimentos</option>
+                            <option value="Amazon">Amazon</option>
+                            <option value="Walmart">Walmart</option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -222,6 +225,9 @@
                                     <option value="Comida">Comida</option>
                                     <option value="Servicios">Servicios</option>
                                     <option value="Motos">Motos</option>
+                                    <option value="Alimentos">Alimentos</option>
+                                    <option value="Amazon">Amazon</option>
+                                    <option value="Walmart">Walmart</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
@@ -408,6 +414,9 @@
                                         <option value="Comida">Comida</option>
                                         <option value="Servicios">Servicios</option>
                                         <option value="Motos">Motos</option>
+                                        <option value="Alimentos">Alimentos</option>
+                                        <option value="Amazon">Amazon</option>
+                                        <option value="Walmart">Walmart</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">
@@ -677,6 +686,30 @@
                     <option value="Hospedaje">Hospedaje</option>
                     <option value="Entretenimiento">Entretenimiento</option>
                 `;
+            } else if (category === 'Alimentos') {
+                subcategorySelect.innerHTML += `
+                    <option value="Carnes">Carnes</option>
+                    <option value="Verduras">Verduras</option>
+                    <option value="Frutas">Frutas</option>
+                    <option value="Lácteos">Lácteos</option>
+                    <option value="Granos">Granos</option>
+                `;
+            } else if (category === 'Amazon') {
+                subcategorySelect.innerHTML += `
+                    <option value="Electrónicos">Electrónicos</option>
+                    <option value="Hogar">Hogar</option>
+                    <option value="Ropa">Ropa</option>
+                    <option value="Deportes">Deportes</option>
+                    <option value="Libros">Libros</option>
+                `;
+            } else if (category === 'Walmart') {
+                subcategorySelect.innerHTML += `
+                    <option value="Alimentos">Alimentos</option>
+                    <option value="Hogar">Hogar</option>
+                    <option value="Ropa">Ropa</option>
+                    <option value="Electrónicos">Electrónicos</option>
+                    <option value="Farmacia">Farmacia</option>
+                `;
             }
             
             // Habilitar el select de subcategoría
@@ -721,6 +754,30 @@
                     <option value="Transporte">Transporte</option>
                     <option value="Hospedaje">Hospedaje</option>
                     <option value="Entretenimiento">Entretenimiento</option>
+                `;
+            } else if (category === 'Alimentos') {
+                subcategorySelect.innerHTML += `
+                    <option value="Carnes">Carnes</option>
+                    <option value="Verduras">Verduras</option>
+                    <option value="Frutas">Frutas</option>
+                    <option value="Lácteos">Lácteos</option>
+                    <option value="Granos">Granos</option>
+                `;
+            } else if (category === 'Amazon') {
+                subcategorySelect.innerHTML += `
+                    <option value="Electrónicos">Electrónicos</option>
+                    <option value="Hogar">Hogar</option>
+                    <option value="Ropa">Ropa</option>
+                    <option value="Deportes">Deportes</option>
+                    <option value="Libros">Libros</option>
+                `;
+            } else if (category === 'Walmart') {
+                subcategorySelect.innerHTML += `
+                    <option value="Alimentos">Alimentos</option>
+                    <option value="Hogar">Hogar</option>
+                    <option value="Ropa">Ropa</option>
+                    <option value="Electrónicos">Electrónicos</option>
+                    <option value="Farmacia">Farmacia</option>
                 `;
             }
         }
@@ -1002,7 +1059,7 @@
             const categoryFilter = document.getElementById('filterCategory').value;
             const statusFilter = document.getElementById('filterStatus').value;
             
-            let filtered = allProducts.filter(product => {
+            let filtered = products.filter(product => {
                 const matchesSearch = product.name.toLowerCase().includes(searchTerm) ||
                                     (product.description && product.description.toLowerCase().includes(searchTerm));
                 
@@ -1023,7 +1080,7 @@
             document.getElementById('searchProducts').value = '';
             document.getElementById('filterCategory').value = '';
             document.getElementById('filterStatus').value = '';
-            displayProducts(allProducts);
+            displayProducts(products);
         }
 
         // Mostrar mensaje de éxito
