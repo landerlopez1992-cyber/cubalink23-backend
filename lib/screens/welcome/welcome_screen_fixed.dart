@@ -1741,8 +1741,69 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(horizontal: 4),
-            itemCount: _categories.length,
+            itemCount: _categories.length + 1, // +1 para la tarjeta de vendedores
             itemBuilder: (context, index) {
+              // Tarjeta especial para Tiendas de Vendedores
+              if (index == _categories.length) {
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, '/vendor-stores');
+                  },
+                  child: Container(
+                    width: 100,
+                    margin: EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0xFF4CAF50).withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.store,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4),
+                          child: Text(
+                            'Tiendas de Vendedores',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
               final category = _categories[index];
               final iconData = _getIconFromString(category['icon'] ?? 'category');
               final colorValue = category['color'] ?? 0xFF9E9E9E;

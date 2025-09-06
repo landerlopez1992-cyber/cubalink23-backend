@@ -21,6 +21,8 @@ import 'package:cubalink23/screens/shopping/amazon_shopping_screen.dart';
 import 'package:cubalink23/screens/welcome/welcome_screen_fixed.dart';
 import 'package:cubalink23/screens/auth/login_screen.dart';
 import 'package:cubalink23/screens/auth/register_screen.dart';
+import 'package:cubalink23/screens/vendor/vendor_stores_list_screen.dart';
+import 'package:cubalink23/screens/vendor/vendor_store_screen.dart';
 import 'package:cubalink23/theme.dart';
 import 'package:cubalink23/models/user.dart';
 
@@ -70,6 +72,11 @@ class CubaLink23App extends StatelessWidget {
         '/welcome': (context) => WelcomeScreenFixed(),
         '/login': (context) => LoginScreen(),
         '/register': (context) => RegisterScreen(),
+        '/vendor-stores': (context) => VendorStoresListScreen(),
+        '/vendor-store': (context) => VendorStoreScreen(
+          vendorId: 'demo',
+          vendorName: 'Demo Store',
+        ),
       },
     );
   }
