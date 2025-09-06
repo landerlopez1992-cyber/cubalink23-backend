@@ -163,3 +163,4 @@ build/app/outputs/flutter-apk/app-release.apk
 **Versión:** 1.0.0+1  
 **Tamaño:** 60.2MB  
 **Estado:** ✅ COMPLETADA
+

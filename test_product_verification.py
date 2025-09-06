@@ -36,3 +36,4 @@ if response.status_code == 200:
         print('❌ No se encontraron productos')
 else:
     print(f'❌ Error: {response.status_code}')
+
