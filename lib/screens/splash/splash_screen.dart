@@ -9,12 +9,7 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
   late AnimationController _logoAnimationController;
-  late AnimationController _progressAnimationController;
   late Animation<double> _logoAnimation;
-  late Animation<double> _progressAnimation;
-  
-  double _progress = 0.0;
-  Timer? _progressTimer;
   Timer? _navigationTimer;
 
   @override
@@ -23,14 +18,9 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     print('🎬 SplashScreen initState() llamado');
     
     try {
-      // Configurar animaciones
+      // Configurar animación del logo
       _logoAnimationController = AnimationController(
-        duration: Duration(milliseconds: 1500),
-        vsync: this,
-      );
-      
-      _progressAnimationController = AnimationController(
-        duration: Duration(seconds: 1), // Reducido a 1 segundo para debug
+        duration: Duration(milliseconds: 1000),
         vsync: this,
       );
       
@@ -38,13 +28,9 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
         CurvedAnimation(parent: _logoAnimationController, curve: Curves.easeInOut),
       );
       
-      _progressAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: _progressAnimationController, curve: Curves.linear),
-      );
+      print('✅ Animación del logo configurada correctamente');
       
-      print('✅ Animaciones configuradas correctamente');
-      
-      // Iniciar animaciones
+      // Iniciar animación y navegación
       _startSplashSequence();
     } catch (e, stackTrace) {
       print('❌ Error en initState de SplashScreen: $e');
@@ -59,31 +45,12 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   void _startSplashSequence() {
     print('🎬 Iniciando secuencia de splash screen...');
     
-    // Animar logo primero
+    // Animar logo
     _logoAnimationController.forward();
     print('▶️ Animación de logo iniciada');
     
-    // Después de 500ms, iniciar la barra de progreso
-    Timer(Duration(milliseconds: 500), () {
-      if (mounted) {
-        print('📊 Iniciando animación de progreso...');
-        _progressAnimationController.forward();
-        
-        // Actualizar progreso cada 100ms para efecto suave
-        _progressTimer = Timer.periodic(Duration(milliseconds: 100), (timer) {
-          if (mounted) {
-            setState(() {
-              _progress = _progressAnimationController.value;
-            });
-          } else {
-            timer.cancel();
-          }
-        });
-      }
-    });
-    
-    // Navegar después de 2 segundos para mostrar animación completa
-    _navigationTimer = Timer(Duration(milliseconds: 2000), () {
+    // Navegar después de 1.5 segundos para mostrar el logo
+    _navigationTimer = Timer(Duration(milliseconds: 1500), () {
       if (mounted) {
         _navigateToWelcome();
       }
@@ -126,8 +93,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   @override
   void dispose() {
     _logoAnimationController.dispose();
-    _progressAnimationController.dispose();
-    _progressTimer?.cancel();
     _navigationTimer?.cancel();
     super.dispose();
   }
@@ -159,7 +124,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity( 0.3),
+                            color: Colors.black.withOpacity(0.3),
                             blurRadius: 20,
                             offset: Offset(0, 10),
                           ),
@@ -228,7 +193,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                     'Recargas Telefónicas',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Theme.of(context).colorScheme.onPrimary.withOpacity( 0.9),
+                      color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.9),
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -236,68 +201,11 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
               },
             ),
             
-            Spacer(),
-            
-            // Barra de progreso
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 60),
-              child: Column(
-                children: [
-                  // Texto "Cargando..."
-                  Text(
-                    'Cargando${_getLoadingDots()}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Theme.of(context).colorScheme.onPrimary.withOpacity( 0.9),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  
-                  SizedBox(height: 16),
-                  
-                  // Barra de progreso
-                  Container(
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.onPrimary.withOpacity( 0.3),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(3),
-                      child: LinearProgressIndicator(
-                        value: _progress,
-                        backgroundColor: Colors.transparent,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Theme.of(context).colorScheme.onPrimary,
-                        ),
-                      ),
-                    ),
-                  ),
-                  
-                  SizedBox(height: 8),
-                  
-                  // Porcentaje
-                  Text(
-                    '${(_progress * 100).toInt()}%',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Theme.of(context).colorScheme.onPrimary.withOpacity( 0.8),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            Spacer(),
+            Spacer(flex: 2),
           ],
         ),
       ),
     );
   }
 
-  String _getLoadingDots() {
-    int dotCount = ((_progress * 12) % 4).toInt();
-    return '.' * (dotCount + 1);
-  }
 }
