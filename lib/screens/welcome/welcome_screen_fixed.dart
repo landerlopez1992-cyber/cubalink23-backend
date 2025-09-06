@@ -553,6 +553,34 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
         'icon': 'shopping_bag',
         'color': 0xFFAB47BC,
       },
+      {
+        'id': 'servicios',
+        'name': 'Servicios',
+        'description': 'Servicios diversos',
+        'icon': 'room_service',
+        'color': 0xFF4CAF50,
+      },
+      {
+        'id': 'motos',
+        'name': 'Motos',
+        'description': 'Vehículos y accesorios',
+        'icon': 'motorcycle',
+        'color': 0xFF607D8B,
+      },
+      {
+        'id': 'amazon',
+        'name': 'Amazon',
+        'description': 'Productos de Amazon',
+        'icon': 'shopping_cart',
+        'color': 0xFFFF9800,
+      },
+      {
+        'id': 'walmart',
+        'name': 'Walmart',
+        'description': 'Productos de Walmart',
+        'icon': 'store',
+        'color': 0xFF2196F3,
+      },
     ];
   }
   

@@ -18,7 +18,7 @@ import 'package:cubalink23/screens/transfer/transfer_screen.dart';
 import 'package:cubalink23/screens/recharge/recharge_home_screen.dart';
 import 'package:cubalink23/screens/travel/flight_booking_screen.dart';
 import 'package:cubalink23/screens/shopping/amazon_shopping_screen.dart';
-import 'package:cubalink23/screens/welcome/welcome_screen.dart';
+import 'package:cubalink23/screens/welcome/welcome_screen_fixed.dart';
 import 'package:cubalink23/screens/auth/login_screen.dart';
 import 'package:cubalink23/screens/auth/register_screen.dart';
 import 'package:cubalink23/theme.dart';
@@ -67,7 +67,7 @@ class CubaLink23App extends StatelessWidget {
         '/recharge': (context) => RechargeHomeScreen(),
         '/flights': (context) => FlightBookingScreen(),
         '/amazon-shopping': (context) => AmazonShoppingScreen(),
-        '/welcome': (context) => WelcomeScreen(),
+        '/welcome': (context) => WelcomeScreenFixed(),
         '/login': (context) => LoginScreen(),
         '/register': (context) => RegisterScreen(),
       },

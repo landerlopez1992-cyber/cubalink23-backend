@@ -81,3 +81,4 @@ curl -X POST https://cubalink23-backend.onrender.com/admin/api/products \
 - ✅ Sistema completo funcionando
 
 **¡LA APP ESTÁ LISTA PARA USAR!** 🚀
+
