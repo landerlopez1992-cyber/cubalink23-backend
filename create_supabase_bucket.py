@@ -105,3 +105,4 @@ def create_product_images_bucket():
 
 if __name__ == "__main__":
     create_product_images_bucket()
+

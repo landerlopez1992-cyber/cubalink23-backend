@@ -84,3 +84,4 @@ Estas URLs son:
 ---
 
 **Nota**: Esta solución es completamente funcional y no requiere configuración adicional de Supabase Storage.
+
