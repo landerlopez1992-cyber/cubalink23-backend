@@ -1,1 +1,4 @@
-# Deploy trigger Thu Sep  4 20:20:40 EDT 2025
+Deploy forzado - Fix endpoint Duffel API aeropuertos
+Timestamp: 2025-01-06 00:35:00
+Fix: Cambiado /places/suggestions por /places en Duffel API
+Status: READY FOR DEPLOY
