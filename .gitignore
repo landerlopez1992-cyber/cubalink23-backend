@@ -35,3 +35,19 @@ pubspec.lock
 # Cursor
 .cursor/*
 !.cursor/rules/*.mdc
+
+# PROTECCIÓN DE PRODUCCIÓN - NO TOCAR ESTOS ARCHIVOS
+# Estos archivos están funcionando en producción, no los modifiques
+app.py
+admin_routes.py
+auth_routes.py
+database.py
+requirements.txt
+render.yaml
+Procfile
+runtime.txt
+
+# Archivos de configuración de producción
+config.env
+.env.production
+.env.render
