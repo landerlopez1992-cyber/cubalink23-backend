@@ -1,46 +1,75 @@
-# Miscellaneous
-*.class
+# ---- Generales / Python
 *.log
+__pycache__/
 *.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
+*.pyo
+*.pyd
+.venv/
+venv/
+.env
+.env.*
 
-# IntelliJ related
+# ---- Flutter / Dart
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+
+# ---- Flutter builds
+build/
+# Android (Gradle)
+android/.gradle/
+android/.idea/
+android/local.properties
+android/app/build/
+android/app/debug
+android/app/profile
+android/app/release
+
+# iOS (CocoaPods / Xcode)
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/DerivedData/
+**/ios/Flutter/.last_build_id
+
+# ---- Frontend (si aplica)
+node_modules/
+dist/
+out/
+
+# ---- Comprimidos / artefactos
+*.zip
+*.tar
+*.tgz
+turecarga(1).zip
+
+# ---- Cursor
+.cursor/*
+!.cursor/rules/*.mdc
+
+# ---- Sistema
+.DS_Store
+*.swp
+*.class
+
+# ---- IDEs
+.idea/
 *.iml
 *.ipr
 *.iws
-.idea/
+.vscode/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# ---- Subrepos (no versionar como archivos)
+admin-panel/backend-duffel/
+backend-duffel/
+cubalink23-web/
+backend-duffel_backup_*/
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-turecarga(1).zip
+# ---- Documentación temporal
+IMPLEMENTACION_PROGRESS.md
+NOTAS_PROYECTO.md
+deploy_render.md
