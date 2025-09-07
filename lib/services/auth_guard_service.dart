@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cubalink23/services/auth_service_bypass.dart';
-import 'package:cubalink23/screens/auth/login_screen.dart';
-import 'package:cubalink23/screens/auth/register_screen.dart';
 
 class AuthGuardService {
   static AuthGuardService? _instance;
@@ -77,9 +75,7 @@ class AuthGuardService {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              serviceName != null
-                  ? 'Para usar $serviceName debes crear una cuenta y iniciar sesión.'
-                  : 'Para usar este servicio debes crear una cuenta y iniciar sesión.',
+              'Para usar este servicio debes ir a "Mi Cuenta" e iniciar sesión.',
               style: TextStyle(
                 fontSize: 16,
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
@@ -106,7 +102,7 @@ class AuthGuardService {
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Es gratis y toma menos de 1 minuto',
+                      'Ve a "Mi Cuenta" en el menú inferior',
                       style: TextStyle(
                         fontSize: 14,
                         color: Theme.of(context).primaryColor,
@@ -123,38 +119,11 @@ class AuthGuardService {
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(
-              'Cancelar',
+              'Cerrar',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               ),
             ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context, false);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => LoginScreen()),
-              );
-            },
-            child: Text('Iniciar Sesión'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context, false);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => RegisterScreen()),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).primaryColor,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: Text('Registrarse'),
           ),
         ],
       ),
@@ -184,17 +153,7 @@ class AuthGuardService {
   }
 
   Future<bool> _showAmazonAuthDialog(BuildContext context, {required String action}) async {
-    String message;
-    switch (action) {
-      case 'search':
-        message = 'Ya realizaste una búsqueda. Para continuar navegando en Amazon necesitas crear una cuenta.';
-        break;
-      case 'add_to_cart':
-        message = 'Para agregar productos al carrito necesitas crear una cuenta y iniciar sesión.';
-        break;
-      default:
-        message = 'Para usar esta función de Amazon necesitas crear una cuenta y iniciar sesión.';
-    }
+    String message = 'Para usar Amazon Shopping debes ir a "Mi Cuenta" e iniciar sesión.';
 
     final result = await showDialog<bool>(
       context: context,
@@ -262,7 +221,7 @@ class AuthGuardService {
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Obtén acceso completo a todas las compras',
+                      'Ve a "Mi Cuenta" en el menú inferior',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.green,
@@ -279,38 +238,11 @@ class AuthGuardService {
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(
-              'Cancelar',
+              'Cerrar',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               ),
             ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context, false);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => LoginScreen()),
-              );
-            },
-            child: Text('Iniciar Sesión'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context, false);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => RegisterScreen()),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: Text('Registrarse'),
           ),
         ],
       ),

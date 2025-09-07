@@ -1058,6 +1058,10 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
         throw Exception('No se pudo crear la búsqueda de vuelos');
       }
 
+      if (searchResult['data'] == null) {
+        throw Exception('No se recibieron datos del servidor');
+      }
+      
       final offerRequestId = searchResult['data']['id'] as String;
       _currentOfferRequestId = offerRequestId;
       

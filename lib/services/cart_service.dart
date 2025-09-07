@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:cubalink23/models/cart_item.dart';
 import 'package:cubalink23/models/amazon_product.dart';
 import 'package:cubalink23/supabase/supabase_config.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CartService extends ChangeNotifier {
   static final CartService _instance = CartService._internal();
@@ -11,6 +10,7 @@ class CartService extends ChangeNotifier {
 
   final List<CartItem> _items = [];
   bool _isLoading = false;
+  String? _currentUserId; // Track current user to isolate carts
 
   List<CartItem> get items => List.unmodifiable(_items);
   bool get isLoading => _isLoading;
@@ -211,6 +211,9 @@ class CartService extends ChangeNotifier {
   }
 
   void addItem(CartItem item) {
+    // Verificar si el usuario cambió antes de agregar items
+    checkUserChange();
+    
     final existingIndex = _items.indexWhere((existing) => existing.id == item.id && existing.type == item.type);
     
     if (existingIndex >= 0) {
@@ -332,15 +335,21 @@ class CartService extends ChangeNotifier {
   }
 
   void updateQuantity(String id, String type, int quantity) {
+    print('🔄 Actualizando cantidad: $id ($type) -> $quantity');
     final index = _items.indexWhere((item) => item.id == id && item.type == type);
     if (index >= 0) {
       if (quantity <= 0) {
+        print('🗑️ Eliminando item del carrito');
         _items.removeAt(index);
       } else {
+        print('📝 Cambiando cantidad de ${_items[index].quantity} a $quantity');
         _items[index] = _items[index].copyWith(quantity: quantity);
       }
       notifyListeners();
+      print('💾 Guardando cambios en Supabase...');
       _saveToSupabase();
+    } else {
+      print('❌ No se encontró el item para actualizar');
     }
   }
 
@@ -350,11 +359,45 @@ class CartService extends ChangeNotifier {
     _saveToSupabase();
   }
 
+  /// Limpiar carrito cuando cambia el usuario (para aislar carritos por usuario)
+  void clearCartForUserChange() {
+    _items.clear();
+    _currentUserId = null;
+    notifyListeners();
+  }
+
+  /// Verificar si el usuario actual es diferente al anterior
+  void checkUserChange() {
+    final client = SupabaseConfig.client;
+    final user = client.auth.currentUser;
+    final currentUserId = user?.id;
+    
+    if (_currentUserId != null && _currentUserId != currentUserId) {
+      print('🔄 Usuario cambió de $_currentUserId a $currentUserId - Limpiando carrito');
+      clearCartForUserChange();
+    }
+    
+    _currentUserId = currentUserId;
+  }
+
+  /// Verificar si un string es un UUID válido
+  bool _isValidUUID(String? value) {
+    if (value == null || value.isEmpty) return false;
+    final uuidRegex = RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', caseSensitive: false);
+    return uuidRegex.hasMatch(value);
+  }
+
   Future<void> _saveToSupabase() async {
     try {
       final client = SupabaseConfig.client;
       final user = client.auth.currentUser;
       if (user != null) {
+        print('💾 Guardando carrito en Supabase para usuario: ${user.id}');
+        print('📦 Items a guardar: ${_items.length}');
+        for (var item in _items) {
+          print('   - ${item.name}: ${item.quantity} unidades');
+        }
+        
         await client
             .from('user_carts')
             .upsert({
@@ -362,9 +405,13 @@ class CartService extends ChangeNotifier {
               'items': _items.map((item) => item.toJson()).toList(),
               'updated_at': DateTime.now().toIso8601String(),
             });
+        
+        print('✅ Carrito guardado exitosamente en Supabase');
+      } else {
+        print('❌ No hay usuario autenticado para guardar carrito');
       }
     } catch (e) {
-      print('Error saving cart to Supabase: $e');
+      print('❌ Error saving cart to Supabase: $e');
     }
   }
 
@@ -372,6 +419,9 @@ class CartService extends ChangeNotifier {
     try {
       _isLoading = true;
       notifyListeners();
+      
+      // Verificar si el usuario cambió antes de cargar
+      checkUserChange();
       
       final client = SupabaseConfig.client;
       final user = client.auth.currentUser;

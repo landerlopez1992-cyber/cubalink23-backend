@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cubalink23/models/user.dart' as UserModel;
 import 'package:cubalink23/models/payment_card.dart';
 import 'package:cubalink23/supabase/supabase_config.dart';
+import 'package:cubalink23/services/cart_service.dart';
 
 /// Simplified Supabase Authentication Service that bypasses RLS policy issues
 /// This service handles authentication without problematic database queries
@@ -82,6 +83,15 @@ class AuthServiceBypass {
     );
     
     _userBalance = prefs.getDouble(_userBalanceKey) ?? 1000.0;
+    
+    // Cargar carrito del usuario desde Supabase
+    try {
+      final cartService = CartService();
+      await cartService.loadFromSupabase();
+      print('🛒 Carrito cargado desde Supabase');
+    } catch (e) {
+      print('⚠️ Error cargando carrito: $e');
+    }
     
     print('✅ Usuario cargado desde almacenamiento local: ${_currentUser!.name}');
   }
@@ -235,6 +245,15 @@ class AuthServiceBypass {
         
         // Save to local storage
         await _saveUserData(_currentUser!, _userBalance);
+        
+        // Cargar carrito del usuario desde Supabase
+        try {
+          final cartService = CartService();
+          await cartService.loadFromSupabase();
+          print('🛒 Carrito cargado desde Supabase');
+        } catch (e) {
+          print('⚠️ Error cargando carrito: $e');
+        }
         
         print('✅ Login completado - Usuario: ${_currentUser!.name}');
         return _currentUser;

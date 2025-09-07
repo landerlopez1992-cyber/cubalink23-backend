@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'dart:io' show Platform;
 import 'package:cubalink23/screens/recharge/recharge_home_screen.dart';
 import 'package:cubalink23/screens/travel/flight_booking_screen.dart';
-import 'package:cubalink23/services/auth_service_bypass.dart';
-import 'package:cubalink23/services/database_service.dart';
 import 'package:cubalink23/services/cart_service.dart';
 import 'package:cubalink23/services/store_service.dart';
-import 'package:cubalink23/models/user.dart';
 import 'package:cubalink23/models/store_product.dart';
 import 'package:cubalink23/screens/shopping/product_details_screen.dart';
 
@@ -27,7 +22,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final StoreService _storeService = StoreService();
   int _currentBannerIndex = 0;
   PageController _bannerController = PageController();
-  final DatabaseService _databaseService = DatabaseService.instance;
   List<Map<String, dynamic>> _categories = [];
   List<Map<String, dynamic>> _bestSellers = [];
   List<StoreProduct> _realFoodProducts = [];
@@ -36,31 +30,25 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   void initState() {
     super.initState();
-    print('🎉 WelcomeScreen - INICIANDO RÁPIDO');
+    print('🎉 WelcomeScreen - INICIANDO CON PRODUCTOS REALES');
+    
+    // Agregar listener del carrito para actualizar contador
+    _cartService.addListener(_updateCartCount);
     
     // Cargar solo lo básico para mostrar la UI inmediatamente
     setState(() {
       _isLoading = false; // Mostrar UI inmediatamente
       _currentBalance = 0.0; // Balance por defecto
+      _cartItemsCount = _cartService.itemCount; // Inicializar contador del carrito
     });
     
-    print('✅ WelcomeScreen - INICIADO INMEDIATAMENTE');
+    // Cargar productos reales de Supabase inmediatamente
+    _loadRealProductsFromSupabase();
+    _loadCategoriesAndBestSellers();
+    
+    print('✅ WelcomeScreen - INICIADO CON CARGA DE PRODUCTOS REALES');
   }
   
-  void _loadEverythingElse() async {
-    print('🔧 Función deshabilitada temporalmente para evitar bloqueos');
-    // TODO: Re-habilitar cuando el problema de preview starting esté resuelto
-    // try {
-    //   await _checkForceUpdate();
-    //   await _loadBanners();
-    //   await _loadCartItemsCount();
-    //   await _loadCategoriesAndBestSellers();
-    //   await _loadRealProducts();
-    //   print('✅ Datos adicionales cargados');
-    // } catch (e) {
-    //   print('⚠️ Error cargando datos adicionales: $e');
-    // }
-  }
 
   @override
   void dispose() {
@@ -128,136 +116,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     );
   }
 
-  Future<void> _loadCartItemsCount() async {
-    setState(() {
-      _cartItemsCount = _cartService.itemCount;
-    });
-  }
 
-  Future<void> _loadUserData() async {
-    try {
-      await AuthServiceBypass.instance.loadCurrentUserFromLocal();
-      final user = AuthServiceBypass.instance.currentUser;
-      if (user != null) {
-        _currentUserId = user.id;
-        // Load notifications count
-        _loadNotificationsCount();
-      }
-      if (mounted) {
-        setState(() {
-          // Usar el balance real del usuario (0.0 para nuevos usuarios)
-          _currentBalance = AuthServiceBypass.instance.userBalance;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      print('Error loading user data: $e');
-      if (mounted) {
-        setState(() {
-          _currentBalance = AuthServiceBypass.instance.userBalance;
-          _isLoading = false;
-        });
-      }
-    }
-  }
 
-  Future<void> _checkForceUpdate() async {
-    try {
-      final shouldUpdate = false; // Placeholder - implementar en Supabase después
-      if (shouldUpdate) {
-        _showForceUpdateDialog();
-      }
-    } catch (e) {
-      print('Error checking force update: $e');
-    }
-  }
 
-  void _showForceUpdateDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.update, color: Colors.orange, size: 28),
-            SizedBox(width: 12),
-            Text('Actualización Requerida'),
-          ],
-        ),
-        content: Text(
-          'Hay una nueva versión de CubaLink23 disponible. Por favor actualiza la app para continuar.',
-          style: TextStyle(fontSize: 16),
-        ),
-        actions: [
-          ElevatedButton.icon(
-            onPressed: _redirectToStore,
-            icon: Icon(Icons.download),
-            label: Text('Actualizar Ahora'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  void _redirectToStore() async {
-    try {
-      // Placeholder - implementar configuraciones en Supabase después
-      final settings = null;
-      String storeUrl;
-
-      if (Platform.isAndroid) {
-        storeUrl = settings['googlePlayUrl'] ?? 'https://play.google.com/store';
-      } else if (Platform.isIOS) {
-        storeUrl = settings['appStoreUrl'] ?? 'https://apps.apple.com';
-      } else {
-        storeUrl = 'https://play.google.com/store';
-      }
-
-      final uri = Uri.parse(storeUrl);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    } catch (e) {
-      print('Error redirecting to store: $e');
-    }
-  }
-
-  Future<void> _loadBanners() async {
-    try {
-      // Placeholder - implementar banners en Supabase después
-      final banners = <dynamic>[];
-      if (mounted) {
-        setState(() {
-          _bannerUrls = banners.cast<String>();
-        });
-
-        // Auto-scroll banners if there are multiple
-        if (_bannerUrls.length > 1) {
-          _startBannerAutoScroll();
-        }
-      }
-    } catch (e) {
-      print('Error loading banners: $e');
-    }
-  }
-
-  void _startBannerAutoScroll() {
-    Future.delayed(Duration(seconds: 3), () {
-      if (mounted && _bannerUrls.length > 1) {
-        _currentBannerIndex = (_currentBannerIndex + 1) % _bannerUrls.length;
-        _bannerController.animateToPage(
-          _currentBannerIndex,
-          duration: Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-        _startBannerAutoScroll();
-      }
-    });
-  }
 
   Future<void> _loadNotificationsCount() async {
     if (_currentUserId == null) return;
@@ -421,34 +283,68 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     ];
   }
 
-  Future<void> _loadRealProducts() async {
+  /// Carga productos reales de Supabase para mostrar en la pantalla de bienvenida
+  Future<void> _loadRealProductsFromSupabase() async {
     try {
-      // Load real products from Supabase
-      final products = await _storeService.getAllProducts();
-      
-      // Filter food products only
-      final foodProducts = products.where((product) => 
-        product.categoryId == 'alimentos' || 
-        product.name.toLowerCase().contains('cerdo') ||
-        product.name.toLowerCase().contains('arroz') ||
-        product.name.toLowerCase().contains('carne')
-      ).take(5).toList();
+      print('🛍️ Cargando productos reales de Supabase...');
+      setState(() {
+        _loadingProducts = true;
+      });
 
-      if (mounted) {
-        setState(() {
-          _realFoodProducts = foodProducts;
-          _loadingProducts = false;
-        });
+      // Cargar TODOS los productos reales de Supabase
+      final allProducts = await _storeService.getAllProducts();
+      print('📦 Productos obtenidos de Supabase: ${allProducts.length}');
+
+      if (allProducts.isNotEmpty) {
+        // Mostrar los primeros 8 productos reales
+        final realProducts = allProducts.take(8).toList();
+        
+        if (mounted) {
+          setState(() {
+            _realFoodProducts = realProducts;
+            _loadingProducts = false;
+          });
+        }
+        
+        print('✅ Productos reales cargados: ${realProducts.length}');
+        for (var product in realProducts) {
+          print('   - ${product.name}: \$${product.price}');
+        }
+      } else {
+        print('⚠️ No hay productos en Supabase, usando productos por defecto');
+        _loadDefaultProducts();
       }
     } catch (e) {
-      print('Error loading real products: $e');
-      if (mounted) {
-        setState(() {
-          _loadingProducts = false;
-        });
-      }
+      print('❌ Error cargando productos reales: $e');
+      _loadDefaultProducts();
     }
   }
+
+  /// Carga productos por defecto como fallback
+  void _loadDefaultProducts() {
+    if (mounted) {
+      setState(() {
+        _realFoodProducts = [
+          StoreProduct(
+            id: 'default_1',
+            name: 'Producto de Ejemplo',
+            description: 'Producto de demostración',
+            categoryId: 'alimentos',
+            price: 10.0,
+            imageUrl: 'https://via.placeholder.com/300x200',
+            unit: 'unidad',
+            weight: 1.0,
+            isAvailable: true,
+            stock: 10,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        ];
+        _loadingProducts = false;
+      });
+    }
+  }
+
 
   int _getCategoryColor(String iconName) {
     switch (iconName.toLowerCase()) {

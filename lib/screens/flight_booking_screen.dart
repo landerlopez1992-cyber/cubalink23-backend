@@ -1425,6 +1425,10 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
       }
       
       // Si no, procesar como antes (offer request)
+      if (searchResult['data'] == null) {
+        throw Exception('No se recibieron datos del servidor');
+      }
+      
       final offerRequestId = searchResult['data']['id'] as String;
       
       print('✅ Offer Request creado: $offerRequestId');

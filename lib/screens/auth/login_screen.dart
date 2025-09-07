@@ -156,25 +156,18 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 width: 150,
                 height: 150,
-                child: Image.asset(
-                  'assets/images/assets_task_01k3m7yveaebmtdrdnybpe7ngv_1756247471_img_1.webp',
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    // Fallback si no se encuentra la imagen
-                    return Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.phone_android,
-                        size: 60,
-                        color: Colors.white,
-                      ),
-                    );
-                  },
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.phone_android,
+                    size: 60,
+                    color: Colors.white,
+                  ),
                 ),
               ),
               SizedBox(height: 24),
