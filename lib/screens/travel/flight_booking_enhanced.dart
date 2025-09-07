@@ -451,7 +451,7 @@ class _FlightBookingEnhancedState extends State<FlightBookingEnhanced> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _selectedTitle,
+                    initialValue: _selectedTitle,
                     decoration: InputDecoration(
                       labelText: 'Título',
                       border: OutlineInputBorder(),
@@ -472,7 +472,7 @@ class _FlightBookingEnhancedState extends State<FlightBookingEnhanced> {
                 SizedBox(width: 16),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _selectedGender,
+                    initialValue: _selectedGender,
                     decoration: InputDecoration(
                       labelText: 'Género',
                       border: OutlineInputBorder(),
@@ -620,7 +620,7 @@ class _FlightBookingEnhancedState extends State<FlightBookingEnhanced> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _selectedCountryOfIssue.isEmpty ? null : _selectedCountryOfIssue,
+                    initialValue: _selectedCountryOfIssue.isEmpty ? null : _selectedCountryOfIssue,
                     decoration: InputDecoration(
                       labelText: 'País de Emisión',
                       border: OutlineInputBorder(),
@@ -1750,7 +1750,7 @@ class _FlightBookingEnhancedState extends State<FlightBookingEnhanced> {
       await Future.delayed(Duration(seconds: 2)); // Simular procesamiento de pago
       
       // SIMULAR que el pago fue exitoso en tu app
-      final appPaymentSuccess = true; // En producción esto vendrá de tu sistema de pagos
+      const appPaymentSuccess = true; // En producción esto vendrá de tu sistema de pagos
       
       if (appPaymentSuccess) {
         print('✅ PAGO EXITOSO EN TU APP');

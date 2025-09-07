@@ -1,6 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
 import 'package:cubalink23/models/product_category.dart';
 import 'package:cubalink23/models/store_product.dart';
 import 'package:cubalink23/supabase/supabase_config.dart';
@@ -58,9 +58,6 @@ class StoreService {
         return;
       }
       
-      print('🔍 Verificando conexión con Supabase...');
-      print('🔑 Cliente inicializado: ${_client != null}');
-      
       final defaultCategories = [
         {'name': 'Alimentos', 'description': 'Comida y productos básicos', 'icon_name': 'restaurant', 'color': '0xFFE57373', 'is_active': true},
         {'name': 'Materiales', 'description': 'Materiales de construcción', 'icon_name': 'construction', 'color': '0xFFFF8A65', 'is_active': true},
@@ -70,7 +67,6 @@ class StoreService {
         {'name': 'Ropa', 'description': 'Vestimenta y accesorios', 'icon_name': 'shopping_bag', 'color': '0xFFAB47BC', 'is_active': true},
         {'name': 'Hogar', 'description': 'Productos para el hogar', 'icon_name': 'home', 'color': '0xFF66BB6A', 'is_active': true},
         {'name': 'Deportes', 'description': 'Artículos deportivos', 'icon_name': 'fitness_center', 'color': '0xFFFF7043', 'is_active': true},
-        {'name': 'Motos', 'description': 'Motocicletas y accesorios', 'icon_name': 'motorcycle', 'color': '0xFF795548', 'is_active': true},
       ];
 
       // Try to check if categories exist, if table doesn't exist, show setup message
@@ -193,14 +189,11 @@ CREATE POLICY "Allow authenticated users to manage products" ON store_products
   Future<List<ProductCategory>> getCategories() async {
     try {
       print('📋 Obteniendo categorías de Supabase...');
-      print('🔍 Cliente Supabase disponible: ${_client != null}');
       
       if (_client == null) {
         print('⚠️ Supabase no disponible, retornando categorías por defecto');
         return _getDefaultCategories();
       }
-      
-      print('🔍 Ejecutando query a product_categories...');
       
       final response = await _client!
         .from('product_categories')
@@ -208,32 +201,19 @@ CREATE POLICY "Allow authenticated users to manage products" ON store_products
         .eq('is_active', true)
         .order('name');
 
-      print('📊 Respuesta de Supabase: $response');
-      print('📊 Tipo de respuesta: ${response.runtimeType}');
-      print('📊 Longitud de respuesta: ${response.length}');
-
       final categories = <ProductCategory>[];
       for (final item in response) {
         try {
-          print('🔄 Procesando categoría: $item');
-          final category = ProductCategory.fromMap(item);
-          print('✅ Categoría parseada: ${category.name}');
-          categories.add(category);
+          categories.add(ProductCategory.fromMap(item));
         } catch (e) {
           print('⚠️ Error parsing category: $e');
-          print('⚠️ Item que falló: $item');
         }
       }
 
-      print('✅ ${categories.length} categorías obtenidas exitosamente');
-      if (categories.isNotEmpty) {
-        print('📋 Primera categoría: ${categories.first.name}');
-      }
+      print('✅ ${categories.length} categorías obtenidas');
       return categories;
     } catch (e) {
       print('❌ Error obteniendo categorías: $e');
-      print('❌ Stack trace: ${StackTrace.current}');
-      print('📋 Usando categorías por defecto como fallback');
       return _getDefaultCategories(); // Return hardcoded categories as fallback
     }
   }
@@ -289,14 +269,6 @@ CREATE POLICY "Allow authenticated users to manage products" ON store_products
         color: 0xFFAB47BC,
         isActive: true,
       ),
-      ProductCategory(
-        id: 'motos',
-        name: 'Motos',
-        description: 'Motocicletas y accesorios',
-        iconName: 'motorcycle',
-        color: 0xFF795548,
-        isActive: true,
-      ),
     ];
   }
 
@@ -315,9 +287,14 @@ CREATE POLICY "Allow authenticated users to manage products" ON store_products
       }
 
       // Upload the file to Supabase Storage
-      await _client!.storage
+      final response = await _client!.storage
           .from(bucket)
           .upload(fileName, File(filePath));
+
+      if (response.isNotEmpty) {
+        print('❌ Error subiendo imagen: $response');
+        return null;
+      }
 
       // Get the public URL
       final publicUrl = _client!.storage
@@ -377,7 +354,7 @@ CREATE POLICY "Allow authenticated users to manage products" ON store_products
         return false;
       }
 
-      await _client!.storage
+      final response = await _client!.storage
           .from(bucket)
           .remove([fileName]);
 
@@ -526,47 +503,6 @@ CREATE POLICY "Allow authenticated users to manage products" ON store_products
     }
   }
 
-  /// Get subcategories by category name (for backward compatibility)
-  Future<List<Map<String, dynamic>>> getSubcategoriesByName(String categoryName) async {
-    try {
-      print('📂 Obteniendo subcategorías por nombre: $categoryName');
-      
-      if (_client == null) {
-        print('⚠️ Supabase no disponible, usando subcategorías por defecto');
-        return _getDefaultSubcategoriesByName(categoryName);
-      }
-
-      // First get the category ID by name
-      final categoryResponse = await _client!
-          .from('product_categories')
-          .select('id')
-          .eq('name', categoryName)
-          .eq('is_active', true)
-          .single();
-
-      if (categoryResponse.isEmpty) {
-        print('⚠️ Categoría no encontrada: $categoryName');
-        return _getDefaultSubcategoriesByName(categoryName);
-      }
-
-      final categoryId = categoryResponse['id'];
-
-      // Then get subcategories for that category
-      final response = await _client!
-          .from('product_subcategories')
-          .select('*')
-          .eq('category_id', categoryId)
-          .eq('is_active', true)
-          .order('name');
-      
-      print('✅ Subcategorías obtenidas: ${response.length}');
-      return List<Map<String, dynamic>>.from(response);
-    } catch (e) {
-      print('❌ Error obteniendo subcategorías por nombre: $e');
-      return _getDefaultSubcategoriesByName(categoryName);
-    }
-  }
-
   /// Get default subcategories as fallback
   List<Map<String, dynamic>> _getDefaultSubcategories() {
     return [
@@ -579,57 +515,7 @@ CREATE POLICY "Allow authenticated users to manage products" ON store_products
       {'id': '7', 'name': 'Tornillos y Clavos', 'category_id': '3'},
       {'id': '8', 'name': 'Medicamentos', 'category_id': '4'},
       {'id': '9', 'name': 'Vitaminas', 'category_id': '4'},
-      {'id': '10', 'name': 'Motos Eléctricas', 'category_id': '9'},
-      {'id': '11', 'name': 'Motos Gasolina', 'category_id': '9'},
     ];
-  }
-
-  /// Get default subcategories by category name as fallback
-  List<Map<String, dynamic>> _getDefaultSubcategoriesByName(String categoryName) {
-    switch (categoryName.toLowerCase()) {
-      case 'alimentos':
-        return [
-          {'id': '1', 'name': 'Carnes', 'icon': Icons.restaurant, 'color': 0xFFE57373},
-          {'id': '2', 'name': 'Lácteos', 'icon': Icons.local_drink, 'color': 0xFF64B5F6},
-          {'id': '3', 'name': 'Frutas & Verduras', 'icon': Icons.eco, 'color': 0xFF81C784},
-          {'id': '4', 'name': 'Panadería', 'icon': Icons.bakery_dining, 'color': 0xFFFFB74D},
-        ];
-      case 'materiales':
-        return [
-          {'id': '5', 'name': 'Construcción', 'icon': Icons.construction, 'color': 0xFFFF8A65},
-          {'id': '6', 'name': 'Pintura', 'icon': Icons.brush, 'color': 0xFF9575CD},
-          {'id': '7', 'name': 'Madera', 'icon': Icons.park, 'color': 0xFF8D6E63},
-          {'id': '8', 'name': 'Metal', 'icon': Icons.build_circle, 'color': 0xFF90A4AE},
-        ];
-      case 'ferretería':
-        return [
-          {'id': '9', 'name': 'Herramientas', 'icon': Icons.build, 'color': 0xFFFF8F00},
-          {'id': '10', 'name': 'Tornillos', 'icon': Icons.settings, 'color': 0xFF5E35B1},
-          {'id': '11', 'name': 'Clavos', 'icon': Icons.push_pin, 'color': 0xFF1E88E5},
-          {'id': '12', 'name': 'Candados', 'icon': Icons.lock, 'color': 0xFF43A047},
-        ];
-      case 'farmacia':
-        return [
-          {'id': '13', 'name': 'Medicamentos', 'icon': Icons.medication, 'color': 0xFF26A69A},
-          {'id': '14', 'name': 'Vitaminas', 'icon': Icons.healing, 'color': 0xFFAB47BC},
-          {'id': '15', 'name': 'Primeros Auxilios', 'icon': Icons.local_hospital, 'color': 0xFFEF5350},
-          {'id': '16', 'name': 'Cuidado Personal', 'icon': Icons.face, 'color': 0xFF66BB6A},
-        ];
-      case 'electrónicos':
-        return [
-          {'id': '17', 'name': 'Teléfonos', 'icon': Icons.phone_android, 'color': 0xFF42A5F5},
-          {'id': '18', 'name': 'Computadoras', 'icon': Icons.computer, 'color': 0xFF5C6BC0},
-          {'id': '19', 'name': 'Accesorios', 'icon': Icons.headphones, 'color': 0xFFFF7043},
-          {'id': '20', 'name': 'Electrodomésticos', 'icon': Icons.kitchen, 'color': 0xFF26C6DA},
-        ];
-      case 'motos':
-        return [
-          {'id': '21', 'name': 'Motos Eléctricas', 'icon': Icons.electric_bike, 'color': 0xFF4CAF50},
-          {'id': '22', 'name': 'Motos Gasolina', 'icon': Icons.motorcycle, 'color': 0xFF795548},
-        ];
-      default:
-        return [];
-    }
   }
 
   /// Create a new subcategory
@@ -680,7 +566,7 @@ CREATE POLICY "Allow authenticated users to manage products" ON store_products
       final response = await _client!
         .from('store_products')
         .select('*')
-        .eq('category', categoryId)
+        .eq('category_id', categoryId)
         .eq('is_active', true)
         .order('created_at', ascending: false);
 
@@ -699,87 +585,6 @@ CREATE POLICY "Allow authenticated users to manage products" ON store_products
       print('❌ Error obteniendo productos: $e');
       return [];
     }
-  }
-
-  /// Get products by category name from Supabase
-  Future<List<StoreProduct>> getProductsByCategoryName(String categoryName) async {
-    try {
-      print('🔍 Buscando productos de categoría por nombre: $categoryName');
-      
-      if (_client == null) {
-        print('⚠️ Supabase no disponible, retornando productos por defecto');
-        return _getDefaultProductsByCategoryName(categoryName);
-      }
-
-      // First get the category ID by name
-      final categoryResponse = await _client!
-          .from('product_categories')
-          .select('id')
-          .eq('name', categoryName)
-          .eq('is_active', true)
-          .single();
-
-      if (categoryResponse.isEmpty) {
-        print('⚠️ Categoría no encontrada: $categoryName');
-        return _getDefaultProductsByCategoryName(categoryName);
-      }
-
-      final categoryId = categoryResponse['id'];
-
-      // Then get products for that category - using 'category' column instead of 'category_id'
-      final response = await _client!
-        .from('store_products')
-        .select('*')
-        .eq('category', categoryId)
-        .eq('is_active', true)
-        .order('created_at', ascending: false);
-
-      final products = <StoreProduct>[];
-      for (final item in response) {
-        try {
-          print('📦 Product data from Supabase: $item');
-          
-          // Verificar si el producto tiene imagen válida
-          final imageUrl = _parseImageFromProduct(item);
-          if (imageUrl.isEmpty) {
-            print('⚠️ Producto sin imagen válida: ${item['name']}');
-            // Usar placeholder si no hay imagen
-            item['image_url'] = '';
-          }
-          
-          products.add(StoreProduct.fromMap(item));
-        } catch (e) {
-          print('⚠️ Error parsing product: $e');
-        }
-      }
-
-      print('✅ ${products.length} productos encontrados para $categoryName');
-      return products;
-    } catch (e) {
-      print('❌ Error obteniendo productos por nombre de categoría: $e');
-      return _getDefaultProductsByCategoryName(categoryName);
-    }
-  }
-
-  /// Parse image from product data
-  String _parseImageFromProduct(Map<String, dynamic> productData) {
-    // Intentar obtener imagen de diferentes campos
-    final imageUrl = productData['image_url'] ?? 
-                    productData['imageUrl'] ?? 
-                    productData['images'];
-    
-    if (imageUrl == null) return '';
-    
-    if (imageUrl is String && imageUrl.isNotEmpty) {
-      return imageUrl;
-    }
-    
-    if (imageUrl is List && imageUrl.isNotEmpty) {
-      final firstImage = imageUrl[0].toString();
-      return firstImage.isNotEmpty ? firstImage : '';
-    }
-    
-    return '';
   }
   
   /// Get product by ID from Supabase
@@ -848,49 +653,16 @@ CREATE POLICY "Allow authenticated users to manage products" ON store_products
         return _getAllDefaultProducts();
       }
       
-      print('🔍 Ejecutando query a store_products...');
       final response = await _client!
         .from('store_products')
         .select('*')
         .eq('is_active', true)
-        .eq('approval_status', 'approved') // Solo productos aprobados
         .order('name');
-
-      print('📊 Respuesta de productos: $response');
 
       final products = <StoreProduct>[];
       for (final item in response) {
         try {
-          print('🔄 Procesando producto: ${item['name']}');
-          
-          // ARREGLO: Mapear correctamente las imágenes
-          String imageUrl = '';
-          if (item['image_url'] != null && item['image_url'].toString().isNotEmpty) {
-            imageUrl = item['image_url'].toString();
-          } else if (item['images'] != null && item['images'] is List && item['images'].isNotEmpty) {
-            imageUrl = item['images'][0].toString();
-          }
-          
-          // Crear producto con imagen corregida
-          final product = StoreProduct(
-            id: item['id']?.toString() ?? '',
-            name: item['name'] ?? '',
-            description: item['description'] ?? '',
-            price: (item['price'] ?? 0.0).toDouble(),
-            imageUrl: imageUrl, // Usar imagen corregida
-            categoryId: item['category'] ?? item['category_id'] ?? '',
-            unit: item['unit'] ?? 'unidad',
-            weight: (item['weight'] ?? 0.0).toDouble(),
-            isAvailable: item['is_active'] ?? true,
-            stock: item['stock'] ?? 0,
-            availableProvinces: List<String>.from(item['available_provinces'] ?? []),
-            deliveryMethod: 'express',
-            createdAt: item['created_at'] != null ? DateTime.parse(item['created_at']) : null,
-          );
-          
-          products.add(product);
-          print('✅ Producto procesado: ${product.name} - Imagen: ${product.imageUrl}');
-          
+          products.add(StoreProduct.fromMap(item));
         } catch (e) {
           print('⚠️ Error parsing product: $e');
         }
@@ -900,8 +672,7 @@ CREATE POLICY "Allow authenticated users to manage products" ON store_products
       return products;
     } catch (e) {
       print('❌ Error obteniendo productos: $e');
-      print('📋 Usando productos por defecto como fallback');
-      return _getAllDefaultProducts();
+      return [];
     }
   }
 
@@ -928,12 +699,12 @@ CREATE POLICY "Allow authenticated users to manage products" ON store_products
         'is_active': product.isAvailable,  // Corregido nombre de columna
         'stock': product.stock,
         'available_provinces': product.availableProvinces,
-        'available_sizes': product.additionalData['sizes'] ?? [],
-        'available_colors': product.additionalData['colors'] ?? [],
-        'delivery_cost': product.additionalData['deliveryCost'] ?? 0.0,
+        'available_sizes': product.additionalData?['sizes'] ?? [],
+        'available_colors': product.additionalData?['colors'] ?? [],
+        'delivery_cost': product.additionalData?['deliveryCost'] ?? 0.0,
         'metadata': {
           'delivery_method': product.deliveryMethod,
-          ...product.additionalData,
+          ...?product.additionalData,
         },
       };
       
@@ -995,12 +766,12 @@ CREATE POLICY "Allow authenticated users to manage products" ON store_products
         'is_active': product.isAvailable,  // Corregido nombre de columna
         'stock': product.stock,
         'available_provinces': product.availableProvinces,
-        'available_sizes': product.additionalData['sizes'] ?? [],
-        'available_colors': product.additionalData['colors'] ?? [],
-        'delivery_cost': product.additionalData['deliveryCost'] ?? 0.0,
+        'available_sizes': product.additionalData?['sizes'] ?? [],
+        'available_colors': product.additionalData?['colors'] ?? [],
+        'delivery_cost': product.additionalData?['deliveryCost'] ?? 0.0,
         'metadata': {
           'delivery_method': product.deliveryMethod,
-          ...product.additionalData,
+          ...?product.additionalData,
         },
         'updated_at': DateTime.now().toIso8601String(),
       };
@@ -1094,80 +865,6 @@ CREATE POLICY "Allow authenticated users to manage products" ON store_products
     ];
   }
 
-  /// Fallback products by category name when Supabase is not available
-  List<StoreProduct> _getDefaultProductsByCategoryName(String categoryName) {
-    switch (categoryName.toLowerCase()) {
-      case 'alimentos':
-        return [
-          StoreProduct(
-            id: 'food_001',
-            name: 'Carne de Res Premium',
-            description: 'Carne de res fresca, ideal para asados',
-            price: 12.99,
-            unit: 'lb',
-            imageUrl: 'https://pixabay.com/get/g75264e69a9c06c727929a3f013ea13786e405699770a052e82d89b921c61324320d89878b3c3f5c3072f9be949e3d288684f52daaac3e17a79660bfbdf3cd1e3_1280.jpg',
-            categoryId: 'alimentos',
-            weight: 1.0,
-            deliveryMethod: 'express',
-            isAvailable: true,
-            stock: 10,
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          ),
-          StoreProduct(
-            id: 'food_002',
-            name: 'Leche Entera 1L',
-            description: 'Leche fresca entera, rica en calcio',
-            price: 3.50,
-            unit: 'litro',
-            imageUrl: 'https://pixabay.com/get/g86d8165e47b58c742f869324506cb752ac86970ac76e9f736e7c4aa6265f28eaec336395b136daa56370b388f5a8e1c383a00a7c67b51a070576e2671ad801a2_1280.jpg',
-            categoryId: 'alimentos',
-            weight: 1.0,
-            deliveryMethod: 'ship',
-            isAvailable: true,
-            stock: 15,
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          ),
-        ];
-      case 'motos':
-        return [
-          StoreProduct(
-            id: 'moto_001',
-            name: 'Moto Eléctrica EcoRide',
-            description: 'Moto eléctrica ecológica, perfecta para la ciudad',
-            price: 2500.0,
-            unit: 'unidad',
-            imageUrl: 'https://via.placeholder.com/300x200',
-            categoryId: 'motos',
-            weight: 80.0,
-            deliveryMethod: 'ship',
-            isAvailable: true,
-            stock: 3,
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          ),
-        ];
-      default:
-        return [
-          StoreProduct(
-            id: 'default_1',
-            name: 'Producto de Ejemplo',
-            description: 'Producto de demostración (Supabase no disponible)',
-            categoryId: categoryName.toLowerCase(),
-            price: 10.0,
-            imageUrl: 'https://via.placeholder.com/300x200',
-            unit: 'unidad',
-            weight: 1.0,
-            isAvailable: true,
-            stock: 10,
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          ),
-        ];
-    }
-  }
-
   /// Fallback recent products when Supabase is not available
   List<StoreProduct> _getDefaultRecentProducts() {
     return [
@@ -1206,144 +903,5 @@ CREATE POLICY "Allow authenticated users to manage products" ON store_products
         updatedAt: DateTime.now(),
       ),
     ];
-  }
-
-  // ==================== SISTEMA DE APROBACIÓN ====================
-
-  /// Obtener productos pendientes de aprobación (solo para admins)
-  Future<List<StoreProduct>> getPendingProducts() async {
-    try {
-      print('⏳ Obteniendo productos pendientes de aprobación...');
-      
-      if (_client == null) {
-        print('⚠️ Supabase no disponible');
-        return [];
-      }
-      
-      final response = await _client!
-          .from('store_products')
-          .select('*')
-          .eq('approval_status', 'pending')
-          .order('created_at', ascending: false);
-
-      if (response.isNotEmpty) {
-        return response.map((item) => StoreProduct.fromJson(item)).toList();
-      }
-      return [];
-    } catch (e) {
-      print('Error fetching pending products: $e');
-      return [];
-    }
-  }
-
-  /// Obtener productos de un vendedor específico (incluyendo pendientes)
-  Future<List<StoreProduct>> getVendorProducts(String vendorId) async {
-    try {
-      print('🛒 Obteniendo productos del vendedor: $vendorId');
-      
-      if (_client == null) {
-        print('⚠️ Supabase no disponible');
-        return [];
-      }
-      
-      final response = await _client!
-          .from('store_products')
-          .select('*')
-          .eq('vendor_id', vendorId)
-          .order('created_at', ascending: false);
-
-      if (response.isNotEmpty) {
-        return response.map((item) => StoreProduct.fromJson(item)).toList();
-      }
-      return [];
-    } catch (e) {
-      print('Error fetching vendor products: $e');
-      return [];
-    }
-  }
-
-  /// Crear producto como vendedor (estado pending)
-  Future<bool> createVendorProduct(StoreProduct product) async {
-    try {
-      print('🛒 Creando producto como vendedor: ${product.name}');
-      
-      if (_client == null) {
-        print('⚠️ Supabase no disponible');
-        return false;
-      }
-
-      final productData = product.toJson();
-      // Forzar estado pending para productos de vendedores
-      productData['approval_status'] = 'pending';
-      productData['vendor_id'] = product.vendorId;
-
-      final response = await _client!
-          .from('store_products')
-          .insert(productData);
-
-      print('✅ Producto creado como pendiente de aprobación');
-      return true;
-    } catch (e) {
-      print('❌ Error creating vendor product: $e');
-      return false;
-    }
-  }
-
-  /// Aprobar producto (solo para admins)
-  Future<bool> approveProduct(String productId, String adminId, {String? notes}) async {
-    try {
-      print('✅ Aprobando producto: $productId');
-      
-      if (_client == null) {
-        print('⚠️ Supabase no disponible');
-        return false;
-      }
-
-      final response = await _client!
-          .from('store_products')
-          .update({
-            'approval_status': 'approved',
-            'approved_at': DateTime.now().toIso8601String(),
-            'approved_by': adminId,
-            'approval_notes': notes,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', productId);
-
-      print('✅ Producto aprobado exitosamente');
-      return true;
-    } catch (e) {
-      print('❌ Error approving product: $e');
-      return false;
-    }
-  }
-
-  /// Rechazar producto (solo para admins)
-  Future<bool> rejectProduct(String productId, String adminId, {String? notes}) async {
-    try {
-      print('❌ Rechazando producto: $productId');
-      
-      if (_client == null) {
-        print('⚠️ Supabase no disponible');
-        return false;
-      }
-
-      final response = await _client!
-          .from('store_products')
-          .update({
-            'approval_status': 'rejected',
-            'approved_at': DateTime.now().toIso8601String(),
-            'approved_by': adminId,
-            'approval_notes': notes,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', productId);
-
-      print('✅ Producto rechazado exitosamente');
-      return true;
-    } catch (e) {
-      print('❌ Error rejecting product: $e');
-      return false;
-    }
   }
 }

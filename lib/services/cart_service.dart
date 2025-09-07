@@ -17,29 +17,6 @@ class CartService extends ChangeNotifier {
   int get itemCount => _items.fold(0, (total, item) => total + item.quantity);
   double get subtotal => _items.fold(0, (total, item) => total + item.totalPrice);
 
-  /// ARREGLO: Inicializar carrito automáticamente
-  Future<void> initializeCart() async {
-    try {
-      print('🛒 Inicializando carrito...');
-      
-      final client = SupabaseConfig.client;
-      final user = client.auth.currentUser;
-      
-      if (user != null) {
-        print('👤 Usuario autenticado, cargando carrito...');
-        await loadFromSupabase();
-      } else {
-        print('⚠️ Usuario no autenticado, carrito vacío');
-        _items.clear();
-        notifyListeners();
-      }
-    } catch (e) {
-      print('❌ Error inicializando carrito: $e');
-      _items.clear();
-      notifyListeners();
-    }
-  }
-
   // ✅ CÁLCULO DE ENVÍO USANDO PESO REAL DE API - FÓRMULA: peso × $5.50 + $10
   double calculateShipping() {
     double totalWeight = _items.fold(0, (total, item) {
@@ -373,63 +350,21 @@ class CartService extends ChangeNotifier {
     _saveToSupabase();
   }
 
-  /// ARREGLO: Limpiar carrito al cerrar sesión
-  void clearCartOnLogout() {
-    print('🚪 Limpiando carrito al cerrar sesión...');
-    _items.clear();
-    notifyListeners();
-    // No guardamos en Supabase porque el usuario se está desconectando
-    print('✅ Carrito limpiado localmente');
-  }
-
-  /// ARREGLO: Cambiar de usuario (limpiar carrito anterior y cargar nuevo)
-  Future<void> switchUser() async {
-    print('🔄 Cambiando de usuario...');
-    
-    // Primero limpiar carrito actual
-    _items.clear();
-    notifyListeners();
-    
-    // Luego cargar carrito del nuevo usuario
-    await initializeCart();
-    
-    print('✅ Cambio de usuario completado');
-  }
-
   Future<void> _saveToSupabase() async {
     try {
       final client = SupabaseConfig.client;
       final user = client.auth.currentUser;
       if (user != null) {
-        // ARREGLO: Usar cart_items en lugar de user_carts
-        // Primero limpiar carrito existente
         await client
-            .from('cart_items')
-            .delete()
-            .eq('user_id', user.id);
-        
-        // Luego insertar todos los items
-        if (_items.isNotEmpty) {
-          final itemsData = _items.map((item) => {
-            'user_id': user.id,
-            'product_id': item.id,
-            'product_name': item.name,
-            'product_price': item.price,
-            'product_image_url': item.imageUrl,
-            'product_type': item.type,
-            'quantity': item.quantity,
-            'weight': item.weight,
-          }).toList();
-          
-          await client
-              .from('cart_items')
-              .insert(itemsData);
-        }
-        
-        print('✅ Carrito guardado en cart_items: ${_items.length} items');
+            .from('user_carts')
+            .upsert({
+              'user_id': user.id,
+              'items': _items.map((item) => item.toJson()).toList(),
+              'updated_at': DateTime.now().toIso8601String(),
+            });
       }
     } catch (e) {
-      print('❌ Error saving cart to Supabase: $e');
+      print('Error saving cart to Supabase: $e');
     }
   }
 
@@ -441,35 +376,23 @@ class CartService extends ChangeNotifier {
       final client = SupabaseConfig.client;
       final user = client.auth.currentUser;
       if (user != null) {
-        print('📦 Cargando carrito para usuario: ${user.id}');
-        
-        // ARREGLO: Cargar desde cart_items en lugar de user_carts
         final response = await client
-            .from('cart_items')
-            .select('*')
-            .eq('user_id', user.id);
+            .from('user_carts')
+            .select('items')
+            .eq('user_id', user.id)
+            .maybeSingle();
         
-        _items.clear();
-        _items.addAll(
-          response.map((itemData) => CartItem(
-            id: itemData['product_id'] ?? itemData['id'],
-            name: itemData['product_name'] ?? '',
-            price: (itemData['product_price'] ?? 0.0).toDouble(),
-            quantity: itemData['quantity'] ?? 1,
-            imageUrl: itemData['product_image_url'] ?? '',
-            type: itemData['product_type'] ?? 'store',
-            weight: itemData['weight'],
-          ))
-        );
-        
-        print('✅ Carrito cargado desde cart_items: ${_items.length} items');
-      } else {
-        print('⚠️ Usuario no autenticado, carrito vacío');
-        _items.clear();
+        if (response != null) {
+          final itemsData = response['items'] as List<dynamic>? ?? [];
+          
+          _items.clear();
+          _items.addAll(
+            itemsData.map((itemData) => CartItem.fromJson(itemData as Map<String, dynamic>))
+          );
+        }
       }
     } catch (e) {
-      print('❌ Error loading cart from Supabase: $e');
-      _items.clear();
+      print('Error loading cart from Supabase: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

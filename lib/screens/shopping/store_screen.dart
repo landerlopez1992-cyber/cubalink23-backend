@@ -3,9 +3,9 @@ import 'package:cubalink23/models/product_category.dart';
 import 'package:cubalink23/models/store_product.dart';
 import 'package:cubalink23/services/store_service.dart';
 import 'package:cubalink23/services/cart_service.dart';
+import 'package:cubalink23/services/firebase_repository.dart';
 import 'package:cubalink23/screens/shopping/store_category_screen.dart';
 import 'package:cubalink23/screens/shopping/product_details_screen.dart';
-import 'package:cubalink23/widgets/vendor_logo.dart';
 
 class StoreScreen extends StatefulWidget {
   @override
@@ -15,10 +15,12 @@ class StoreScreen extends StatefulWidget {
 class _StoreScreenState extends State<StoreScreen> {
   final StoreService _storeService = StoreService();
   final CartService _cartService = CartService();
+  final FirebaseRepository _firebaseRepository = FirebaseRepository.instance;
   
   List<ProductCategory> _realCategories = [];
   List<StoreProduct> _realProducts = [];
   bool _isLoading = true;
+  String? _selectedMainCategory;
 
   @override
   void initState() {
@@ -28,34 +30,22 @@ class _StoreScreenState extends State<StoreScreen> {
 
   Future<void> _initializeStore() async {
     try {
-      print('🏪 Inicializando tienda...');
-      
       // Initialize store service with default categories
       await _storeService.initializeDefaultCategories();
       
-      // Load real categories and products from Supabase
-      print('📋 Cargando categorías...');
+      // Load real categories and products from Firebase
       final categories = await _storeService.getCategories();
-      print('✅ Categorías cargadas: ${categories.length}');
-      
-      print('📦 Cargando productos...');
       final products = await _storeService.getAllProducts();
-      print('✅ Productos cargados: ${products.length}');
       
       if (mounted) {
-        print('🔄 Actualizando estado de la UI...');
         setState(() {
           _realCategories = categories;
           _realProducts = products;
           _isLoading = false;
         });
-        print('🎉 Tienda inicializada correctamente');
-        print('📊 Estado final - Categories: ${_realCategories.length}, Products: ${_realProducts.length}, Loading: $_isLoading');
-      } else {
-        print('⚠️ Widget no está montado, no se puede actualizar el estado');
       }
     } catch (e) {
-      print('❌ Error inicializando tienda: $e');
+      print('Error inicializando tienda: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -95,7 +85,6 @@ class _StoreScreenState extends State<StoreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print('🏗️ StoreScreen build() llamado - isLoading: $_isLoading, categories: ${_realCategories.length}, products: ${_realProducts.length}');
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
@@ -147,50 +136,25 @@ class _StoreScreenState extends State<StoreScreen> {
         ],
       ),
       body: _isLoading
-          ? Center(
+          ? Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              physics: BouncingScrollPhysics(),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Cargando tienda...'),
+                  // Banner informativo
+                  _buildInfoBanner(),
+                  
+                  // Categorías
+                  _buildCategoriesSection(),
+                  
+                  // Productos destacados
+                  if (_realProducts.isNotEmpty) _buildFeaturedProductsSection(),
+                  
+                  SizedBox(height: 20),
                 ],
               ),
-            )
-          : _realCategories.isEmpty && _realProducts.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.error_outline, size: 64, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text('No se pudieron cargar los datos'),
-                      SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: _initializeStore,
-                        child: Text('Reintentar'),
-                      ),
-                    ],
-                  ),
-                )
-              : SingleChildScrollView(
-                  physics: BouncingScrollPhysics(),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Banner informativo
-                      _buildInfoBanner(),
-                      
-                      // Categorías
-                      _buildCategoriesSection(),
-                      
-                      // Productos destacados
-                      _buildFeaturedProductsSection(),
-                      
-                      SizedBox(height: 20),
-                    ],
-                  ),
-                ),
+            ),
     );
   }
 
@@ -375,52 +339,17 @@ class _StoreScreenState extends State<StoreScreen> {
             ],
           ),
           SizedBox(height: 16),
-          if (_realProducts.isEmpty)
-            Container(
-              height: 120,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey.shade400),
-                    SizedBox(height: 8),
-                    Text(
-                      'No hay productos disponibles',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      'Los productos aparecerán aquí cuando estén disponibles',
-                      style: TextStyle(
-                        color: Colors.grey.shade500,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else
-            Container(
-              height: 220,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _realProducts.take(10).length,
-                itemBuilder: (context, index) {
-                  final product = _realProducts[index];
-                  return _buildRealProductCard(product);
-                },
-              ),
+          Container(
+            height: 220,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _realProducts.take(10).length,
+              itemBuilder: (context, index) {
+                final product = _realProducts[index];
+                return _buildRealProductCard(product);
+              },
             ),
+          ),
         ],
       ),
     );
@@ -476,24 +405,24 @@ class _StoreScreenState extends State<StoreScreen> {
                   child: Container(
                     height: 100,
                     width: double.infinity,
-                    child: product.imageUrl.isNotEmpty 
-                      ? Image.network(
-                          product.imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => _buildAppLogoPlaceholder(),
-                        )
-                      : _buildAppLogoPlaceholder(),
+                    child: Image.network(
+                      product.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.grey.shade200,
+                        child: Icon(
+                          Icons.image_not_supported,
+                          size: 40,
+                          color: Colors.grey.shade400,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                // Logo del vendedor
-                VendorLogo(
-                  vendorId: product.vendorId,
-                  size: 20.0,
                 ),
                 if (!product.isAvailable)
                   Positioned(
                     top: 8,
-                    right: 8,
+                    left: 8,
                     child: Container(
                       padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
@@ -583,7 +512,6 @@ class _StoreScreenState extends State<StoreScreen> {
   }
 
   IconData _getCategoryIcon(String iconName) {
-    print('🎨 Getting icon for: $iconName');
     switch (iconName.toLowerCase()) {
       case 'restaurant': return Icons.restaurant;
       case 'devices': return Icons.devices;
@@ -593,48 +521,7 @@ class _StoreScreenState extends State<StoreScreen> {
       case 'build': return Icons.build;
       case 'construction': return Icons.construction;
       case 'local_pharmacy': return Icons.local_pharmacy;
-      case 'healing': return Icons.healing;
-      case 'phone_android': return Icons.phone_android;
-      case 'shopping_bag': return Icons.shopping_bag;
-      case 'home': return Icons.home;
-      case 'fitness_center': return Icons.fitness_center;
-      case 'motorcycle': return Icons.motorcycle;
-      case 'store': return Icons.store;
-      case 'alimentos': return Icons.restaurant;
-      case 'materiales': return Icons.construction;
-      case 'ferretería': return Icons.build;
-      case 'farmacia': return Icons.healing;
-      case 'electrónicos': return Icons.phone_android;
-      case 'ropa': return Icons.shopping_bag;
-      case 'motos': return Icons.motorcycle;
-      default: 
-        print('⚠️ Icon not found for: $iconName, using default');
-        return Icons.store;
+      default: return Icons.store;
     }
-  }
-
-  Widget _buildAppLogoPlaceholder() {
-    return Container(
-      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.store,
-            size: 40,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          SizedBox(height: 4),
-          Text(
-            'CubaLink23',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

@@ -203,7 +203,7 @@ class FlightDetailFinal extends StatelessWidget {
                                 ],
                               ),
                             );
-                          }).toList(),
+                          }),
                         ],
                       ),
                     ),

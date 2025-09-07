@@ -353,7 +353,7 @@ class FlightDetailsWorking extends StatelessWidget {
                           ],
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
               ),

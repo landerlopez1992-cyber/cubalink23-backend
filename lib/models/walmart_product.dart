@@ -106,7 +106,7 @@ class WalmartProduct {
     
     // Try images arrays
     final images = _parseImages(json);
-    if (images.isNotEmpty) return images[0];
+    if (images.isNotEmpty) return images.first;
     
     return null;
   }

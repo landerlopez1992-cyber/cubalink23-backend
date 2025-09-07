@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cubalink23/models/user.dart';
+import 'package:cubalink23/screens/admin/admin_screen.dart';
 import 'package:cubalink23/services/supabase_auth_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -13,6 +14,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _pushNotifications = true;
   bool _emailPromotions = true;
   String _currentLanguage = 'Español';
+  bool _isAdmin = false;
   String _userEmail = '';
 
   @override
@@ -42,8 +44,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _currentLanguage = prefs.getString('language') ?? 'Español';
       _userEmail = currentUser?.email ?? '';
       
+      // Check admin status from current user's role (from Supabase)
+      _isAdmin = currentUser?.role == 'admin' || User.isAdminEmail(_userEmail);
       
-      print('📊 Usuario actual: ${currentUser?.name}, Email: $_userEmail, Role: ${currentUser?.role}');
+      print('📊 Usuario actual: ${currentUser?.name}, Email: $_userEmail, Role: ${currentUser?.role}, IsAdmin: $_isAdmin');
     });
   }
 
@@ -79,6 +83,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: EdgeInsets.all(16),
         children: [
+          // Botón de Administración (solo visible para admins)
+          if (_isAdmin) ...[
+            Card(
+              elevation: 2,
+              margin: EdgeInsets.only(bottom: 16),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.orange.withOpacity( 0.1),
+                      Colors.orange.withOpacity( 0.05),
+                    ],
+                  ),
+                ),
+                child: ListTile(
+                  leading: Icon(
+                    Icons.admin_panel_settings,
+                    color: Colors.orange,
+                    size: 28,
+                  ),
+                  title: Text(
+                    'Administración',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: Colors.orange[800],
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Panel de control administrativo',
+                    style: TextStyle(
+                      color: Colors.orange[600],
+                    ),
+                  ),
+                  trailing: Icon(
+                    Icons.chevron_right,
+                    color: Colors.orange,
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AdminScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
           
           // Idioma
           Card(

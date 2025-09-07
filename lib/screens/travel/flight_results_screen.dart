@@ -47,7 +47,7 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: Text(
           '${widget.fromAirport} → ${widget.toAirport}',
@@ -153,8 +153,9 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: Colors.grey[200],
                     borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.grey[300]!, width: 1),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
@@ -162,8 +163,8 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
                       isDense: true,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey[700],
-                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[800],
+                        fontWeight: FontWeight.w600,
                       ),
                       items: [
                         DropdownMenuItem(value: 'price', child: Text('Precio')),
@@ -362,7 +363,7 @@ class _FlightResultsScreenState extends State<FlightResultsScreen> {
                           ),
                         ),
                         Text(
-                          '${flight.currency}',
+                          flight.currency,
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[500],

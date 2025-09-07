@@ -99,14 +99,14 @@ class AuthGuardService {
               child: Row(
                 children: [
                   Icon(
-                    Icons.account_circle_outlined,
+                    Icons.info_outline,
                     color: Theme.of(context).primaryColor,
                     size: 20,
                   ),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Ve a "Mi Cuenta" para iniciar sesión o registrarte',
+                      'Es gratis y toma menos de 1 minuto',
                       style: TextStyle(
                         fontSize: 14,
                         color: Theme.of(context).primaryColor,
@@ -120,8 +120,33 @@ class AuthGuardService {
           ],
         ),
         actions: [
-          ElevatedButton(
+          TextButton(
             onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context, false);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => LoginScreen()),
+              );
+            },
+            child: Text('Iniciar Sesión'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context, false);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => RegisterScreen()),
+              );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).primaryColor,
               foregroundColor: Colors.white,
@@ -129,7 +154,7 @@ class AuthGuardService {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: Text('Cerrar'),
+            child: Text('Registrarse'),
           ),
         ],
       ),
@@ -221,26 +246,26 @@ class AuthGuardService {
             Container(
               padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.05),
+                color: Colors.green.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: Colors.orange.withOpacity(0.2),
+                  color: Colors.green.withOpacity(0.2),
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
-                    Icons.account_circle_outlined,
-                    color: Colors.orange,
+                    Icons.local_offer_outlined,
+                    color: Colors.green,
                     size: 20,
                   ),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Ve a "Mi Cuenta" para iniciar sesión o registrarte',
+                      'Obtén acceso completo a todas las compras',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.orange,
+                        color: Colors.green,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -251,8 +276,33 @@ class AuthGuardService {
           ],
         ),
         actions: [
-          ElevatedButton(
+          TextButton(
             onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context, false);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => LoginScreen()),
+              );
+            },
+            child: Text('Iniciar Sesión'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context, false);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => RegisterScreen()),
+              );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.orange,
               foregroundColor: Colors.white,
@@ -260,7 +310,7 @@ class AuthGuardService {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: Text('Cerrar'),
+            child: Text('Registrarse'),
           ),
         ],
       ),

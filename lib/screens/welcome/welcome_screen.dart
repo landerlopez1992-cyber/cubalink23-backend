@@ -7,6 +7,7 @@ import 'package:cubalink23/services/auth_service_bypass.dart';
 import 'package:cubalink23/services/database_service.dart';
 import 'package:cubalink23/services/cart_service.dart';
 import 'package:cubalink23/services/store_service.dart';
+import 'package:cubalink23/models/user.dart';
 import 'package:cubalink23/models/store_product.dart';
 import 'package:cubalink23/screens/shopping/product_details_screen.dart';
 
@@ -26,6 +27,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final StoreService _storeService = StoreService();
   int _currentBannerIndex = 0;
   PageController _bannerController = PageController();
+  final DatabaseService _databaseService = DatabaseService.instance;
   List<Map<String, dynamic>> _categories = [];
   List<Map<String, dynamic>> _bestSellers = [];
   List<StoreProduct> _realFoodProducts = [];
@@ -42,16 +44,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       _currentBalance = 0.0; // Balance por defecto
     });
     
-    // Configurar CartService
-    _cartService.addListener(_updateCartCount);
-    _loadCartFromSupabase();
-    
-    // Cargar datos de categorías y productos en background
-    _loadCategoriesAndBestSellers();
-    
     print('✅ WelcomeScreen - INICIADO INMEDIATAMENTE');
   }
-
+  
   void _loadEverythingElse() async {
     print('🔧 Función deshabilitada temporalmente para evitar bloqueos');
     // TODO: Re-habilitar cuando el problema de preview starting esté resuelto
@@ -79,19 +74,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       setState(() {
         _cartItemsCount = _cartService.itemCount;
       });
-      print('🛒 Carrito actualizado: $_cartItemsCount productos');
-    }
-  }
-
-  /// Cargar carrito desde Supabase
-  Future<void> _loadCartFromSupabase() async {
-    try {
-      print('📦 Cargando carrito desde Supabase...');
-      await _cartService.loadFromSupabase();
-      _updateCartCount();
-      print('✅ Carrito cargado desde Supabase: ${_cartService.itemCount} productos');
-    } catch (e) {
-      print('❌ Error cargando carrito desde Supabase: $e');
     }
   }
 
@@ -343,9 +325,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         print('ℹ️ No hay productos recientes, usando productos de ejemplo');
         bestSellersMap = _getDefaultProductsMap();
       }
-      
-      // Load real food products to fix the loading issue
-      await _loadRealProducts();
 
       if (mounted) {
         setState(() {
@@ -506,47 +485,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         ),
         centerTitle: false,
         actions: [
-          // Carrito de compras
-          Stack(
-            children: [
-              IconButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/cart');
-                },
-                icon: Icon(
-                  Icons.shopping_cart,
-                  color: Colors.white,
-                  size: 26,
-                ),
-              ),
-              if (_cartItemsCount > 0)
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    padding: EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    constraints: BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
-                    ),
-                    child: Text(
-                      _cartItemsCount > 9 ? '9+' : _cartItemsCount.toString(),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          // Notificaciones
           IconButton(
             onPressed: () async {
               await Navigator.pushNamed(context, '/notifications');
@@ -579,6 +517,47 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         _unreadNotificationsCount > 9
                             ? '9+'
                             : _unreadNotificationsCount.toString(),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          // Shopping Cart Icon
+          IconButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/cart');
+            },
+            icon: Stack(
+              children: [
+                Icon(
+                  Icons.shopping_cart,
+                  color: Colors.white,
+                  size: 26,
+                ),
+                if (_cartItemsCount > 0)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      padding: EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.orange,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1),
+                      ),
+                      constraints: BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        _cartItemsCount > 9 ? '9+' : _cartItemsCount.toString(),
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 10,

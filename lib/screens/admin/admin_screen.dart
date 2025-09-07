@@ -121,7 +121,7 @@ class _AdminScreenState extends State<AdminScreen> {
     }
 
     final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth >= 600 && screenWidth < 900;
+    // Removed unused variable: isTablet
     final isDesktop = screenWidth >= 900;
 
     return Scaffold(

@@ -12,14 +12,13 @@ class FlightDetailSimple extends StatelessWidget {
     print('🔍 DEBUG: FlightDetailSimple abierta exitosamente');
     print('🔍 DEBUG: Vuelo seleccionado: ${flight.airline} - ${flight.formattedPrice}');
     print('🔍 DEBUG: Raw data keys: ${flight.rawData.keys.toList()}');
+    print('🔍 DEBUG: Logo URL: "${flight.airlineLogo}"');
+    print('🔍 DEBUG: Airline Code: "${flight.airlineCode}"');
     
     // Extraer datos adicionales de Duffel API
     final rawDuffelData = flight.rawData;
     final slices = rawDuffelData['slices'] as List<dynamic>? ?? [];
     final conditions = rawDuffelData['conditions'] as Map<String, dynamic>? ?? {};
-    final owner = rawDuffelData['owner'] as Map<String, dynamic>? ?? {};
-    final services = rawDuffelData['services'] as List<dynamic>? ?? [];
-    final passengersData = rawDuffelData['passengers'] as List<dynamic>? ?? [];
     
     // Extraer políticas
     final changeBeforeDeparture = conditions['change_before_departure'] as Map<String, dynamic>? ?? {};
@@ -45,20 +44,23 @@ class FlightDetailSimple extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        // Logo de aerolínea mejorado
+                        // Logo de aerolínea real - MÁS GRANDE Y VISIBLE
                         Container(
-                          width: 50,
-                          height: 50,
+                          width: 80,
+                          height: 80,
                           decoration: BoxDecoration(
-                            color: Colors.blue[50],
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.blue[200]!, width: 1),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.grey[300]!, width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.15),
+                                blurRadius: 8,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          child: Icon(
-                            Icons.flight,
-                            size: 24,
-                            color: Colors.blue[600],
-                          ),
+                          child: _buildAirlineLogo(),
                         ),
                         SizedBox(width: 16),
                         Expanded(
@@ -355,7 +357,7 @@ class FlightDetailSimple extends StatelessWidget {
                           }
                         }
                         return SizedBox.shrink();
-                      }).toList(),
+                      }),
                       
                       // Si no hay datos de equipaje, mostrar valores por defecto
                       if (slices.isEmpty || _getBaggageCount(slices) == 0) ...[
@@ -427,11 +429,11 @@ class FlightDetailSimple extends StatelessWidget {
                               final segment = segEntry.value as Map<String, dynamic>;
                               
                               return _buildSegmentCard(segment, segIndex + 1);
-                            }).toList(),
+                            }),
                             if (index < slices.length - 1) SizedBox(height: 16),
                           ],
                         );
-                      }).toList(),
+                      }),
                     ],
                   ),
                 ),
@@ -533,6 +535,164 @@ class FlightDetailSimple extends StatelessWidget {
     );
   }
 
+  /// 🎨 Construir logo de aerolínea con múltiples fuentes
+  Widget _buildAirlineLogo() {
+    // Generar múltiples URLs de logo
+    final airlineCode = flight.airlineCode;
+    final logoUrls = <String>[];
+    
+    if (airlineCode.isNotEmpty && airlineCode != 'N/A') {
+      // Fuente 1: Daisycon
+      logoUrls.add('https://daisycon.io/images/airline/?width=120&height=120&color=ffffff&iata=$airlineCode');
+      // Fuente 2: Avionero
+      logoUrls.add('https://avionero.com/airline-logos/$airlineCode.png');
+      // Fuente 3: Airline Logos
+      logoUrls.add('https://logos.skyscnr.com/images/airlines/favicon/$airlineCode.png');
+      // Fuente 4: Alternative
+      logoUrls.add('https://images.kiwi.com/airlines/64/$airlineCode.png');
+    }
+    
+    print('🔍 DEBUG: Intentando cargar logos para código: $airlineCode');
+    print('🔍 DEBUG: URLs generadas: $logoUrls');
+    
+    // Si hay URLs disponibles, intentar cargarlas
+    if (logoUrls.isNotEmpty) {
+      return _buildLogoWithFallback(logoUrls);
+    }
+    
+    // Fallback final: ícono genérico más grande
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.blue[50],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.flight_takeoff,
+            size: 32,
+            color: Colors.blue[600],
+          ),
+          SizedBox(height: 4),
+          Text(
+            flight.airline.length > 8 
+                ? '${flight.airline.substring(0, 8)}...' 
+                : flight.airline,
+            style: TextStyle(
+              fontSize: 8,
+              fontWeight: FontWeight.w600,
+              color: Colors.blue[700],
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 🔄 Construir logo con fallback a múltiples URLs
+  Widget _buildLogoWithFallback(List<String> urls) {
+    if (urls.isEmpty) {
+      return _buildFallbackIcon();
+    }
+    
+    final currentUrl = urls.first;
+    final remainingUrls = urls.skip(1).toList();
+    
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Image.network(
+        currentUrl,
+        width: 80,
+        height: 80,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          print('❌ Error cargando logo desde: $currentUrl');
+          print('❌ Error: $error');
+          
+          // Si hay más URLs, intentar la siguiente
+          if (remainingUrls.isNotEmpty) {
+            print('🔄 Intentando siguiente URL...');
+            return _buildLogoWithFallback(remainingUrls);
+          }
+          
+          // Si no hay más URLs, usar fallback
+          return _buildFallbackIcon();
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          
+          return Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue[600]!),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Cargando...',
+                    style: TextStyle(
+                      fontSize: 8,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// 🎯 Ícono de fallback mejorado
+  Widget _buildFallbackIcon() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.blue[50],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.flight_takeoff,
+            size: 32,
+            color: Colors.blue[600],
+          ),
+          SizedBox(height: 4),
+          Text(
+            flight.airline.length > 8 
+                ? '${flight.airline.substring(0, 8)}...' 
+                : flight.airline,
+            style: TextStyle(
+              fontSize: 8,
+              fontWeight: FontWeight.w600,
+              color: Colors.blue[700],
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: EdgeInsets.only(bottom: 12),
@@ -602,7 +762,7 @@ class FlightDetailSimple extends StatelessWidget {
               ),
               Text(
                 allowed 
-                  ? (penalty != null && penalty != '0' ? 'Permitido con cargo de ${penalty ?? ''} ${currency ?? ''}' : 'Permitido sin cargo')
+                  ? (penalty != null && penalty != '0' ? 'Permitido con cargo de $penalty $currency' : 'Permitido sin cargo')
                   : 'No permitido',
                 style: TextStyle(
                   fontSize: 11,
@@ -856,3 +1016,4 @@ class FlightDetailSimple extends StatelessWidget {
     return duration;
   }
 }
+

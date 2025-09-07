@@ -8,8 +8,6 @@ import 'package:cubalink23/services/auth_service.dart';
 import 'package:cubalink23/services/supabase_auth_service.dart';
 import 'package:cubalink23/widgets/zelle_payment_dialog.dart';
 import 'package:cubalink23/screens/payment/payment_method_screen.dart';
-import 'package:cubalink23/services/delivery_detection_service.dart';
-import 'package:cubalink23/widgets/delivery_difference_alert.dart';
 import 'dart:io';
 
 class ShippingScreen extends StatefulWidget {
@@ -38,18 +36,12 @@ class _ShippingScreenState extends State<ShippingScreen> {
   bool _isLoading = true;
   bool _isProcessingPayment = false;
   double _userBalance = 0.0;
-  
-  // Variables para separación de órdenes
-  List<List<CartItem>> _separatedOrders = [];
-  bool _hasDeliveryDifferences = false;
-  String? _deliveryDifferenceMessage;
 
   @override
   void initState() {
     super.initState();
     _cartService.addListener(_onCartChanged);
     _loadUserData();
-    _detectDeliveryDifferences();
   }
 
   Future<void> _loadUserData() async {
@@ -130,372 +122,7 @@ class _ShippingScreenState extends State<ShippingScreen> {
   }
 
   void _onCartChanged() {
-    if (mounted) {
-      setState(() {});
-      _detectDeliveryDifferences();
-    }
-  }
-
-  /// Detectar diferencias de entrega y separar órdenes
-  void _detectDeliveryDifferences() {
-    final cartItems = _cartService.items;
-    
-    if (cartItems.isEmpty) {
-      _separatedOrders = [];
-      _hasDeliveryDifferences = false;
-      _deliveryDifferenceMessage = null;
-      return;
-    }
-
-    // Separar productos por vendedor/procedencia
-    final Map<String, List<CartItem>> ordersByVendor = {};
-    
-    for (final item in cartItems) {
-      final vendorId = item.vendorId ?? 'admin';
-      if (!ordersByVendor.containsKey(vendorId)) {
-        ordersByVendor[vendorId] = [];
-      }
-      ordersByVendor[vendorId]!.add(item);
-    }
-
-    // Convertir a lista de órdenes separadas
-    _separatedOrders = ordersByVendor.values.toList();
-    
-    // Determinar si hay diferencias
-    _hasDeliveryDifferences = ordersByVendor.length > 1;
-    
-    if (_hasDeliveryDifferences) {
-      _deliveryDifferenceMessage = _generateDeliveryDifferenceMessage(ordersByVendor);
-    } else {
-      _deliveryDifferenceMessage = null;
-    }
-  }
-
-  /// Generar mensaje de diferencias de entrega
-  String _generateDeliveryDifferenceMessage(Map<String, List<CartItem>> ordersByVendor) {
-    final vendorNames = ordersByVendor.keys.map((vendorId) {
-      switch (vendorId.toLowerCase()) {
-        case 'amazon':
-          return 'Amazon';
-        case 'walmart':
-          return 'Walmart';
-        case 'ebay':
-          return 'eBay';
-        case 'homedepot':
-        case 'home_depot':
-          return 'Home Depot';
-        case 'shein':
-          return 'Shein';
-        case 'admin':
-          return 'Tienda Local';
-        default:
-          return 'Vendedor Externo';
-      }
-    }).toList();
-
-    if (vendorNames.length == 2) {
-      return 'Tu pedido contiene productos de ${vendorNames[0]} y ${vendorNames[1]}. '
-             'Estos se enviarán por separado debido a diferentes métodos de entrega.';
-    } else {
-      return 'Tu pedido contiene productos de ${vendorNames.length} vendedores diferentes. '
-             'Estos se enviarán por separado debido a diferentes métodos de entrega.';
-    }
-  }
-
-  /// Construir alerta de diferencias de entrega
-  Widget _buildDeliveryDifferenceAlert() {
-    return Container(
-      margin: EdgeInsets.all(16),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.orange[50],
-        border: Border.all(color: Colors.orange[300]!),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.info_outline,
-                color: Colors.orange[700],
-                size: 24,
-              ),
-              SizedBox(width: 8),
-              Text(
-                'Pedidos Separados',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.orange[700],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8),
-          Text(
-            _deliveryDifferenceMessage ?? '',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.orange[700],
-            ),
-          ),
-          SizedBox(height: 12),
-          Text(
-            'Cada pedido será procesado y enviado por separado:',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Colors.orange[700],
-            ),
-          ),
-          SizedBox(height: 8),
-          ..._separatedOrders.asMap().entries.map((entry) {
-            final index = entry.key;
-            final orderItems = entry.value;
-            final vendorId = orderItems.first.vendorId ?? 'admin';
-            final vendorName = _getVendorDisplayName(vendorId);
-            final itemCount = orderItems.fold(0, (sum, item) => sum + item.quantity);
-            
-            return Padding(
-              padding: EdgeInsets.only(bottom: 4),
-              child: Row(
-                children: [
-                  Container(
-                    width: 20,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      color: Colors.orange[700],
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${index + 1}',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    'Pedido $vendorName: $itemCount productos',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.orange[700],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }).toList(),
-        ],
-      ),
-    );
-  }
-
-  /// Obtener nombre de display del vendedor
-  String _getVendorDisplayName(String vendorId) {
-    switch (vendorId.toLowerCase()) {
-      case 'amazon':
-        return 'Amazon';
-      case 'walmart':
-        return 'Walmart';
-      case 'ebay':
-        return 'eBay';
-      case 'homedepot':
-      case 'home_depot':
-        return 'Home Depot';
-      case 'shein':
-        return 'Shein';
-      case 'admin':
-        return 'Tienda Local';
-      default:
-        return 'Vendedor Externo';
-    }
-  }
-
-  /// Construir resumen de pedidos separados
-  Widget _buildSeparatedOrderSummary() {
-    if (_separatedOrders.isEmpty) {
-      return SizedBox.shrink();
-    }
-
-    return Container(
-      margin: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _hasDeliveryDifferences ? 'Resumen de Pedidos Separados' : 'Resumen del Pedido',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF232F3E),
-            ),
-          ),
-          SizedBox(height: 16),
-          ..._separatedOrders.asMap().entries.map((entry) {
-            final index = entry.key;
-            final orderItems = entry.value;
-            return _buildOrderSummaryCard(index + 1, orderItems);
-          }).toList(),
-        ],
-      ),
-    );
-  }
-
-  /// Construir tarjeta de resumen para una orden específica
-  Widget _buildOrderSummaryCard(int orderNumber, List<CartItem> items) {
-    final vendorId = items.first.vendorId ?? 'admin';
-    final vendorName = _getVendorDisplayName(vendorId);
-    final subtotal = items.fold(0.0, (sum, item) => sum + item.totalPrice);
-    
-    return Container(
-      margin: EdgeInsets.only(bottom: 16),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: Color(0xFF232F3E),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    '$orderNumber',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 8),
-              Text(
-                'Pedido $vendorName',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF232F3E),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12),
-          ...items.map((item) => Padding(
-            padding: EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: item.imageUrl.isNotEmpty
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: Image.network(
-                            item.imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Icon(
-                                Icons.image,
-                                color: Colors.grey[400],
-                                size: 20,
-                              );
-                            },
-                          ),
-                        )
-                      : Icon(
-                          Icons.image,
-                          color: Colors.grey[400],
-                          size: 20,
-                        ),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.name,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF232F3E),
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        'Cantidad: ${item.quantity}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  '\$${item.totalPrice.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF232F3E),
-                  ),
-                ),
-              ],
-            ),
-          )).toList(),
-          Divider(),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Subtotal:',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF232F3E),
-                ),
-              ),
-              Text(
-                '\$${subtotal.toStringAsFixed(2)}',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF232F3E),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+    if (mounted) setState(() {});
   }
 
   @override
@@ -524,9 +151,6 @@ class _ShippingScreenState extends State<ShippingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Alerta de diferencias de entrega
-                  if (_hasDeliveryDifferences) _buildDeliveryDifferenceAlert(),
-                  
                   // Método de envío
                   _buildShippingMethodSelector(),
                   
@@ -542,8 +166,8 @@ class _ShippingScreenState extends State<ShippingScreen> {
                   // Métodos de pago
                   _buildPaymentMethods(),
                   
-                  // Resumen del pedido (separado por vendedor)
-                  _buildSeparatedOrderSummary(),
+                  // Resumen del pedido
+                  _buildOrderSummary(),
                 ],
               ),
             ),

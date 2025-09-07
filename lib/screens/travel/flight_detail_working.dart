@@ -200,7 +200,7 @@ class FlightDetailWorking extends StatelessWidget {
                               ],
                             ),
                           );
-                        }).toList(),
+                        }),
                       ],
                     ),
                   ),

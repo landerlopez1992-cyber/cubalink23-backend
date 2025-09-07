@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:cubalink23/services/duffel_api_service.dart';
 import 'package:cubalink23/models/flight_offer.dart';
 import 'passenger_info_screen.dart';
-import 'flight_results_screen.dart';
 
 class FlightBookingScreen extends StatefulWidget {
   @override
@@ -37,18 +36,21 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
   List<FlightOffer> _flightOffers = [];
   bool _isLoadingFlights = false;
   String? _errorMessage;
-  
-  // Variables para debounce de búsqueda de aeropuertos
-  Timer? _fromSearchTimer;
-  Timer? _toSearchTimer;
   String? _currentOfferRequestId;
-  bool _backendAvailable = false;
   
-  // 🎯 SELECTOR DE TIPO DE AEROLÍNEAS  
-  String _airlineType = 'ambos'; // 'comerciales', 'charter', 'ambos'
-  
-  // Lista vacía - se llenará desde el backend
-  List<Map<String, dynamic>> _popularDestinations = [];
+  // Lista de destinos populares con códigos IATA exactos
+  List<Map<String, dynamic>> _popularDestinations = [
+    {'name': 'Miami International Airport', 'display_name': 'Miami, FL, USA (MIA)', 'code': 'MIA'},
+    {'name': 'José Martí International Airport', 'display_name': 'La Habana, Cuba (HAV)', 'code': 'HAV'},
+    {'name': 'John F Kennedy International Airport', 'display_name': 'New York, NY, USA (JFK)', 'code': 'JFK'},
+    {'name': 'Los Angeles International Airport', 'display_name': 'Los Angeles, CA, USA (LAX)', 'code': 'LAX'},
+    {'name': 'Madrid-Barajas Airport', 'display_name': 'Madrid, España (MAD)', 'code': 'MAD'},
+    {'name': 'Charles de Gaulle Airport', 'display_name': 'París, Francia (CDG)', 'code': 'CDG'},
+    {'name': 'Heathrow Airport', 'display_name': 'Londres, Reino Unido (LHR)', 'code': 'LHR'},
+    {'name': 'Cancún International Airport', 'display_name': 'Cancún, México (CUN)', 'code': 'CUN'},
+    {'name': 'Toronto Pearson International Airport', 'display_name': 'Toronto, Canadá (YYZ)', 'code': 'YYZ'},
+    {'name': 'Barcelona–El Prat Airport', 'display_name': 'Barcelona, España (BCN)', 'code': 'BCN'},
+  ];
   
   List<Map<String, dynamic>> _fromSearchResults = [];
   List<Map<String, dynamic>> _toSearchResults = [];
@@ -231,149 +233,6 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                       ),
                     ),
                     
-                    // 🎯 SELECTOR DE TIPO DE AEROLÍNEAS - RESPONSIVE
-                    Container(
-                      margin: EdgeInsets.only(bottom: 20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 10,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          // Ambos
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () => setState(() => _airlineType = 'ambos'),
-                              child: Container(
-                                padding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                                decoration: BoxDecoration(
-                                  color: _airlineType == 'ambos'
-                                      ? Theme.of(context).colorScheme.primary 
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.all_inclusive,
-                                      color: _airlineType == 'ambos'
-                                          ? Colors.white 
-                                          : Colors.grey[600],
-                                      size: 14,
-                                    ),
-                                    SizedBox(height: 2),
-                                    Text(
-                                      'Ambos',
-                                      style: TextStyle(
-                                        color: _airlineType == 'ambos'
-                                            ? Colors.white 
-                                            : Colors.grey[600],
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 10,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          // Comerciales
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () => setState(() => _airlineType = 'comerciales'),
-                              child: Container(
-                                padding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                                decoration: BoxDecoration(
-                                  color: _airlineType == 'comerciales'
-                                      ? Theme.of(context).colorScheme.primary 
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.business,
-                                      color: _airlineType == 'comerciales'
-                                          ? Colors.white 
-                                          : Colors.grey[600],
-                                      size: 14,
-                                    ),
-                                    SizedBox(height: 2),
-                                    Text(
-                                      'Comerciales',
-                                      style: TextStyle(
-                                        color: _airlineType == 'comerciales'
-                                          ? Colors.white 
-                                          : Colors.grey[600],
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 9,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          // Charter
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () => setState(() => _airlineType = 'charter'),
-                              child: Container(
-                                padding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                                decoration: BoxDecoration(
-                                  color: _airlineType == 'charter'
-                                      ? Theme.of(context).colorScheme.primary 
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.flight_takeoff,
-                                      color: _airlineType == 'charter'
-                                          ? Colors.white 
-                                          : Colors.grey[600],
-                                      size: 14,
-                                    ),
-                                    SizedBox(height: 2),
-                                    Text(
-                                      'Charter',
-                                      style: TextStyle(
-                                        color: _airlineType == 'charter'
-                                          ? Colors.white 
-                                          : Colors.grey[600],
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 9,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    
                     // Campos de origen y destino con intercambio
                     Container(
                       margin: EdgeInsets.only(bottom: 20),
@@ -434,17 +293,10 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                         color: Colors.grey[800],
                                       ),
                                       onChanged: (value) {
-                                        // Cancelar búsqueda anterior
-                                        _fromSearchTimer?.cancel();
-                                        
                                         if (value.isNotEmpty) {
-                                          // Debounce de 500ms
-                                          _fromSearchTimer = Timer(Duration(milliseconds: 500), () {
-                                            _searchAirportsFrom(value);
-                                          });
+                                          _searchAirportsFrom(value);
                                         } else {
                                           setState(() {
-                                            _fromSearchResults = [];
                                             _showFromDropdown = false;
                                           });
                                         }
@@ -460,40 +312,34 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                 ),
                               ),
                               
-                              // Dropdown de resultados "Desde" - RECUADRO LIMPIO
+                              // Dropdown de resultados "Desde"
                               if (_showFromDropdown)
-                                Container(
-                                  margin: EdgeInsets.only(top: 8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.grey[200]!),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
-                                        blurRadius: 8,
-                                        offset: Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  constraints: BoxConstraints(maxHeight: 200),
-                                  child: ListView.builder(
-                                    shrinkWrap: true,
-                                    padding: EdgeInsets.zero,
-                                    itemCount: _fromSearchResults.length,
-                                    itemBuilder: (context, index) {
-                                      if (index >= _fromSearchResults.length) return SizedBox.shrink();
-                                      final airport = _fromSearchResults[index];
-                                      return Container(
-                                        decoration: BoxDecoration(
-                                          border: Border(
-                                            bottom: BorderSide(
-                                              color: Colors.grey[100]!,
-                                              width: 0.5,
-                                            ),
-                                          ),
+                                Positioned(
+                                  top: 70,
+                                  left: 0,
+                                  right: 0,
+                                  child: Container(
+                                    constraints: BoxConstraints(maxHeight: 200),
+                                    margin: EdgeInsets.symmetric(horizontal: 16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: Colors.grey[200]!),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity( 0.1),
+                                          blurRadius: 8,
+                                          offset: Offset(0, 2),
                                         ),
-                                        child: ListTile(
+                                      ],
+                                    ),
+                                    child: ListView.builder(
+                                      shrinkWrap: true,
+                                      padding: EdgeInsets.zero,
+                                      itemCount: _fromSearchResults.length,
+                                      itemBuilder: (context, index) {
+                                        final airport = _fromSearchResults[index];
+                                        return ListTile(
                                           dense: true,
                                           leading: Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
                                           title: Text(
@@ -502,30 +348,17 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                           ),
                                           subtitle: Text(
                                             '${airport['code']}',
-                                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                            style: TextStyle(fontSize: 12),
                                           ),
                                           onTap: () {
-                                            print('🔍 DEBUG: Aeropuerto FROM seleccionado:');
-                                            print('🔍 DEBUG: - display_name: ${airport['display_name']}');
-                                            print('🔍 DEBUG: - name: ${airport['name']}');
-                                            print('🔍 DEBUG: - code: ${airport['code']}');
-                                            print('🔍 DEBUG: - iata_code: ${airport['iata_code']}');
-                                            print('🔍 DEBUG: - Estructura completa: $airport');
-                                            
-                                            // Usar el formato correcto: "Nombre del Aeropuerto (IATA_CODE)"
-                                            final airportName = airport['name'] ?? '';
-                                            final iataCode = airport['iata_code'] ?? airport['code'] ?? '';
-                                            final displayText = '$airportName ($iataCode)';
-                                            
-                                            print('🔍 DEBUG: Texto formateado: "$displayText"');
-                                            _fromController.text = displayText;
+                                            _fromController.text = '${airport['display_name']} (${airport['code']})';
                                             setState(() {
                                               _showFromDropdown = false;
                                             });
                                           },
-                                        ),
-                                      );
-                                    },
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                             ],
@@ -581,17 +414,10 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                         color: Colors.grey[800],
                                       ),
                                       onChanged: (value) {
-                                        // Cancelar búsqueda anterior
-                                        _toSearchTimer?.cancel();
-                                        
                                         if (value.isNotEmpty) {
-                                          // Debounce de 500ms
-                                          _toSearchTimer = Timer(Duration(milliseconds: 500), () {
-                                            _searchAirportsTo(value);
-                                          });
+                                          _searchAirportsTo(value);
                                         } else {
                                           setState(() {
-                                            _toSearchResults = [];
                                             _showToDropdown = false;
                                           });
                                         }
@@ -607,40 +433,34 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                 ),
                               ),
                               
-                              // Dropdown de resultados "Hasta" - RECUADRO LIMPIO
+                              // Dropdown de resultados "Hasta"
                               if (_showToDropdown)
-                                Container(
-                                  margin: EdgeInsets.only(top: 8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.grey[200]!),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
-                                        blurRadius: 8,
-                                        offset: Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  constraints: BoxConstraints(maxHeight: 200),
-                                  child: ListView.builder(
-                                    shrinkWrap: true,
-                                    padding: EdgeInsets.zero,
-                                    itemCount: _toSearchResults.length,
-                                    itemBuilder: (context, index) {
-                                      if (index >= _toSearchResults.length) return SizedBox.shrink();
-                                      final airport = _toSearchResults[index];
-                                      return Container(
-                                        decoration: BoxDecoration(
-                                          border: Border(
-                                            bottom: BorderSide(
-                                              color: Colors.grey[100]!,
-                                              width: 0.5,
-                                            ),
-                                          ),
+                                Positioned(
+                                  top: 70,
+                                  left: 0,
+                                  right: 0,
+                                  child: Container(
+                                    constraints: BoxConstraints(maxHeight: 200),
+                                    margin: EdgeInsets.symmetric(horizontal: 16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: Colors.grey[200]!),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity( 0.1),
+                                          blurRadius: 8,
+                                          offset: Offset(0, 2),
                                         ),
-                                        child: ListTile(
+                                      ],
+                                    ),
+                                    child: ListView.builder(
+                                      shrinkWrap: true,
+                                      padding: EdgeInsets.zero,
+                                      itemCount: _toSearchResults.length,
+                                      itemBuilder: (context, index) {
+                                        final airport = _toSearchResults[index];
+                                        return ListTile(
                                           dense: true,
                                           leading: Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
                                           title: Text(
@@ -649,30 +469,17 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                           ),
                                           subtitle: Text(
                                             '${airport['code']}',
-                                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                            style: TextStyle(fontSize: 12),
                                           ),
                                           onTap: () {
-                                            print('🔍 DEBUG: Aeropuerto TO seleccionado:');
-                                            print('🔍 DEBUG: - display_name: ${airport['display_name']}');
-                                            print('🔍 DEBUG: - name: ${airport['name']}');
-                                            print('🔍 DEBUG: - code: ${airport['code']}');
-                                            print('🔍 DEBUG: - iata_code: ${airport['iata_code']}');
-                                            print('🔍 DEBUG: - Estructura completa: $airport');
-                                            
-                                            // Usar el formato correcto: "Nombre del Aeropuerto (IATA_CODE)"
-                                            final airportName = airport['name'] ?? '';
-                                            final iataCode = airport['iata_code'] ?? airport['code'] ?? '';
-                                            final displayText = '$airportName ($iataCode)';
-                                            
-                                            print('🔍 DEBUG: Texto formateado: "$displayText"');
-                                            _toController.text = displayText;
+                                            _toController.text = '${airport['display_name']} (${airport['code']})';
                                             setState(() {
                                               _showToDropdown = false;
                                             });
                                           },
-                                        ),
-                                      );
-                                    },
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                             ],
@@ -681,32 +488,29 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                       ),
                     ),
                     
-                    // Botón de intercambio - CENTRADO Y RESPONSIVE
-                    Container(
-                      width: double.infinity,
-                      child: Center(
-                        child: GestureDetector(
-                          onTap: _swapAirports,
-                          child: Container(
-                            margin: EdgeInsets.symmetric(vertical: 20),
-                            padding: EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.grey[300]!, width: 2),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 8,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Icon(
-                              Icons.swap_vert,
-                              size: 24,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
+                    // Botón de intercambio
+                    Center(
+                      child: GestureDetector(
+                        onTap: _swapAirports,
+                        child: Container(
+                          margin: EdgeInsets.only(bottom: 20),
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.grey[300]!, width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity( 0.1),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.swap_vert,
+                            size: 24,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
                       ),
@@ -1060,11 +864,10 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                     
                     SizedBox(height: 32),
                     
-                    // Botón de búsqueda principal - RESPONSIVE
+                    // Botón de búsqueda principal estilo referencia
                     Container(
                       width: double.infinity,
                       height: 56,
-                      margin: EdgeInsets.symmetric(horizontal: 4),
                       child: ElevatedButton(
                         onPressed: _isLoadingFlights ? null : () {
                           if (_formKey.currentState!.validate()) {
@@ -1193,123 +996,22 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
     );
   }
 
-  /// 🛩️ MOSTRAR MODAL DE CARGA CON AVIONCITO
-  void _showLoadingModal() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return WillPopScope(
-          onWillPop: () async => false,
-          child: Dialog(
-            backgroundColor: Colors.transparent,
-            child: Container(
-              padding: EdgeInsets.all(40),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Avioncito animado
-                  Container(
-                    width: 80,
-                    height: 80,
-                    child: Stack(
-                      children: [
-                        // Círculo de fondo
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        // Avioncito con animación
-                        Center(
-                          child: TweenAnimationBuilder(
-                            tween: Tween<double>(begin: 0, end: 1),
-                            duration: Duration(seconds: 2),
-                            builder: (context, double value, child) {
-                              return Transform.translate(
-                                offset: Offset(10 * value, -5 * value),
-                                child: Transform.rotate(
-                                  angle: 0.3 * value,
-                                  child: Icon(
-                                    Icons.flight_takeoff,
-                                    size: 40,
-                                    color: Theme.of(context).colorScheme.primary,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 24),
-                  Text(
-                    'Buscando vuelos',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    _airlineType == 'ambos' 
-                        ? 'Consultando todas las aerolíneas...'
-                        : _airlineType == 'comerciales'
-                        ? 'Consultando aerolíneas comerciales...'
-                        : 'Consultando aerolíneas charter...',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  LinearProgressIndicator(
-                    backgroundColor: Colors.grey[200],
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   /// ✈️ BÚSQUEDA DE VUELOS CON DUFFEL API REAL
   Future<void> _searchFlights() async {
-    // 🛩️ MOSTRAR MODAL DE CARGA
-    _showLoadingModal();
+    setState(() {
+      _isLoadingFlights = true;
+      _errorMessage = null;
+      _flightOffers.clear();
+    });
 
     try {
       print('🎯 INICIANDO BÚSQUEDA REAL CON DUFFEL API');
       
       // Extraer códigos IATA
-      print('🔍 DEBUG: Texto del controlador FROM: "${_fromController.text}"');
-      print('🔍 DEBUG: Texto del controlador TO: "${_toController.text}"');
-      
       final fromCode = _extractAirportCode(_fromController.text);
       final toCode = _extractAirportCode(_toController.text);
       
-      print('🔍 DEBUG: Código FROM extraído: $fromCode');
-      print('🔍 DEBUG: Código TO extraído: $toCode');
-      
       if (fromCode == null || toCode == null) {
-        print('❌ ERROR: No se pudieron extraer códigos IATA');
-        print('❌ FROM text: "${_fromController.text}" → code: $fromCode');
-        print('❌ TO text: "${_toController.text}" → code: $toCode');
         throw Exception('Códigos de aeropuerto no válidos');
       }
 
@@ -1342,8 +1044,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
       print('👥 Pasajeros: ${_getTotalPassengers()}');
       print('💺 Clase: $cabinClass');
 
-      // PASO 1: Crear Offer Request con tipo de aerolínea
-      print('🎯 Tipo de aerolínea seleccionado: $_airlineType');
+      // PASO 1: Crear Offer Request
       final searchResult = await DuffelApiService.searchFlights(
         origin: fromCode,
         destination: toCode,
@@ -1351,60 +1052,12 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
         adults: _getTotalPassengers(),
         cabinClass: cabinClass,
         returnDate: returnStr,
-        airlineType: _airlineType, // 🎯 USAR TIPO SELECCIONADO
       );
 
       if (searchResult == null) {
         throw Exception('No se pudo crear la búsqueda de vuelos');
       }
 
-      // 🛡️ MANEJAR ESTADO OFFLINE DEL BACKEND
-      if (searchResult['status'] == 'offline' || searchResult['status'] == 'error') {
-        // 🚫 CERRAR MODAL DE CARGA
-        Navigator.of(context).pop();
-        
-        setState(() {
-          _errorMessage = searchResult['message'] ?? 'Servicio temporalmente no disponible';
-          _isLoadingFlights = false;
-        });
-        return;
-      }
-
-      // Verificar si el resultado contiene datos de vuelos directamente
-      if (searchResult['data'] != null && searchResult['data'] is List) {
-        // El backend ya devolvió los vuelos procesados
-        final flights = searchResult['data'] as List;
-        print('✅ Vuelos obtenidos directamente: ${flights.length}');
-        
-        // Convertir a FlightOffer
-        final flightOffers = flights.map((flight) => FlightOffer.fromDuffelJson(flight)).toList();
-        
-        // 🚫 CERRAR MODAL DE CARGA
-        Navigator.of(context).pop();
-        
-        setState(() {
-          _flightOffers = flightOffers;
-          _isLoadingFlights = false;
-        });
-        
-        // Navegar a resultados
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => FlightResultsScreen(
-              flightOffers: flightOffers,
-              fromAirport: fromCode,
-              toAirport: toCode,
-              departureDate: departureStr,
-              returnDate: returnStr,
-              passengers: _getTotalPassengers(),
-              airlineType: _airlineType,
-            ),
-          ),
-        );
-        return;
-      }
-      
-      // Si no, procesar como antes (offer request)
       final offerRequestId = searchResult['data']['id'] as String;
       _currentOfferRequestId = offerRequestId;
       
@@ -1415,12 +1068,8 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
       final offersData = await DuffelApiService.getOffers(offerRequestId);
 
       if (offersData.isEmpty) {
-        // 🚫 CERRAR MODAL DE CARGA
-        Navigator.of(context).pop();
-        
         setState(() {
           _errorMessage = 'No se encontraron vuelos disponibles para esta ruta y fecha. Intente con diferentes destinos o fechas.';
-          _isLoadingFlights = false;
         });
         return;
       }
@@ -1428,38 +1077,19 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
       // Convertir a modelos FlightOffer
       final offers = offersData.map((offerData) => FlightOffer.fromDuffelJson(offerData)).toList();
       
-      // 🚫 CERRAR MODAL DE CARGA
-      Navigator.of(context).pop();
-      
-      print('🎉 ¡${offers.length} ofertas cargadas exitosamente!');
-      
-      // 🚀 NAVEGAR A NUEVA PANTALLA DE RESULTADOS
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => FlightResultsScreen(
-            flightOffers: offers,
-            fromAirport: _fromController.text,
-            toAirport: _toController.text,
-            departureDate: departureStr,
-            returnDate: returnStr,
-            passengers: _getTotalPassengers(),
-            airlineType: _airlineType,
-          ),
-        ),
-      );
-      
       setState(() {
-        _isLoadingFlights = false;
+        _flightOffers = offers;
       });
+
+      print('🎉 ¡${offers.length} ofertas cargadas exitosamente!');
 
     } catch (e) {
       print('❌ Error en búsqueda: $e');
-      // 🚫 CERRAR MODAL DE CARGA EN CASO DE ERROR
-      Navigator.of(context).pop();
-      
       setState(() {
         _errorMessage = 'Error buscando vuelos: ${e.toString()}';
+      });
+    } finally {
+      setState(() {
         _isLoadingFlights = false;
       });
     }
@@ -1467,13 +1097,10 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
 
   // Extraer código IATA del texto del controller
   String? _extractAirportCode(String text) {
-    print('🔍 DEBUG: Extrayendo código IATA de: "$text"');
-    
     // Buscar patrón de 3 letras mayúsculas dentro de paréntesis
     final regexParens = RegExp(r'\(([A-Z]{3})\)');
     var match = regexParens.firstMatch(text);
     if (match != null) {
-      print('✅ Encontrado código IATA en paréntesis: ${match.group(1)}');
       return match.group(1)!;
     }
     
@@ -1481,29 +1108,9 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
     final regex = RegExp(r'\b([A-Z]{3})\b');
     match = regex.firstMatch(text);
     if (match != null) {
-      print('✅ Encontrado código IATA al final: ${match.group(1)}');
       return match.group(1)!;
     }
     
-    // Buscar cualquier secuencia de 3 letras mayúsculas consecutivas
-    final allCaps = RegExp(r'[A-Z]{3}');
-    match = allCaps.firstMatch(text);
-    if (match != null) {
-      print('✅ Encontrado código IATA en texto: ${match.group(0)}');
-      return match.group(0);
-    }
-    
-    // Último recurso: buscar cualquier 3 letras mayúsculas
-    final anyThree = RegExp(r'[A-Z][A-Z][A-Z]');
-    match = anyThree.firstMatch(text);
-    if (match != null) {
-      print('✅ Encontrado código IATA (último recurso): ${match.group(0)}');
-      return match.group(0);
-    }
-    
-    print('❌ No se pudo extraer código IATA de: "$text"');
-    print('❌ Longitud del texto: ${text.length}');
-    print('❌ Caracteres del texto: ${text.codeUnits}');
     return null;
   }
 
@@ -1732,33 +1339,30 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
       _isSearchingFrom = true;
       _showFromDropdown = true;
     });
-    
-    print('🔍 DEBUG: _showFromDropdown = $_showFromDropdown, _fromSearchResults.length = ${_fromSearchResults.length}');
 
     try {
-      // 🎯 USAR API REAL DE DUFFEL
-      print('🔍 Buscando aeropuertos "From" con Duffel API: $query');
-      final results = await DuffelApiService.searchAirports(query);
+      // Primero buscar en destinos populares
+      final popularResults = _popularDestinations.where((airport) =>
+        airport['name'].toString().toLowerCase().contains(query.toLowerCase()) ||
+        airport['display_name'].toString().toLowerCase().contains(query.toLowerCase()) ||
+        airport['code'].toString().toLowerCase().contains(query.toLowerCase())
+      ).toList();
+
+      // Luego buscar en la API de Duffel
+      final apiResults = await DuffelApiService.searchAirports(query);
       
-      print('🔍 DEBUG: Resultados obtenidos: ${results.length}');
-      
+      // Combinar resultados (destinos populares primero)
+      final allResults = [...popularResults, ...apiResults];
+
       setState(() {
-        _fromSearchResults = results;
+        _fromSearchResults = allResults;
         _isSearchingFrom = false;
-        _showFromDropdown = results.isNotEmpty; // Solo mostrar si hay resultados
       });
-      
-      print('🔍 DEBUG: Después del setState - _showFromDropdown = $_showFromDropdown, _fromSearchResults.length = ${_fromSearchResults.length}');
-      print('✅ Encontrados ${results.length} aeropuertos "From"');
     } catch (e) {
-      print('⚠️ Error searching airports From: $e');
-      
-      // 🚫 SIN FALLBACK SIMULADO - SOLO API REAL
-      print('❌ API real no disponible - no se muestran aeropuertos falsos');
+      print('Error searching airports: $e');
       setState(() {
         _fromSearchResults = [];
         _isSearchingFrom = false;
-        _showFromDropdown = false;
       });
     }
   }
@@ -1768,33 +1372,30 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
       _isSearchingTo = true;
       _showToDropdown = true;
     });
-    
-    print('🔍 DEBUG: _showToDropdown = $_showToDropdown, _toSearchResults.length = ${_toSearchResults.length}');
 
     try {
-      // 🎯 USAR API REAL DE DUFFEL
-      print('🔍 Buscando aeropuertos "To" con Duffel API: $query');
-      final results = await DuffelApiService.searchAirports(query);
+      // Primero buscar en destinos populares
+      final popularResults = _popularDestinations.where((airport) =>
+        airport['name'].toString().toLowerCase().contains(query.toLowerCase()) ||
+        airport['display_name'].toString().toLowerCase().contains(query.toLowerCase()) ||
+        airport['code'].toString().toLowerCase().contains(query.toLowerCase())
+      ).toList();
+
+      // Luego buscar en la API de Duffel
+      final apiResults = await DuffelApiService.searchAirports(query);
       
-      print('🔍 DEBUG: Resultados obtenidos: ${results.length}');
-      
+      // Combinar resultados (destinos populares primero)
+      final allResults = [...popularResults, ...apiResults];
+
       setState(() {
-        _toSearchResults = results;
+        _toSearchResults = allResults;
         _isSearchingTo = false;
-        _showToDropdown = results.isNotEmpty; // Solo mostrar si hay resultados
       });
-      
-      print('🔍 DEBUG: Después del setState - _showToDropdown = $_showToDropdown, _toSearchResults.length = ${_toSearchResults.length}');
-      print('✅ Encontrados ${results.length} aeropuertos "To"');
     } catch (e) {
-      print('⚠️ Error searching airports To: $e');
-      
-      // 🚫 SIN FALLBACK SIMULADO - SOLO API REAL  
-      print('❌ API real no disponible - no se muestran aeropuertos falsos');
+      print('Error searching airports: $e');
       setState(() {
         _toSearchResults = [];
         _isSearchingTo = false;
-        _showToDropdown = false;
       });
     }
   }

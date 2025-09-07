@@ -474,10 +474,10 @@ class SupabaseAuthService {
     try {
       final response = await _client
           ?.from('users')
-          .select('status')
+          .select('suspended')
           .eq('id', userId)
           .single();
-      return response?['status'] == 'Bloqueado';
+      return response?['suspended'] ?? false;
     } catch (e) {
       print('Error checking user suspension: $e');
       return false; // Default to not suspended if error

@@ -8,15 +8,10 @@ class StoreProduct {
   final String imageUrl;
   final String categoryId;
   final String? subCategoryId;
-  final String? vendorId;
   final String unit; // lb, kg, unidad, etc.
   final double weight; // peso en kg
   final bool isAvailable;
   final int stock;
-  final String approvalStatus; // pending, approved, rejected
-  final DateTime? approvedAt;
-  final String? approvedBy;
-  final String? approvalNotes;
   final List<String> availableProvinces; // Provincias donde se puede entregar
   final String deliveryMethod; // 'express' o 'barco'
   final Map<String, dynamic> additionalData;
@@ -31,15 +26,10 @@ class StoreProduct {
     required this.imageUrl,
     required this.categoryId,
     this.subCategoryId,
-    this.vendorId,
     required this.unit,
     required this.weight,
     this.isAvailable = true,
     this.stock = 0,
-    this.approvalStatus = 'approved',
-    this.approvedAt,
-    this.approvedBy,
-    this.approvalNotes,
     this.availableProvinces = const [],
     this.deliveryMethod = 'express',
     this.additionalData = const {},
@@ -54,17 +44,12 @@ class StoreProduct {
       description: json['description'] ?? '',
       price: (json['price'] ?? 0.0).toDouble(),
       imageUrl: _parseFirstImage(json['imageUrl'] ?? json['image_url'] ?? json['images']),
-      categoryId: json['categoryId'] ?? json['category_id'] ?? json['category'] ?? '',
+      categoryId: json['categoryId'] ?? json['category_id'] ?? '',
       subCategoryId: json['subCategoryId'] ?? json['subcategory_id'] ?? json['sub_category_id'],
-      vendorId: json['vendorId'] ?? json['vendor_id'],
       unit: json['unit'] ?? 'unidad',
       weight: (json['weight'] ?? 0.0).toDouble(),
       isAvailable: json['isAvailable'] ?? json['is_active'] ?? json['is_available'] ?? true,
       stock: json['stock'] ?? 0,
-      approvalStatus: json['approvalStatus'] ?? json['approval_status'] ?? 'approved',
-      approvedAt: _parseDateTime(json['approvedAt'] ?? json['approved_at']),
-      approvedBy: json['approvedBy'] ?? json['approved_by'],
-      approvalNotes: json['approvalNotes'] ?? json['approval_notes'],
       availableProvinces: _parseProvinces(json['availableProvinces'] ?? json['available_provinces']),
       deliveryMethod: _parseDeliveryMethod(json['deliveryMethod'] ?? json['delivery_method'] ?? json['metadata']),
       additionalData: _combineAdditionalData(json),
@@ -115,31 +100,11 @@ class StoreProduct {
   }
 
   static String _parseFirstImage(dynamic imageData) {
-    print('🖼️ Parsing image data: $imageData (type: ${imageData.runtimeType})');
-    
-    // Si es null o vacío, usar placeholder
-    if (imageData == null) {
-      print('🖼️ Image data is null, using placeholder');
-      return '';
-    }
-    
-    // Si es string y no está vacío
-    if (imageData is String && imageData.trim().isNotEmpty) {
-      print('🖼️ Image URL: $imageData');
-      return imageData;
-    }
-    
-    // Si es lista y tiene elementos
+    if (imageData == null) return '';
+    if (imageData is String && imageData.isNotEmpty) return imageData;
     if (imageData is List && imageData.isNotEmpty) {
-      final firstImage = imageData[0].toString();
-      print('🖼️ First image from list: $firstImage');
-      if (firstImage.trim().isNotEmpty) {
-        return firstImage;
-      }
+      return imageData.first.toString();
     }
-    
-    // Si es string vacío o lista vacía, usar placeholder
-    print('🖼️ No valid image found, using placeholder');
     return '';
   }
 
@@ -180,21 +145,11 @@ class StoreProduct {
       'category_id': categoryId, // Snake case for Supabase
       'subCategoryId': subCategoryId,
       'sub_category_id': subCategoryId, // Snake case for Supabase
-      'vendorId': vendorId,
-      'vendor_id': vendorId, // Snake case for Supabase
       'unit': unit,
       'weight': weight,
       'isAvailable': isAvailable,
       'is_available': isAvailable, // Snake case for Supabase
       'stock': stock,
-      'approvalStatus': approvalStatus,
-      'approval_status': approvalStatus, // Snake case for Supabase
-      'approvedAt': approvedAt?.toIso8601String(),
-      'approved_at': approvedAt?.toIso8601String(), // Snake case for Supabase
-      'approvedBy': approvedBy,
-      'approved_by': approvedBy, // Snake case for Supabase
-      'approvalNotes': approvalNotes,
-      'approval_notes': approvalNotes, // Snake case for Supabase
       'availableProvinces': availableProvinces,
       'available_provinces': jsonEncode(availableProvinces), // JSON string for Supabase
       'deliveryMethod': deliveryMethod,
@@ -219,21 +174,6 @@ class StoreProduct {
     return availableProvinces.contains(province);
   }
 
-  // Verificar si el producto está aprobado
-  bool get isApproved => approvalStatus == 'approved';
-  
-  // Verificar si el producto está pendiente de aprobación
-  bool get isPending => approvalStatus == 'pending';
-  
-  // Verificar si el producto fue rechazado
-  bool get isRejected => approvalStatus == 'rejected';
-  
-  // Verificar si el producto se puede mostrar en la app (aprobado y disponible)
-  bool get canBeDisplayed => isApproved && isAvailable && isActive;
-  
-  // Verificar si el producto está activo (alias para compatibilidad)
-  bool get isActive => isAvailable;
-
   StoreProduct copyWith({
     String? id,
     String? name,
@@ -242,15 +182,10 @@ class StoreProduct {
     String? imageUrl,
     String? categoryId,
     String? subCategoryId,
-    String? vendorId,
     String? unit,
     double? weight,
     bool? isAvailable,
     int? stock,
-    String? approvalStatus,
-    DateTime? approvedAt,
-    String? approvedBy,
-    String? approvalNotes,
     List<String>? availableProvinces,
     String? deliveryMethod,
     Map<String, dynamic>? additionalData,
@@ -265,15 +200,10 @@ class StoreProduct {
       imageUrl: imageUrl ?? this.imageUrl,
       categoryId: categoryId ?? this.categoryId,
       subCategoryId: subCategoryId ?? this.subCategoryId,
-      vendorId: vendorId ?? this.vendorId,
       unit: unit ?? this.unit,
       weight: weight ?? this.weight,
       isAvailable: isAvailable ?? this.isAvailable,
       stock: stock ?? this.stock,
-      approvalStatus: approvalStatus ?? this.approvalStatus,
-      approvedAt: approvedAt ?? this.approvedAt,
-      approvedBy: approvedBy ?? this.approvedBy,
-      approvalNotes: approvalNotes ?? this.approvalNotes,
       availableProvinces: availableProvinces ?? this.availableProvinces,
       deliveryMethod: deliveryMethod ?? this.deliveryMethod,
       additionalData: additionalData ?? this.additionalData,

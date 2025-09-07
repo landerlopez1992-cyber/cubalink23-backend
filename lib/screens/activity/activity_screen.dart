@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cubalink23/services/supabase_service.dart';
 import 'package:cubalink23/services/supabase_auth_service.dart';
 import 'package:cubalink23/models/recharge_history.dart';
-import 'package:cubalink23/models/order.dart';
+// Removed unused import: package:cubalink23/models/order.dart
 import 'package:cubalink23/services/auth_guard_service.dart';
 
 class ActivityScreen extends StatefulWidget {

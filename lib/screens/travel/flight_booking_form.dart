@@ -286,7 +286,7 @@ class _FlightBookingFormState extends State<FlightBookingForm> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _selectedTitle,
+                    initialValue: _selectedTitle,
                     decoration: InputDecoration(
                       labelText: 'Título',
                       border: OutlineInputBorder(),
@@ -307,7 +307,7 @@ class _FlightBookingFormState extends State<FlightBookingForm> {
                 SizedBox(width: 16),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _selectedGender,
+                    initialValue: _selectedGender,
                     decoration: InputDecoration(
                       labelText: 'Género',
                       border: OutlineInputBorder(),
@@ -455,7 +455,7 @@ class _FlightBookingFormState extends State<FlightBookingForm> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _selectedCountryOfIssue.isEmpty ? null : _selectedCountryOfIssue,
+                    initialValue: _selectedCountryOfIssue.isEmpty ? null : _selectedCountryOfIssue,
                     decoration: InputDecoration(
                       labelText: 'País de Emisión',
                       border: OutlineInputBorder(),

@@ -56,24 +56,94 @@ class _StoreCategoryScreenState extends State<StoreCategoryScreen> {
   }
 
   Future<void> _loadSubcategories(String categoryName) async {
-    try {
-      // Cargar subcategorías reales desde Supabase
-      _subcategories = await _storeService.getSubcategoriesByName(categoryName);
-      print('✅ Subcategorías cargadas: ${_subcategories.length}');
-    } catch (e) {
-      print('❌ Error cargando subcategorías: $e');
-      _subcategories = [];
+    // Definir subcategorías basadas en la categoría principal
+    switch (categoryName.toLowerCase()) {
+      case 'alimentos':
+        _subcategories = [
+          {'name': 'Carnes', 'icon': Icons.restaurant, 'color': 0xFFE57373},
+          {'name': 'Lácteos', 'icon': Icons.local_drink, 'color': 0xFF64B5F6},
+          {'name': 'Frutas & Verduras', 'icon': Icons.eco, 'color': 0xFF81C784},
+          {'name': 'Panadería', 'icon': Icons.bakery_dining, 'color': 0xFFFFB74D},
+          {'name': 'Mariscos', 'icon': Icons.set_meal, 'color': 0xFF4DB6AC},
+          {'name': 'Congelados', 'icon': Icons.ac_unit, 'color': 0xFFBA68C8},
+        ];
+        break;
+      case 'materiales':
+        _subcategories = [
+          {'name': 'Construcción', 'icon': Icons.construction, 'color': 0xFFFF8A65},
+          {'name': 'Pintura', 'icon': Icons.brush, 'color': 0xFF9575CD},
+          {'name': 'Madera', 'icon': Icons.park, 'color': 0xFF8D6E63},
+          {'name': 'Metal', 'icon': Icons.build_circle, 'color': 0xFF90A4AE},
+        ];
+        break;
+      case 'ferretería':
+        _subcategories = [
+          {'name': 'Herramientas', 'icon': Icons.build, 'color': 0xFFFF8F00},
+          {'name': 'Tornillos', 'icon': Icons.settings, 'color': 0xFF5E35B1},
+          {'name': 'Clavos', 'icon': Icons.push_pin, 'color': 0xFF1E88E5},
+          {'name': 'Candados', 'icon': Icons.lock, 'color': 0xFF43A047},
+        ];
+        break;
+      case 'farmacia':
+        _subcategories = [
+          {'name': 'Medicamentos', 'icon': Icons.medication, 'color': 0xFF26A69A},
+          {'name': 'Vitaminas', 'icon': Icons.healing, 'color': 0xFFAB47BC},
+          {'name': 'Primeros Auxilios', 'icon': Icons.local_hospital, 'color': 0xFFEF5350},
+          {'name': 'Cuidado Personal', 'icon': Icons.face, 'color': 0xFF66BB6A},
+        ];
+        break;
+      case 'electrónicos':
+        _subcategories = [
+          {'name': 'Teléfonos', 'icon': Icons.phone_android, 'color': 0xFF42A5F5},
+          {'name': 'Computadoras', 'icon': Icons.computer, 'color': 0xFF5C6BC0},
+          {'name': 'Accesorios', 'icon': Icons.headphones, 'color': 0xFFFF7043},
+          {'name': 'Electrodomésticos', 'icon': Icons.kitchen, 'color': 0xFF26C6DA},
+        ];
+        break;
+      case 'cosmética':
+        _subcategories = [
+          {'name': 'Maquillaje', 'icon': Icons.face_retouching_natural, 'color': 0xFFEC407A},
+          {'name': 'Perfumes', 'icon': Icons.local_florist, 'color': 0xFF9C27B0},
+          {'name': 'Cuidado de Piel', 'icon': Icons.spa, 'color': 0xFF66BB6A},
+          {'name': 'Cabello', 'icon': Icons.content_cut, 'color': 0xFFFF9800},
+        ];
+        break;
+      default:
+        _subcategories = [];
     }
   }
 
   Future<void> _loadFeaturedProducts(String categoryName) async {
-    try {
-      // Cargar productos reales desde Supabase
-      _products = await _storeService.getProductsByCategoryName(categoryName);
-      print('✅ Productos cargados: ${_products.length}');
-    } catch (e) {
-      print('❌ Error cargando productos: $e');
-      _products = [];
+    // Productos demo para cada categoría
+    switch (categoryName.toLowerCase()) {
+      case 'alimentos':
+        _products = [
+          StoreProduct(
+            id: 'food_001',
+            name: 'Carne de Res Premium',
+            description: 'Carne de res fresca, ideal para asados',
+            price: 12.99,
+            unit: 'lb',
+            imageUrl: 'https://pixabay.com/get/g75264e69a9c06c727929a3f013ea13786e405699770a052e82d89b921c61324320d89878b3c3f5c3072f9be949e3d288684f52daaac3e17a79660bfbdf3cd1e3_1280.jpg',
+            categoryId: 'alimentos',
+            weight: 1.0,
+            deliveryMethod: 'express',
+          ),
+          StoreProduct(
+            id: 'food_002',
+            name: 'Leche Entera 1L',
+            description: 'Leche fresca entera, rica en calcio',
+            price: 3.50,
+            unit: 'litro',
+            imageUrl: 'https://pixabay.com/get/g86d8165e47b58c742f869324506cb752ac86970ac76e9f736e7c4aa6265f28eaec336395b136daa56370b388f5a8e1c383a00a7c67b51a070576e2671ad801a2_1280.jpg',
+            categoryId: 'alimentos',
+            weight: 1.0,
+            deliveryMethod: 'ship',
+          ),
+        ];
+        break;
+      default:
+        _products = [];
     }
   }
 
@@ -115,6 +185,34 @@ class _StoreCategoryScreenState extends State<StoreCategoryScreen> {
     );
   }
 
+  void _addDemoProductToCart(Map<String, dynamic> productData) {
+    final cartItem = {
+      'id': 'demo_${productData['name'].replaceAll(' ', '_').toLowerCase()}',
+      'name': productData['name'],
+      'price': productData['price'],
+      'image': productData['image'],
+      'type': 'store_product',
+      'unit': productData['unit'],
+      'quantity': 1,
+    };
+
+    _cartService.addFoodProduct(cartItem);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${productData['name']} añadido al carrito'),
+        duration: Duration(seconds: 2),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        action: SnackBarAction(
+          label: 'Ver Carrito',
+          textColor: Colors.white,
+          onPressed: () {
+            Navigator.pushNamed(context, '/cart');
+          },
+        ),
+      ),
+    );
+  }
 
   void _showDeliveryAlert(StoreProduct product) {
     showDialog(
@@ -344,6 +442,37 @@ class _StoreCategoryScreenState extends State<StoreCategoryScreen> {
     );
   }
 
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.inventory_2_outlined,
+            size: 64,
+            color: Colors.grey.shade400,
+          ),
+          SizedBox(height: 16),
+          Text(
+            'No hay productos disponibles',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'en esta categoría por el momento.',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildSubcategoriesAndProducts() {
     return SingleChildScrollView(
@@ -478,13 +607,18 @@ class _StoreCategoryScreenState extends State<StoreCategoryScreen> {
               child: Container(
                 width: 80,
                 height: 80,
-                child: product.imageUrl.isNotEmpty 
-                  ? Image.network(
-                      product.imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => _buildAppLogoPlaceholder(),
-                    )
-                  : _buildAppLogoPlaceholder(),
+                child: Image.network(
+                  product.imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: Colors.grey.shade200,
+                    child: Icon(
+                      Icons.image_not_supported,
+                      size: 32,
+                      color: Colors.grey.shade400,
+                    ),
+                  ),
+                ),
               ),
             ),
             SizedBox(width: 16),
@@ -614,13 +748,18 @@ class _StoreCategoryScreenState extends State<StoreCategoryScreen> {
                   child: Container(
                     width: 80,
                     height: 80,
-                    child: product.imageUrl.isNotEmpty 
-                      ? Image.network(
-                          product.imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => _buildAppLogoPlaceholder(),
-                        )
-                      : _buildAppLogoPlaceholder(),
+                    child: Image.network(
+                      product.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.grey.shade200,
+                        child: Icon(
+                          Icons.image_not_supported,
+                          size: 32,
+                          color: Colors.grey.shade400,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 SizedBox(width: 16),
@@ -718,31 +857,6 @@ class _StoreCategoryScreenState extends State<StoreCategoryScreen> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildAppLogoPlaceholder() {
-    return Container(
-      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.store,
-            size: 32,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          SizedBox(height: 2),
-          Text(
-            'CubaLink23',
-            style: TextStyle(
-              fontSize: 8,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

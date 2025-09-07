@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io' show Platform;
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:cubalink23/screens/recharge/recharge_home_screen.dart';
 import 'package:cubalink23/screens/travel/flight_booking_screen.dart';
 import 'package:cubalink23/services/auth_service_bypass.dart';
@@ -49,10 +47,6 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
       _categories = _getDefaultCategoriesMap();
       _bestSellers = _getDefaultProductsMap();
     });
-    
-    // ARREGLO: Configurar CartService y cargar carrito
-    _cartService.addListener(_updateCartCount);
-    _initializeCart();
     
     // Cargar datos en background SIN BLOQUEAR la UI
     _loadDataInBackground();
@@ -282,24 +276,11 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
     super.dispose();
   }
 
-  /// ARREGLO: Inicializar carrito correctamente
-  Future<void> _initializeCart() async {
-    try {
-      print('🛒 Inicializando carrito en WelcomeScreen...');
-      await _cartService.initializeCart();
-      _updateCartCount();
-      print('✅ Carrito inicializado: ${_cartService.itemCount} items');
-    } catch (e) {
-      print('❌ Error inicializando carrito: $e');
-    }
-  }
-
   void _updateCartCount() {
     if (mounted) {
       setState(() {
         _cartItemsCount = _cartService.itemCount;
       });
-      print('🛒 Carrito actualizado: $_cartItemsCount productos');
     }
   }
 
@@ -354,25 +335,10 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
     );
   }
 
-  /// ARREGLO: Mejorar _loadCartItemsCount
   Future<void> _loadCartItemsCount() async {
-    try {
-      print('🛒 Cargando conteo de carrito...');
-      
-      // Asegurar que el carrito esté cargado
-      if (_cartService.itemCount == 0) {
-        await _cartService.loadFromSupabase();
-      }
-      
-      if (mounted) {
-        setState(() {
-          _cartItemsCount = _cartService.itemCount;
-        });
-        print('✅ Conteo de carrito actualizado: $_cartItemsCount');
-      }
-    } catch (e) {
-      print('❌ Error cargando conteo de carrito: $e');
-    }
+    setState(() {
+      _cartItemsCount = _cartService.itemCount;
+    });
   }
 
   Future<void> _checkForceUpdate() async {
@@ -441,56 +407,19 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
 
   Future<void> _loadBanners() async {
     try {
-      print('🖼️ Cargando banners desde Supabase...');
-      
-      // Cargar banners reales desde Supabase
-      final response = await http.get(
-        Uri.parse('https://zgqrhzuhrwudckwesybg.supabase.co/rest/v1/banners?banner_type=eq.banner1&is_active=eq.true&select=image_url&order=display_order.asc'),
-        headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTI3OTgsImV4cCI6MjA3MTM2ODc5OH0.lUVK99zmOYD7bNTxilJZWHTmYPfZF5YeMJDVUaJ-FsQ',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTI3OTgsImV4cCI6MjA3MTM2ODc5OH0.lUVK99zmOYD7bNTxilJZWHTmYPfZF5YeMJDVUaJ-FsQ',
-        },
-      );
-      
-      if (response.statusCode == 200) {
-        final List<dynamic> banners = json.decode(response.body);
-        final List<String> bannerUrls = banners.map((banner) => banner['image_url'] as String).toList();
-        
-        print('✅ Banners cargados: ${bannerUrls.length}');
-        
-        if (mounted) {
-          setState(() {
-            _bannerUrls = bannerUrls;
-          });
+      // Implementar banners en Supabase después
+      final banners = <dynamic>[];
+      if (mounted) {
+        setState(() {
+          _bannerUrls = banners.cast<String>();
+        });
 
-          // Auto-scroll banners if there are multiple
-          if (_bannerUrls.length > 1) {
-            _startBannerAutoScroll();
-          }
-        }
-      } else {
-        print('❌ Error cargando banners: ${response.statusCode}');
-        // Usar banners de fallback
-        if (mounted) {
-          setState(() {
-            _bannerUrls = [
-              'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=400&fit=crop&crop=center',
-              'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&h=400&fit=crop&crop=center',
-            ];
-          });
+        if (_bannerUrls.length > 1) {
+          _startBannerAutoScroll();
         }
       }
     } catch (e) {
-      print('❌ Error loading banners: $e');
-      // Usar banners de fallback
-      if (mounted) {
-        setState(() {
-          _bannerUrls = [
-            'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=400&fit=crop&crop=center',
-            'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&h=400&fit=crop&crop=center',
-          ];
-        });
-      }
+      print('Error loading banners: $e');
     }
   }
 
@@ -552,34 +481,6 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
         'description': 'Vestimenta y accesorios',
         'icon': 'shopping_bag',
         'color': 0xFFAB47BC,
-      },
-      {
-        'id': 'servicios',
-        'name': 'Servicios',
-        'description': 'Servicios diversos',
-        'icon': 'room_service',
-        'color': 0xFF4CAF50,
-      },
-      {
-        'id': 'motos',
-        'name': 'Motos',
-        'description': 'Vehículos y accesorios',
-        'icon': 'motorcycle',
-        'color': 0xFF607D8B,
-      },
-      {
-        'id': 'amazon',
-        'name': 'Amazon',
-        'description': 'Productos de Amazon',
-        'icon': 'shopping_cart',
-        'color': 0xFFFF9800,
-      },
-      {
-        'id': 'walmart',
-        'name': 'Walmart',
-        'description': 'Productos de Walmart',
-        'icon': 'store',
-        'color': 0xFF2196F3,
       },
     ];
   }
@@ -1556,14 +1457,14 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
                   );
                 },
                 child: Container(
-                  width: 160,
+                  width: 150,
                   margin: EdgeInsets.only(right: 12),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.2),
+                        color: Colors.grey.withOpacity( 0.2),
                         blurRadius: 8,
                         offset: Offset(0, 3),
                       ),
@@ -1577,39 +1478,11 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
                         child: Container(
                           height: 100,
                           width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                          ),
-                          child: product.imageUrl.isNotEmpty
-                              ? Image.network(
-                                  product.imageUrl,
-                                  fit: BoxFit.cover,
-                                  loadingBuilder: (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
-                                    return Container(
-                                      color: Colors.grey.shade100,
-                                      child: Center(
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          value: loadingProgress.expectedTotalBytes != null
-                                              ? loadingProgress.cumulativeBytesLoaded /
-                                                  loadingProgress.expectedTotalBytes!
-                                              : null,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      Container(
-                                        color: Colors.grey.shade200,
-                                        child: Icon(
-                                          Icons.restaurant,
-                                          size: 40,
-                                          color: Colors.grey.shade400,
-                                        ),
-                                      ),
-                                )
-                              : Container(
+                          child: Image.network(
+                            product.imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
                                   color: Colors.grey.shade200,
                                   child: Icon(
                                     Icons.restaurant,
@@ -1617,6 +1490,7 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
                                     color: Colors.grey.shade400,
                                   ),
                                 ),
+                          ),
                         ),
                       ),
                       Expanded(
@@ -1660,11 +1534,11 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
                                     ],
                                   ),
                                   Container(
-                                    width: 36,
-                                    height: 36,
+                                    width: 32,
+                                    height: 32,
                                     decoration: BoxDecoration(
                                       color: Theme.of(context).colorScheme.primary,
-                                      borderRadius: BorderRadius.circular(8),
+                                      shape: BoxShape.circle,
                                     ),
                                     child: IconButton(
                                       padding: EdgeInsets.zero,
@@ -1741,69 +1615,8 @@ class _WelcomeScreenFixedState extends State<WelcomeScreenFixed> {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(horizontal: 4),
-            itemCount: _categories.length + 1, // +1 para la tarjeta de vendedores
+            itemCount: _categories.length,
             itemBuilder: (context, index) {
-              // Tarjeta especial para Tiendas de Vendedores
-              if (index == _categories.length) {
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(context, '/vendor-stores');
-                  },
-                  child: Container(
-                    width: 100,
-                    margin: EdgeInsets.only(right: 12),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(0xFF4CAF50).withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.store,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 4),
-                          child: Text(
-                            'Tiendas de Vendedores',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-
               final category = _categories[index];
               final iconData = _getIconFromString(category['icon'] ?? 'category');
               final colorValue = category['color'] ?? 0xFF9E9E9E;

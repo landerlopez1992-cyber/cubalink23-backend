@@ -7,9 +7,7 @@ class CartItem {
   final String type; // 'amazon', 'recharge', etc.
   final String? description;
   final dynamic weight; // Puede ser double (peso real) o String (peso con texto/desconocido)
-  final double? weightLb; // Peso en libras (más preciso)
   final String? category;
-  final String? vendorId; // ID del vendedor (amazon, walmart, admin, etc.)
   final Map<String, dynamic>? additionalData;
 
   const CartItem({
@@ -21,9 +19,7 @@ class CartItem {
     required this.type,
     this.description,
     this.weight,
-    this.weightLb,
     this.category,
-    this.vendorId,
     this.additionalData,
   });
 
@@ -36,9 +32,7 @@ class CartItem {
     String? type,
     String? description,
     dynamic weight,
-    double? weightLb,
     String? category,
-    String? vendorId,
     Map<String, dynamic>? additionalData,
   }) {
     return CartItem(
@@ -50,9 +44,7 @@ class CartItem {
       type: type ?? this.type,
       description: description ?? this.description,
       weight: weight ?? this.weight,
-      weightLb: weightLb ?? this.weightLb,
       category: category ?? this.category,
-      vendorId: vendorId ?? this.vendorId,
       additionalData: additionalData ?? this.additionalData,
     );
   }
@@ -69,9 +61,7 @@ class CartItem {
       'type': type,
       'description': description,
       'weight': weight,
-      'weightLb': weightLb,
       'category': category,
-      'vendorId': vendorId,
       'additionalData': additionalData,
       'timestamp': DateTime.now().millisecondsSinceEpoch,
     };
@@ -89,9 +79,7 @@ class CartItem {
       type: json['type'] ?? 'unknown',
       description: json['description'],
       weight: json['weight'], // Mantener como dynamic
-      weightLb: json['weightLb']?.toDouble(),
       category: json['category'],
-      vendorId: json['vendorId'],
       additionalData: json['additionalData'],
     );
   }

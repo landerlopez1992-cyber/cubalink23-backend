@@ -195,3 +195,4 @@ if __name__ == "__main__":
     print("🎉 CONFIGURACIÓN COMPLETADA")
     print("   Los carritos ahora se guardarán automáticamente")
     print("   Persistencia entre sesiones habilitada")
+

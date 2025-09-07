@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+// Removed unused imports: url_launcher, dart:io
 // import 'package:cubalink23/services/firebase_repository.dart'; // Commented out for compilation
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
+// Removed unused imports: dart:typed_data, flutter/foundation
 
 class PushManagementScreen extends StatefulWidget {
   @override
@@ -18,7 +16,7 @@ class _PushManagementScreenState extends State<PushManagementScreen> {
   List<String> _bannerUrls = [];
   final TextEditingController _bannerUrlController = TextEditingController();
   bool _isLoadingBanners = false;
-  bool _isUploadingBanner = false;
+  // Removed unused field: _isUploadingBanner
   
   // Force update management
   final TextEditingController _googlePlayController = TextEditingController();
@@ -31,12 +29,12 @@ class _PushManagementScreenState extends State<PushManagementScreen> {
   final TextEditingController _pushMessageController = TextEditingController();
   final TextEditingController _pushImageUrlController = TextEditingController();
   String _selectedRole = 'user';
-  bool _isSendingPush = false;
+  // Removed unused field: _isSendingPush
   
   // Alert management
   final TextEditingController _alertMessageController = TextEditingController();
   final TextEditingController _alertImageUrlController = TextEditingController();
-  bool _isSendingAlert = false;
+  // Removed unused field: _isSendingAlert
   
   // App maintenance
   bool _maintenanceMode = false;

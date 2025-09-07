@@ -78,7 +78,7 @@ class FlightOffer {
         duration = firstSlice['duration'] ?? 'N/A';
         
         final sliceSegments = firstSlice['segments'] as List<dynamic>? ?? [];
-        stops = sliceSegments.length > 0 ? (sliceSegments.length - 1) : 0;
+        stops = sliceSegments.isNotEmpty ? (sliceSegments.length - 1) : 0;
         
         for (int i = 0; i < sliceSegments.length; i++) {
           try {
@@ -261,15 +261,6 @@ class FlightOffer {
       'BK': 'Okay Airways',
       'DR': 'Ruili Airlines',
       'GT': 'Guizhou Airlines',
-      'PN': 'China West Air',
-      'RY': 'Jiangxi Air',
-      'UQ': 'Urumqi Air',
-      'ZH': 'Shenzhen Airlines',
-      'KN': 'China United Airlines',
-      'G5': 'China Express Airlines',
-      'QW': 'Qingdao Airlines',
-      'FU': 'Fuzhou Airlines',
-      'TV': 'Tibet Airlines',
       'PN': 'China West Air',
       'RY': 'Jiangxi Air',
       'UQ': 'Urumqi Air',

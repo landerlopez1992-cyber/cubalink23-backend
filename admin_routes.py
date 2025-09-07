@@ -1095,3 +1095,536 @@ def upload_banners():
             'success': False,
             'error': str(e)
         }), 500
+
+        
+        response = requests.post(
+            f'{SUPABASE_URL}/storage/v1/object/product-images/{filename}',
+            headers=upload_headers,
+            files=files
+        )
+        
+        print(f"📡 Response Status: {response.status_code}")
+        print(f"📊 Response Text: {response.text}")
+        
+        if response.status_code == 200:
+            # Retornar URL pública de la imagen
+            public_url = f'{SUPABASE_URL}/storage/v1/object/public/product-images/{filename}'
+            print(f"✅ Imagen subida exitosamente: {public_url}")
+            return public_url
+        else:
+            print(f"❌ Error subiendo imagen: {response.status_code} - {response.text}")
+            # Usar imagen de Unsplash como fallback
+            return f'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop&crop=center'
+            
+    except Exception as e:
+        print(f"Error en upload_image_to_supabase: {e}")
+        # Usar placeholder como fallback
+        return f'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop&crop=center'
+@admin.route('/api/products/<product_id>', methods=['PUT'])
+def update_product(product_id):
+    """Actualizar producto en Supabase"""
+    try:
+        import requests
+        
+        data = request.json
+        SUPABASE_URL = 'https://zgqrhzuhrwudckwesybg.supabase.co'
+        SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTI3OTgsImV4cCI6MjA3MTM2ODc5OH0.lUVK99zmOYD7bNTxilJZWHTmYPfZF5YeMJDVUaJ-FsQ'
+        
+        headers = {
+            'apikey': SUPABASE_KEY,
+            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Content-Type': 'application/json'
+        }
+        
+        # Manejar imagen del producto
+        if data.get('image_base64'):
+            # Si hay imagen en base64, subirla a Supabase Storage
+            image_url = upload_image_to_supabase(data.get('image_base64'), data.get('name', 'product'))
+            if image_url:
+                data['image_url'] = image_url
+        
+        # Preparar datos actualizados con nuevas funcionalidades
+        update_data = {}
+        if 'name' in data:
+            update_data['name'] = data['name']
+        if 'description' in data:
+            update_data['description'] = data['description']
+        if 'price' in data:
+            update_data['price'] = float(data['price'])
+        if 'category' in data:
+            update_data['category'] = data['category']
+        if 'subcategory' in data:
+            update_data['subcategory'] = data['subcategory']
+        if 'stock' in data:
+            update_data['stock'] = int(data['stock'])
+        if 'weight' in data:
+            update_data['weight'] = data['weight']
+        if 'shipping_cost' in data:
+            update_data['shipping_cost'] = float(data['shipping_cost']) if data['shipping_cost'] else 0
+        if 'vendor_id' in data:
+            update_data['vendor_id'] = data['vendor_id']
+        if 'shipping_methods' in data:
+            update_data['shipping_methods'] = data['shipping_methods']
+        if 'tags' in data:
+            update_data['tags'] = data['tags']
+        if 'is_active' in data:
+            update_data['is_active'] = data['is_active']
+        if 'image_url' in data:
+            update_data['image_url'] = data['image_url']
+        
+        response = requests.patch(
+            f'{SUPABASE_URL}/rest/v1/store_products?id=eq.{product_id}',
+            headers=headers,
+            json=update_data
+        )
+        
+        print(f"🔍 Update Response Status: {response.status_code}")
+        print(f"🔍 Update Response Text: {response.text}")
+        
+        # Supabase devuelve 204 para actualizaciones exitosas
+        if response.status_code in [200, 204]:
+            return jsonify({
+                'success': True,
+                'message': 'Producto actualizado exitosamente'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'Error de Supabase: {response.status_code} - {response.text}'
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@admin.route('/api/products/<product_id>', methods=['DELETE'])
+def delete_product(product_id):
+    """Eliminar producto de Supabase y su imagen del Storage"""
+    try:
+        import requests
+        import os
+        
+        SUPABASE_URL = 'https://zgqrhzuhrwudckwesybg.supabase.co'
+        SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTI3OTgsImV4cCI6MjA3MTM2ODc5OH0.lUVK99zmOYD7bNTxilJZWHTmYPfZF5YeMJDVUaJ-FsQ'
+        SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTc5Mjc5OCwiZXhwIjoyMDcxMzY4Nzk4fQ.kUgRPYHRuWJVPfD8iVA7GDuOlj9Xwp6eQ2gH7FJqJ9s'
+        
+        headers = {
+            'apikey': SUPABASE_KEY,
+            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Content-Type': 'application/json'
+        }
+        
+        # Primero obtener el producto para obtener la URL de la imagen
+        get_response = requests.get(
+            f'{SUPABASE_URL}/rest/v1/store_products?id=eq.{product_id}&select=image_url',
+            headers=headers
+        )
+        
+        if get_response.status_code == 200:
+            products = get_response.json()
+            if products and len(products) > 0:
+                product = products[0]
+                image_url = product.get('image_url', '')
+                
+                # Si la imagen está en Supabase Storage, eliminarla
+                if image_url and 'storage/v1/object/public/product-images/' in image_url:
+                    try:
+                        # Extraer el nombre del archivo de la URL
+                        filename = os.path.basename(image_url)
+                        
+                        # Eliminar la imagen del Storage usando Service Key
+                        storage_headers = {
+                            'apikey': SERVICE_KEY,
+                            'Authorization': f'Bearer {SERVICE_KEY}'
+                        }
+                        
+                        delete_image_response = requests.delete(
+                            f'{SUPABASE_URL}/storage/v1/object/product-images/{filename}',
+                            headers=storage_headers
+                        )
+                        
+                        if delete_image_response.status_code == 200:
+                            print(f"✅ Imagen eliminada del Storage: {filename}")
+                        else:
+                            print(f"⚠️ No se pudo eliminar la imagen del Storage: {delete_image_response.status_code}")
+                            
+                    except Exception as e:
+                        print(f"⚠️ Error eliminando imagen del Storage: {e}")
+        
+        # Eliminar el producto de la base de datos
+        response = requests.delete(
+            f'{SUPABASE_URL}/rest/v1/store_products?id=eq.{product_id}',
+            headers=headers
+        )
+        
+        if response.status_code == 204:
+            return jsonify({
+                'success': True,
+                'message': 'Producto eliminado exitosamente'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'Error de Supabase: {response.status_code} - {response.text}'
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+def upload_banner_image_to_supabase(image_base64, banner_title):
+    """Subir imagen de banner a Supabase Storage"""
+    print("�� Subiendo imagen de banner...")
+    try:
+        import requests
+        import base64
+        import uuid
+        
+        # Configuración de Supabase con Anon Key (para Storage)
+        SUPABASE_URL = 'https://zgqrhzuhrwudckwesybg.supabase.co'
+        ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTI3OTgsImV4cCI6MjA3MTM2ODc5OH0.lUVK99zmOYD7bNTxilJZWHTmYPfZF5YeMJDVUaJ-FsQ'
+        
+        # Generar nombre único para la imagen
+        image_id = str(uuid.uuid4())
+        filename = f"{banner_title.replace(' ', '_')}_{image_id}.jpg"
+        
+        # Decodificar imagen base64
+        image_data = base64.b64decode(image_base64.split(',')[1])
+        
+        # Determinar el tipo MIME correcto
+        mime_type = 'image/jpeg'  # Por defecto
+        if 'data:image/png' in image_base64:
+            mime_type = 'image/png'
+            filename = filename.replace('.jpg', '.png')
+        elif 'data:image/gif' in image_base64:
+            mime_type = 'image/gif'
+            filename = filename.replace('.jpg', '.gif')
+        elif 'data:image/webp' in image_base64:
+            mime_type = 'image/webp'
+            filename = filename.replace('.jpg', '.webp')
+        
+        # Headers para upload con Anon Key
+        upload_headers = {
+            'apikey': ANON_KEY,
+            'Authorization': f'Bearer {ANON_KEY}',
+            'Content-Type': mime_type,
+        }
+        
+        print(f"🔍 Subiendo banner: {filename}")
+        print(f"📸 MIME Type: {mime_type}")
+        
+        response = requests.post(
+            f'{SUPABASE_URL}/storage/v1/object/banners/{filename}',
+            headers=upload_headers,
+            data=image_data
+        )
+        
+        print(f"📡 Response Status: {response.status_code}")
+        print(f"📊 Response Text: {response.text}")
+        
+        if response.status_code == 200:
+            # Retornar URL pública de la imagen
+            public_url = f'{SUPABASE_URL}/storage/v1/object/public/banners/{filename}'
+            print(f"✅ Banner subido exitosamente: {public_url}")
+            return public_url
+        else:
+            print(f"❌ Error subiendo banner: {response.status_code} - {response.text}")
+            # Usar imagen de Unsplash como fallback
+            return f'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=400&fit=crop&crop=center'
+            
+    except Exception as e:
+        print(f"Error en upload_banner_image_to_supabase: {e}")
+        # Usar imagen de Unsplash como fallback
+        return f'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=400&fit=crop&crop=center'
+
+@admin.route('/api/banners/<banner_id>', methods=['PUT'])
+def update_banner(banner_id):
+    """Actualizar banner en Supabase"""
+    try:
+        import requests
+        
+        data = request.json
+        SUPABASE_URL = 'https://zgqrhzuhrwudckwesybg.supabase.co'
+        SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTI3OTgsImV4cCI6MjA3MTM2ODc5OH0.lUVK99zmOYD7bNTxilJZWHTmYPfZF5YeMJDVUaJ-FsQ'
+        
+        headers = {
+            'apikey': SUPABASE_KEY,
+            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Content-Type': 'application/json'
+        }
+        
+        # Manejar imagen del banner si se proporciona
+        if data.get('image_base64'):
+            try:
+                image_url = upload_banner_image_to_supabase(data.get('image_base64'), data.get('title', 'banner'))
+                data['image_url'] = image_url
+            except Exception as e:
+                print(f"❌ Error en upload de imagen: {e}")
+        
+        # Preparar datos del banner
+        banner_data = {
+            'title': data.get('title'),
+            'description': data.get('description', ''),
+            'banner_type': data.get('banner_type'),
+            'display_order': int(data.get('display_order', 0)),
+            'is_active': bool(data.get('is_active', True)),
+            'auto_rotate': bool(data.get('auto_rotate', True)),
+            'rotation_speed': int(data.get('rotation_speed', 5000))
+        }
+        
+        # Agregar image_url si se actualizó
+        if 'image_url' in data:
+            banner_data['image_url'] = data['image_url']
+        
+        response = requests.patch(
+            f'{SUPABASE_URL}/rest/v1/banners?id=eq.{banner_id}',
+            headers=headers,
+            json=banner_data
+        )
+        
+        if response.status_code == 204:
+            return jsonify({
+                'success': True,
+                'message': 'Banner actualizado exitosamente'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'Error actualizando banner: {response.status_code} - {response.text}'
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@admin.route('/api/banners/<banner_id>', methods=['DELETE'])
+def delete_banner(banner_id):
+    """Eliminar banner de Supabase y su imagen del Storage"""
+    try:
+        import requests
+        import os
+        
+        SUPABASE_URL = 'https://zgqrhzuhrwudckwesybg.supabase.co'
+        SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTI3OTgsImV4cCI6MjA3MTM2ODc5OH0.lUVK99zmOYD7bNTxilJZWHTmYPfZF5YeMJDVUaJ-FsQ'
+        SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTc5Mjc5OCwiZXhwIjoyMDcxMzY4Nzk4fQ.kUgRPYHRuWJVPfD8iVA7GDuOlj9Xwp6eQ2gH7FJqJ9s'
+        
+        headers = {
+            'apikey': SUPABASE_KEY,
+            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Content-Type': 'application/json'
+        }
+        
+        # Primero obtener el banner para obtener la URL de la imagen
+        get_response = requests.get(
+            f'{SUPABASE_URL}/rest/v1/banners?id=eq.{banner_id}&select=image_url',
+            headers=headers
+        )
+        
+        if get_response.status_code == 200:
+            banners = get_response.json()
+            if banners and len(banners) > 0:
+                banner = banners[0]
+                image_url = banner.get('image_url', '')
+                
+                # Si la imagen está en Supabase Storage, eliminarla
+                if image_url and 'storage/v1/object/public/banners/' in image_url:
+                    try:
+                        # Extraer el nombre del archivo de la URL
+                        filename = os.path.basename(image_url)
+                        
+                        # Eliminar la imagen del Storage usando Service Key
+                        storage_headers = {
+                            'apikey': SERVICE_KEY,
+                            'Authorization': f'Bearer {SERVICE_KEY}'
+                        }
+                        
+                        delete_image_response = requests.delete(
+                            f'{SUPABASE_URL}/storage/v1/object/banners/{filename}',
+                            headers=storage_headers
+                        )
+                        
+                        if delete_image_response.status_code == 200:
+                            print(f"✅ Imagen de banner eliminada del Storage: {filename}")
+                        else:
+                            print(f"⚠️ No se pudo eliminar la imagen del Storage: {delete_image_response.status_code}")
+                            
+                    except Exception as e:
+                        print(f"⚠️ Error eliminando imagen del Storage: {e}")
+        
+        # Eliminar el banner de la base de datos
+        response = requests.delete(
+            f'{SUPABASE_URL}/rest/v1/banners?id=eq.{banner_id}',
+            headers=headers
+        )
+        
+        if response.status_code == 204:
+            return jsonify({
+                'success': True,
+                'message': 'Banner eliminado exitosamente'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'Error eliminando banner: {response.status_code} - {response.text}'
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@admin.route('/api/upload-banners', methods=['POST'])
+def upload_banners():
+    """Subir banners desde el sistema actual (compatible con la interfaz existente)"""
+    try:
+        import requests
+        import base64
+        import uuid
+        
+        SUPABASE_URL = 'https://zgqrhzuhrwudckwesybg.supabase.co'
+        SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTI3OTgsImV4cCI6MjA3MTM2ODc5OH0.lUVK99zmOYD7bNTxilJZWHTmYPfZF5YeMJDVUaJ-FsQ'
+        
+        headers = {
+            'apikey': SUPABASE_KEY,
+            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Content-Type': 'application/json'
+        }
+        
+        uploaded_banners = []
+        
+        # Procesar Banner Principal (Home)
+        if 'main_banner' in request.files:
+            main_banner = request.files['main_banner']
+            if main_banner and main_banner.filename:
+                try:
+                    # Convertir a base64
+                    image_data = main_banner.read()
+                    image_base64 = base64.b64encode(image_data).decode('utf-8')
+                    image_base64 = f'data:image/jpeg;base64,{image_base64}'
+                    
+                    # Subir a Supabase Storage
+                    image_url = upload_banner_image_to_supabase(image_base64, 'Banner Principal')
+                    
+                    # Crear banner en la base de datos
+                    banner_data = {
+                        'title': 'Banner Principal (Home)',
+                        'description': 'Banner principal de la aplicación',
+                        'banner_type': 'banner1',
+                        'image_url': image_url,
+                        'display_order': 1,
+                        'is_active': True,
+                        'auto_rotate': True,
+                        'rotation_speed': 5000
+                    }
+                    
+                    response = requests.post(
+                        f'{SUPABASE_URL}/rest/v1/banners',
+                        headers=headers,
+                        json=banner_data
+                    )
+                    
+                    if response.status_code == 201:
+                        uploaded_banners.append('Banner Principal')
+                    
+                except Exception as e:
+                    print(f"Error procesando banner principal: {e}")
+        
+        # Procesar Banner Secundario
+        if 'secondary_banner' in request.files:
+            secondary_banner = request.files['secondary_banner']
+            if secondary_banner and secondary_banner.filename:
+                try:
+                    # Convertir a base64
+                    image_data = secondary_banner.read()
+                    image_base64 = base64.b64encode(image_data).decode('utf-8')
+                    image_base64 = f'data:image/jpeg;base64,{image_base64}'
+                    
+                    # Subir a Supabase Storage
+                    image_url = upload_banner_image_to_supabase(image_base64, 'Banner Secundario')
+                    
+                    # Crear banner en la base de datos
+                    banner_data = {
+                        'title': 'Banner Secundario',
+                        'description': 'Banner secundario de la aplicación',
+                        'banner_type': 'banner2',
+                        'image_url': image_url,
+                        'display_order': 2,
+                        'is_active': True,
+                        'auto_rotate': True,
+                        'rotation_speed': 5000
+                    }
+                    
+                    response = requests.post(
+                        f'{SUPABASE_URL}/rest/v1/banners',
+                        headers=headers,
+                        json=banner_data
+                    )
+                    
+                    if response.status_code == 201:
+                        uploaded_banners.append('Banner Secundario')
+                    
+                except Exception as e:
+                    print(f"Error procesando banner secundario: {e}")
+        
+        # Procesar Banner de Promociones
+        if 'promo_banner' in request.files:
+            promo_banner = request.files['promo_banner']
+            if promo_banner and promo_banner.filename:
+                try:
+                    # Convertir a base64
+                    image_data = promo_banner.read()
+                    image_base64 = base64.b64encode(image_data).decode('utf-8')
+                    image_base64 = f'data:image/jpeg;base64,{image_base64}'
+                    
+                    # Subir a Supabase Storage
+                    image_url = upload_banner_image_to_supabase(image_base64, 'Banner de Promociones')
+                    
+                    # Crear banner en la base de datos
+                    banner_data = {
+                        'title': 'Banner de Promociones',
+                        'description': 'Banner de promociones de la aplicación',
+                        'banner_type': 'banner1',  # Agregar como banner1 adicional
+                        'image_url': image_url,
+                        'display_order': 3,
+                        'is_active': True,
+                        'auto_rotate': True,
+                        'rotation_speed': 5000
+                    }
+                    
+                    response = requests.post(
+                        f'{SUPABASE_URL}/rest/v1/banners',
+                        headers=headers,
+                        json=banner_data
+                    )
+                    
+                    if response.status_code == 201:
+                        uploaded_banners.append('Banner de Promociones')
+                    
+                except Exception as e:
+                    print(f"Error procesando banner de promociones: {e}")
+        
+        if uploaded_banners:
+            return jsonify({
+                'success': True,
+                'message': f'Banners subidos exitosamente: {", ".join(uploaded_banners)}',
+                'uploaded': uploaded_banners
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'No se pudieron subir los banners'
+            }), 400
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500

@@ -219,3 +219,4 @@ if __name__ == "__main__":
     print("🎉 CONFIGURACIÓN DE IMÁGENES COMPLETADA")
     print("   Las fotos de productos ahora se subirán automáticamente")
     print("   Y se mostrarán correctamente en la app Flutter")
+

@@ -169,3 +169,4 @@ if __name__ == "__main__":
     print("\n" + "=" * 45)
     print("🎉 ARREGLO DE TABLA COMPLETADO")
     print("   Los productos ahora se podrán subir y editar correctamente")
+

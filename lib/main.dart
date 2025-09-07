@@ -17,14 +17,15 @@ import 'package:cubalink23/screens/activity/activity_screen.dart';
 import 'package:cubalink23/screens/transfer/transfer_screen.dart';
 import 'package:cubalink23/screens/recharge/recharge_home_screen.dart';
 import 'package:cubalink23/screens/travel/flight_booking_screen.dart';
+import 'package:cubalink23/screens/travel/flight_results_screen.dart';
+import 'package:cubalink23/screens/travel/flight_detail_simple.dart';
 import 'package:cubalink23/screens/shopping/amazon_shopping_screen.dart';
-import 'package:cubalink23/screens/welcome/welcome_screen_fixed.dart';
+import 'package:cubalink23/screens/welcome/welcome_screen.dart';
 import 'package:cubalink23/screens/auth/login_screen.dart';
 import 'package:cubalink23/screens/auth/register_screen.dart';
-import 'package:cubalink23/screens/vendor/vendor_stores_list_screen.dart';
-import 'package:cubalink23/screens/vendor/vendor_store_screen.dart';
 import 'package:cubalink23/theme.dart';
 import 'package:cubalink23/models/user.dart';
+import 'package:cubalink23/models/flight_offer.dart';
 
 /// Main application entry point with Supabase initialization
 void main() async {
@@ -68,15 +69,32 @@ class CubaLink23App extends StatelessWidget {
         '/transfer': (context) => TransferScreen(),
         '/recharge': (context) => RechargeHomeScreen(),
         '/flights': (context) => FlightBookingScreen(),
+        '/flight-search': (context) => FlightBookingScreen(),
+        '/flight-results': (context) => FlightResultsScreen(
+          flightOffers: [],
+          fromAirport: '',
+          toAirport: '',
+          departureDate: '',
+          passengers: 1,
+          airlineType: 'all',
+        ),
+        '/flight-details': (context) => FlightDetailSimple(flight: FlightOffer(
+          id: '',
+          totalAmount: '0',
+          totalCurrency: 'USD',
+          airline: '',
+          departureTime: '',
+          arrivalTime: '',
+          duration: '',
+          stops: 0,
+          segments: [],
+          rawData: {},
+          airlineLogo: '',
+        )),
         '/amazon-shopping': (context) => AmazonShoppingScreen(),
-        '/welcome': (context) => WelcomeScreenFixed(),
+        '/welcome': (context) => WelcomeScreen(),
         '/login': (context) => LoginScreen(),
         '/register': (context) => RegisterScreen(),
-        '/vendor-stores': (context) => VendorStoresListScreen(),
-        '/vendor-store': (context) => VendorStoreScreen(
-          vendorId: 'demo',
-          vendorName: 'Demo Store',
-        ),
       },
     );
   }
