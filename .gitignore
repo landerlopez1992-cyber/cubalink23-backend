@@ -2,22 +2,36 @@
 *.log
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# Archivos grandes o temporales
-*.zip
-*.tar
-*.tgz
-
-# Entornos y llaves (no exponer secretos)
+# Python env
+.venv/
+venv/
 .env
 .env.*
 .env.local
 
-# Cursor
-.cursor/*
-!.cursor/rules/*.mdc
+# Builds y empaques
+build/
+dist/
+*.egg-info/
+*.zip
+*.tar
+*.tgz
 
 # Node/Frontend (si aplica)
 node_modules/
 dist/
-build/
+out/
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+pubspec.lock
+
+# Cursor
+.cursor/*
+!.cursor/rules/*.mdc
