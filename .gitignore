@@ -1,34 +1,23 @@
-# Variables de entorno
-.env
-config.env
-
-# Cache Python
+# Logs y caches
+*.log
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
-.Python
-build/
-develop-eggs/
+
+# Archivos grandes o temporales
+*.zip
+*.tar
+*.tgz
+
+# Entornos y llaves (no exponer secretos)
+.env
+.env.*
+.env.local
+
+# Cursor
+.cursor/*
+!.cursor/rules/*.mdc
+
+# Node/Frontend (si aplica)
+node_modules/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Archivos temporales
-*.tmp
-*.log
-.DS_Store
-
-# Archivos locales de desarrollo
-static/uploads/
-instance/
+build/
