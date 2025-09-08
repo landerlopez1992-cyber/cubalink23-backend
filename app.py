@@ -468,5 +468,6 @@ def delete_push_notification(notification_id):
         return jsonify({'success': False, 'error': f'Error interno: {str(e)}'}), 500
 
 if __name__ == '__main__':
+    print("🚀 FORZANDO DEPLOY RENDER - PUSH NOTIFICATIONS FIX - 2025-09-08 18:05")
     app.run(host='0.0.0.0', port=PORT, debug=False)
 
