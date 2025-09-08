@@ -53,6 +53,7 @@ print("🔄 REINICIO FORZADO - TIMESTAMP: {}".format(datetime.now().isoformat())
 print("🔄 REINICIO FORZADO - TIMESTAMP: {}".format(datetime.now().isoformat()))
 print("🔄 REINICIO FORZADO - TIMESTAMP: {}".format(datetime.now().isoformat()))
 print("🔄 REINICIO FORZADO - TIMESTAMP: {}".format(datetime.now().isoformat()))
+print("🔄 REINICIO FORZADO - TIMESTAMP: {}".format(datetime.now().isoformat()))
 
 @app.route('/')
 def home():
