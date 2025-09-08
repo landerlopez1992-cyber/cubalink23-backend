@@ -202,6 +202,18 @@ class SupabaseService:
             print(f"Error getting banners: {e}")
             return []
     
+    def get_active_banners(self):
+        """Obtener solo banners activos"""
+        try:
+            response = requests.get(f'{self.supabase_url}/rest/v1/banners?select=*&is_active=eq.true', headers=self.headers)
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return []
+        except Exception as e:
+            print(f"Error getting active banners: {e}")
+            return []
+    
     def add_banner(self, data):
         """Agregar banner con imagen"""
         try:

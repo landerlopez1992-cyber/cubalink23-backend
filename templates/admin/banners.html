@@ -256,17 +256,22 @@
                             ${banner.banner_type === 'welcome' ? 'Bienvenida' : 'Vuelos'}
                         </span>
                     </td>
-                    <td>${banner.order}</td>
+                    <td>${banner.display_order || banner.order || 0}</td>
                     <td>
-                        <span class="badge ${banner.active ? 'bg-success' : 'bg-danger'}">
-                            ${banner.active ? 'Activo' : 'Inactivo'}
+                        <span class="badge ${(banner.is_active !== undefined ? banner.is_active : banner.active) ? 'bg-success' : 'bg-danger'}">
+                            ${(banner.is_active !== undefined ? banner.is_active : banner.active) ? 'Activo' : 'Inactivo'}
                         </span>
                     </td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editBanner('${banner.id}')">
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editBanner('${banner.id}')" title="Editar">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteBanner('${banner.id}')">
+                        <button class="btn btn-sm ${(banner.is_active !== undefined ? banner.is_active : banner.active) ? 'btn-outline-warning' : 'btn-outline-success'} me-1" 
+                                onclick="toggleBanner('${banner.id}', ${(banner.is_active !== undefined ? banner.is_active : banner.active)})" 
+                                title="${(banner.is_active !== undefined ? banner.is_active : banner.active) ? 'Desactivar' : 'Activar'}">
+                            <i class="fas ${(banner.is_active !== undefined ? banner.is_active : banner.active) ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteBanner('${banner.id}')" title="Eliminar">
                             <i class="fas fa-trash"></i>
                         </button>
                     </td>
@@ -361,6 +366,36 @@
                 .catch(error => {
                     console.error('Error deleting banner:', error);
                     showAlert('Error al eliminar el banner', 'danger');
+                });
+            }
+        }
+
+        function toggleBanner(bannerId, currentStatus) {
+            const newStatus = !currentStatus;
+            const action = newStatus ? 'activar' : 'desactivar';
+            
+            if (confirm(`¿Estás seguro de que quieres ${action} este banner?`)) {
+                fetch(`/admin/api/banners/${bannerId}/toggle`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        active: newStatus
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadBanners();
+                        showAlert(`Banner ${action}do exitosamente`, 'success');
+                    } else {
+                        showAlert(`Error al ${action} el banner`, 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error(`Error toggling banner:`, error);
+                    showAlert(`Error al ${action} el banner`, 'danger');
                 });
             }
         }

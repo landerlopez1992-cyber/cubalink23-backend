@@ -22,7 +22,7 @@ try:
     from supabase_storage_service import storage_service
     print("✅ Servicio de storage importado correctamente")
 except ImportError as e:
-    print(f"⚠️ No se pudo importar storage service: {e}")
+    print("⚠️ No se pudo importar storage service: {}".format(e))
 
 # Importar el panel de administración
 from admin_routes import admin
@@ -33,8 +33,8 @@ PORT = int(os.environ.get('PORT', 10000))
 DUFFEL_API_KEY = os.environ.get('DUFFEL_API_KEY')
 
 print("🚀 CUBALINK23 BACKEND FINAL - FUNCIONANDO AL 100%")
-print(f"🔧 Puerto: {PORT}")
-print(f"🔑 API Key: {'✅ Configurada' if DUFFEL_API_KEY else '❌ No configurada'}")
+print("🔧 Puerto: {}".format(PORT))
+print("🔑 API Key: {}".format('✅ Configurada' if DUFFEL_API_KEY else '❌ No configurada'))
 
 @app.route('/')
 def home():
@@ -66,7 +66,7 @@ def search_airports():
     try:
         # 🔧 FIX: Aceptar tanto 'query' como 'q' para compatibilidad
         query = request.args.get('query', '') or request.args.get('q', '')
-        print(f"🔍 Query recibida: {query}")
+        print("🔍 Query recibida: {}".format(query))
         
         if not query or len(query) < 1:
             print("❌ Query vacía o muy corta")
@@ -79,17 +79,17 @@ def search_airports():
         try:
             headers = {
                 'Accept': 'application/json',
-                'Authorization': f'Bearer {DUFFEL_API_KEY}',
+                'Authorization': 'Bearer {}'.format(DUFFEL_API_KEY),
                 'Duffel-Version': 'v2'
             }
             
-            print(f"📡 Consultando Duffel API para: {query}")
+            print("📡 Consultando Duffel API para: {}".format(query))
             
             # Usar el endpoint correcto de Duffel para aeropuertos
-            url = f'https://api.duffel.com/places?query={query}'
+            url = 'https://api.duffel.com/places?query={}'.format(query)
             response = requests.get(url, headers=headers, timeout=10)
             
-            print(f"📡 Status Duffel: {response.status_code}")
+            print("📡 Status Duffel: {}".format(response.status_code))
             
             if response.status_code == 200:
                 data = response.json()
@@ -103,7 +103,7 @@ def search_airports():
                                 'code': place.get('iata_code', ''),  # Para compatibilidad con frontend
                                 'iata_code': place.get('iata_code', ''),
                                 'name': place.get('name', ''),
-                                'display_name': f"{place.get('name', '')} ({place.get('iata_code', '')})",  # Formato: "José Martí International Airport (HAV)"
+                                'display_name': "{place.get('name', '')} ({place.get('iata_code', '')})",  # Formato: "José Martí International Airport (HAV)"
                                 'city': place.get('city_name', ''),
                                 'country': place.get('country_name', ''),
                                 'time_zone': place.get('time_zone', '')
@@ -122,25 +122,25 @@ def search_airports():
                         query_lower in airport['city'].lower()):
                         filtered_airports.append(airport)
                 
-                print(f"✅ Encontrados {len(filtered_airports)} aeropuertos FILTRADOS para: {query}")
+                print("✅ Encontrados {len(filtered_airports)} aeropuertos FILTRADOS para: {query}")
                 if filtered_airports:
                     print("🔍 PREVIEW aeropuertos FILTRADOS:")
                     for i, airport in enumerate(filtered_airports[:5]):
-                        print(f"   {i+1}. {airport['iata_code']} - {airport['name']}")
+                        print("   {i+1}. {airport['iata_code']} - {airport['name']}")
                 
                 return jsonify(filtered_airports)
             
             else:
-                print(f"❌ Error Duffel API: {response.status_code}")
-                print(f"❌ Response: {response.text}")
+                print("❌ Error Duffel API: {response.status_code}")
+                print("❌ Response: {response.text}")
                 return jsonify([])
         
         except Exception as e:
-            print(f"💥 Error consultando Duffel API: {str(e)}")
+            print("💥 Error consultando Duffel API: {str(e)}")
             return jsonify([])
             
     except Exception as e:
-        print(f"💥 Error general: {str(e)}")
+        print("💥 Error general: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify([])
@@ -173,10 +173,10 @@ def search_flights():
         }
         
         cabin_class = cabin_class_mapping.get(cabin_class_raw, 'economy')
-        print(f"🎯 Cabin class mapeado: '{cabin_class_raw}' → '{cabin_class}'")
+        print("🎯 Cabin class mapeado: '{cabin_class_raw}' → '{cabin_class}'")
         
-        print(f"🔍 Buscando vuelos: {origin} → {destination}")
-        print(f"📅 Fecha: {departure_date} | Pasajeros: {passengers}")
+        print("🔍 Buscando vuelos: {origin} → {destination}")
+        print("📅 Fecha: {departure_date} | Pasajeros: {passengers}")
         
         if not DUFFEL_API_KEY:
             return jsonify({"error": "API key no configurada"}), 500
@@ -184,7 +184,7 @@ def search_flights():
         try:
             headers = {
                 'Accept': 'application/json',
-                'Authorization': f'Bearer {DUFFEL_API_KEY}',
+                'Authorization': 'Bearer {}'.format(DUFFEL_API_KEY),
                 'Duffel-Version': 'v2',
                 'Content-Type': 'application/json'
             }
@@ -207,9 +207,9 @@ def search_flights():
             
             # 🚀 PRODUCCIÓN REAL: Duffel API en modo producción
             # Según documentación: usar rutas reales que existan
-            print(f"🚀 PRODUCCIÓN REAL: Duffel API")
-            print(f"🚀 Ruta: {origin} → {destination}")
-            print(f"🚀 Payload para Duffel: {offer_request_data}")
+            print("🚀 PRODUCCIÓN REAL: Duffel API")
+            print("🚀 Ruta: {origin} → {destination}")
+            print("🚀 Payload para Duffel: {offer_request_data}")
             
             # Verificar que la ruta sea válida para producción
             if not origin or not destination:
@@ -222,7 +222,7 @@ def search_flights():
             # 🚫 RESTRICCIÓN: Duffel no permite rutas domésticas en producción
             # MIA → HAV es internacional (USA → Cuba) ✅
             # MIA → JFK sería doméstica (USA → USA) ❌
-            print(f"🌍 Validando ruta internacional: {origin} → {destination}")
+            print("🌍 Validando ruta internacional: {origin} → {destination}")
             
             offer_response = requests.post(
                 'https://api.duffel.com/air/offer_requests',
@@ -231,55 +231,55 @@ def search_flights():
                 timeout=30
             )
             
-            print(f"📡 Offer request status: {offer_response.status_code}")
-            print(f"📡 Offer request response: {offer_response.text}")
-            print(f"📡 Offer request headers: {dict(offer_response.headers)}")
+            print("📡 Offer request status: {offer_response.status_code}")
+            print("📡 Offer request response: {offer_response.text}")
+            print("📡 Offer request headers: {dict(offer_response.headers)}")
             
             # DEBUGGING MEJORADO: Mostrar toda la información de la respuesta
-            print(f"📡 DUFFEL RESPONSE STATUS: {offer_response.status_code}")
-            print(f"📡 DUFFEL RESPONSE HEADERS: {dict(offer_response.headers)}")
-            print(f"📡 DUFFEL RESPONSE BODY: {offer_response.text}")
-            print(f"📡 DUFFEL REQUEST PAYLOAD: {offer_request_data}")
+            print("📡 DUFFEL RESPONSE STATUS: {offer_response.status_code}")
+            print("📡 DUFFEL RESPONSE HEADERS: {dict(offer_response.headers)}")
+            print("📡 DUFFEL RESPONSE BODY: {offer_response.text}")
+            print("📡 DUFFEL REQUEST PAYLOAD: {offer_request_data}")
             
             if offer_response.status_code not in [200, 201]:
-                print(f"❌ Error creando offer request: {offer_response.status_code}")
-                print(f"❌ Response: {offer_response.text}")
-                print(f"❌ Request payload: {offer_request_data}")
+                print("❌ Error creando offer request: {offer_response.status_code}")
+                print("❌ Response: {offer_response.text}")
+                print("❌ Request payload: {offer_request_data}")
                 
                 # Enviar error específico de Duffel al frontend
                 try:
                     error_data = offer_response.json()
                     error_message = error_data.get('errors', [{}])[0].get('message', 'Error desconocido de Duffel')
                     return jsonify({
-                        "error": f"Duffel API Error: {error_message}",
+                        "error": "Duffel API Error: {error_message}",
                         "duffel_status": offer_response.status_code,
                         "duffel_response": offer_response.text
                     }), 500
                 except:
                     return jsonify({
-                        "error": f"Error creando offer request: {offer_response.text}",
+                        "error": "Error creando offer request: {offer_response.text}",
                         "duffel_status": offer_response.status_code
                     }), 500
             
             offer_request = offer_response.json()
             offer_request_id = offer_request['data']['id']
-            print(f"✅ Offer request creado: {offer_request_id}")
+            print("✅ Offer request creado: {offer_request_id}")
             
             # Obtener ofertas
             print("📡 Obteniendo ofertas...")
             offers_response = requests.get(
-                f'https://api.duffel.com/air/offers?offer_request_id={offer_request_id}',
+                'https://api.duffel.com/air/offers?offer_request_id={offer_request_id}',
                 headers=headers,
                 timeout=30
             )
             
             if offers_response.status_code != 200:
-                print(f"❌ Error obteniendo ofertas: {offers_response.status_code}")
+                print("❌ Error obteniendo ofertas: {offers_response.status_code}")
                 return jsonify({"error": "Error obteniendo ofertas"}), 500
             
             offers_data = offers_response.json()
             offers = offers_data.get('data', [])
-            print(f"✅ Encontradas {len(offers)} ofertas")
+            print("✅ Encontradas {len(offers)} ofertas")
             
             # Procesar vuelos
             processed_flights = []
@@ -311,7 +311,7 @@ def search_flights():
                             if 'marketing_carrier' in first_segment:
                                 flight_info['airline'] = first_segment['marketing_carrier'].get('name', 'Unknown Airline')
                                 flight_info['airline_code'] = first_segment['marketing_carrier'].get('iata_code', 'XX')
-                                flight_info['airline_logo'] = f"https://daisycon.io/images/airline/?width=60&height=60&color=ffffff&iata={flight_info['airline_code']}"
+                                flight_info['airline_logo'] = "https://daisycon.io/images/airline/?width=60&height=60&color=ffffff&iata={flight_info['airline_code']}"
                             
                             # Horarios
                             flight_info['departureTime'] = first_segment.get('departing_at', '')
@@ -330,28 +330,28 @@ def search_flights():
                     processed_flights.append(flight_info)
                     
                 except Exception as e:
-                    print(f"⚠️ Error procesando vuelo: {e}")
+                    print("⚠️ Error procesando vuelo: {e}")
                     continue
             
-            print(f"✈️ Vuelos procesados: {len(processed_flights)}")
+            print("✈️ Vuelos procesados: {len(processed_flights)}")
             
             return jsonify({
                 "success": True,
-                "message": f"Se encontraron {len(processed_flights)} vuelos",
+                "message": "Se encontraron {len(processed_flights)} vuelos",
                 "total": len(processed_flights),
                 "data": processed_flights
             })
             
         except Exception as e:
-            print(f"💥 Error en búsqueda de vuelos: {str(e)}")
-            return jsonify({"error": f"Error en búsqueda: {str(e)}"}), 500
+            print("💥 Error en búsqueda de vuelos: {str(e)}")
+            return jsonify({"error": "Error en búsqueda: {str(e)}"}), 500
             
     except Exception as e:
-        print(f"💥 Error general: {str(e)}")
-        return jsonify({"error": f"Error general: {str(e)}"}), 500
+        print("💥 Error general: {str(e)}")
+        return jsonify({"error": "Error general: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    print(f"🚀 INICIANDO BACKEND FINAL EN PUERTO {PORT}")
+    print("🚀 INICIANDO BACKEND FINAL EN PUERTO {PORT}")
     print("🌐 Listo para deploy en Render.com")
     
     try:
@@ -363,7 +363,7 @@ if __name__ == '__main__':
         )
     except OSError as e:
         if "Address already in use" in str(e):
-            print(f"⚠️ Puerto {PORT} en uso, esperando 2 segundos...")
+            print("⚠️ Puerto {PORT} en uso, esperando 2 segundos...")
             time.sleep(2)
             app.run(
                 host='0.0.0.0',

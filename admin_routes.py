@@ -291,6 +291,24 @@ def delete_banner(banner_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@admin.route('/api/banners/<banner_id>/toggle', methods=['POST'])
+@require_auth
+def toggle_banner(banner_id):
+    """Activar/desactivar banner"""
+    try:
+        data = request.json
+        active = data.get('active', True)
+        
+        # Actualizar el estado del banner en Supabase
+        result = supabase_service.update_banner(banner_id, {'is_active': active})
+        
+        if result.get('success'):
+            return jsonify({'success': True, 'active': active})
+        else:
+            return jsonify({'error': 'Error al actualizar el banner'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # ===== GESTIÓN DE USUARIOS =====
 @admin.route('/users')
 @require_auth
