@@ -457,6 +457,9 @@
                                                 <button class="btn btn-success" onclick="uploadBanners()">
                                                     <i class="fas fa-upload"></i> Actualizar Banners
                                                 </button>
+                                                <button class="btn btn-primary ms-2" onclick="openBannerManagement()">
+                                                    <i class="fas fa-cogs"></i> Administrar Banners
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -956,6 +959,408 @@ Para preguntas sobre privacidad, contáctenos.</textarea>
             };
             reader.readAsDataURL(file);
         }
+    </script>
+
+    <!-- Modal para Administrar Banners -->
+    <div class="modal fade" id="bannerManagementModal" tabindex="-1" aria-labelledby="bannerManagementModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bannerManagementModalLabel">
+                        <i class="fas fa-images me-2"></i>Administrar Banners Activos
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Banner 1 - Pantalla de Bienvenida -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-home me-2"></i>Banner 1 - Pantalla de Bienvenida</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row" id="banner1Container">
+                                <div class="col-12 text-center">
+                                    <p class="text-muted">Cargando banners...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Banner 2 - Pantalla de Vuelos -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="fas fa-plane me-2"></i>Banner 2 - Pantalla de Vuelos</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row" id="banner2Container">
+                                <div class="col-12 text-center">
+                                    <p class="text-muted">Cargando banners...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de todos los banners -->
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Todos los Banners</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Imagen</th>
+                                            <th>Título</th>
+                                            <th>Tipo</th>
+                                            <th>Orden</th>
+                                            <th>Velocidad</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="bannersTable">
+                                        <tr>
+                                            <td colspan="7" class="text-center">Cargando banners...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" onclick="addNewBanner()">
+                        <i class="fas fa-plus me-2"></i>Agregar Nuevo Banner
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para agregar/editar banner -->
+    <div class="modal fade" id="addBannerModal" tabindex="-1" aria-labelledby="addBannerModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addBannerModalLabel">Agregar Nuevo Banner</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="bannerForm" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="bannerTitle" class="form-label">Título del Banner</label>
+                            <input type="text" class="form-control" id="bannerTitle" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bannerDescription" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="bannerDescription" name="description" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bannerType" class="form-label">Tipo de Banner</label>
+                            <select class="form-select" id="bannerType" name="banner_type" required>
+                                <option value="banner1">Banner 1 - Pantalla de Bienvenida</option>
+                                <option value="banner2">Banner 2 - Pantalla de Vuelos</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bannerOrder" class="form-label">Orden de Visualización</label>
+                            <input type="number" class="form-control" id="bannerOrder" name="order" value="0" min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label for="rotationSpeed" class="form-label">Velocidad de Rotación (ms)</label>
+                            <input type="number" class="form-control" id="rotationSpeed" name="rotation_speed" value="3000" min="1000" max="10000">
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="bannerActive" name="active" checked>
+                                <label class="form-check-label" for="bannerActive">
+                                    Banner Activo
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bannerImage" class="form-label">Imagen del Banner</label>
+                            <input type="file" class="form-control" id="bannerImage" name="image" accept="image/*" required>
+                            <div id="imagePreview" class="mt-2"></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="saveBannerBtn">Guardar Banner</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let banners = [];
+        let editingBannerId = null;
+
+        // Función para abrir el modal de gestión de banners
+        function openBannerManagement() {
+            const modal = new bootstrap.Modal(document.getElementById('bannerManagementModal'));
+            modal.show();
+            loadBanners();
+        }
+
+        // Cargar banners desde la API
+        function loadBanners() {
+            fetch('/admin/api/banners')
+                .then(response => response.json())
+                .then(data => {
+                    banners = data.banners || [];
+                    displayBanners();
+                })
+                .catch(error => {
+                    console.error('Error loading banners:', error);
+                    showAlert('Error al cargar los banners', 'danger');
+                });
+        }
+
+        // Mostrar banners en la interfaz
+        function displayBanners() {
+            const tbody = document.getElementById('bannersTable');
+            
+            // Mostrar banners en contenedores específicos
+            displayBannerContainer('banner1');
+            displayBannerContainer('banner2');
+            
+            // Mostrar todos los banners en la tabla
+            if (banners.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No hay banners disponibles</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = banners.map(banner => `
+                <tr>
+                    <td>
+                        <img src="${banner.image_url}" alt="${banner.title}" class="banner-image" style="width: 60px; height: 40px; object-fit: cover;">
+                    </td>
+                    <td>${banner.title}</td>
+                    <td>
+                        <span class="badge ${banner.banner_type === 'banner1' ? 'bg-success' : 'bg-info'}">
+                            ${banner.banner_type === 'banner1' ? 'Banner 1' : 'Banner 2'}
+                        </span>
+                    </td>
+                    <td>${banner.display_order}</td>
+                    <td>${banner.rotation_speed}ms</td>
+                    <td>
+                        <span class="badge ${banner.is_active ? 'bg-success' : 'bg-danger'}">
+                            ${banner.is_active ? 'Activo' : 'Inactivo'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editBanner('${banner.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteBanner('${banner.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Mostrar banners en contenedores específicos
+        function displayBannerContainer(bannerType) {
+            const container = document.getElementById(`${bannerType}Container`);
+            if (!container) return;
+            
+            const bannerTypeBanners = banners.filter(banner => banner.banner_type === bannerType && banner.is_active);
+            
+            if (bannerTypeBanners.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12 text-center">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <p>No hay fotos para este banner. Haz clic en "Agregar Nuevo Banner" para comenzar.</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = bannerTypeBanners.map((banner, index) => `
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <img src="${banner.image_url}" class="card-img-top" style="height: 150px; object-fit: cover;" alt="${banner.title}">
+                        <div class="card-body">
+                            <h6 class="card-title mb-1">${banner.title}</h6>
+                            <small class="text-muted">Orden: ${banner.display_order}</small>
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="editBanner('${banner.id}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteBanner('${banner.id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Agregar nuevo banner
+        function addNewBanner() {
+            editingBannerId = null;
+            document.getElementById('bannerForm').reset();
+            document.getElementById('addBannerModalLabel').textContent = 'Agregar Nuevo Banner';
+            document.getElementById('bannerImage').required = true;
+            document.getElementById('imagePreview').innerHTML = '';
+            
+            const modal = new bootstrap.Modal(document.getElementById('addBannerModal'));
+            modal.show();
+        }
+
+        // Editar banner
+        function editBanner(bannerId) {
+            const banner = banners.find(b => b.id === bannerId);
+            if (banner) {
+                editingBannerId = bannerId;
+                document.getElementById('addBannerModalLabel').textContent = 'Editar Banner';
+                document.getElementById('bannerTitle').value = banner.title;
+                document.getElementById('bannerDescription').value = banner.description || '';
+                document.getElementById('bannerType').value = banner.banner_type;
+                document.getElementById('bannerOrder').value = banner.display_order;
+                document.getElementById('rotationSpeed').value = banner.rotation_speed;
+                document.getElementById('bannerActive').checked = banner.is_active;
+                
+                // Mostrar imagen actual
+                const preview = document.getElementById('imagePreview');
+                preview.innerHTML = `<img src="${banner.image_url}" class="img-fluid" style="max-height: 150px;">`;
+                
+                // Hacer la imagen opcional para edición
+                document.getElementById('bannerImage').required = false;
+                
+                const modal = new bootstrap.Modal(document.getElementById('addBannerModal'));
+                modal.show();
+            }
+        }
+
+        // Eliminar banner
+        function deleteBanner(bannerId) {
+            if (confirm('¿Estás seguro de que quieres eliminar este banner?')) {
+                fetch(`/admin/api/banners/${bannerId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        loadBanners();
+                        showAlert('Banner eliminado exitosamente', 'success');
+                    } else {
+                        showAlert('Error al eliminar el banner', 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting banner:', error);
+                    showAlert('Error al eliminar el banner', 'danger');
+                });
+            }
+        }
+
+        // Guardar banner
+        document.getElementById('saveBannerBtn').addEventListener('click', function() {
+            const form = document.getElementById('bannerForm');
+            const formData = new FormData(form);
+            formData.append('is_active', document.getElementById('bannerActive').checked);
+            
+            const url = editingBannerId ? `/admin/api/banners/${editingBannerId}` : '/admin/api/banners';
+            const method = editingBannerId ? 'PUT' : 'POST';
+            
+            // Si hay imagen, convertir a base64
+            const imageFile = document.getElementById('bannerImage').files[0];
+            if (imageFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const jsonData = {
+                        title: formData.get('title'),
+                        description: formData.get('description'),
+                        banner_type: formData.get('banner_type'),
+                        display_order: parseInt(formData.get('order')),
+                        rotation_speed: parseInt(formData.get('rotation_speed')),
+                        is_active: formData.get('is_active') === 'on',
+                        image_base64: e.target.result.split(',')[1]
+                    };
+                    sendBannerData(url, method, jsonData);
+                };
+                reader.readAsDataURL(imageFile);
+            } else {
+                const jsonData = {
+                    title: formData.get('title'),
+                    description: formData.get('description'),
+                    banner_type: formData.get('banner_type'),
+                    display_order: parseInt(formData.get('order')),
+                    rotation_speed: parseInt(formData.get('rotation_speed')),
+                    is_active: formData.get('is_active') === 'on'
+                };
+                sendBannerData(url, method, jsonData);
+            }
+        });
+
+        // Enviar datos del banner
+        function sendBannerData(url, method, data) {
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    loadBanners();
+                    showAlert('Banner guardado exitosamente', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('addBannerModal')).hide();
+                } else {
+                    showAlert('Error al guardar el banner: ' + (data.error || 'Error desconocido'), 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving banner:', error);
+                showAlert('Error al guardar el banner', 'danger');
+            });
+        }
+
+        // Mostrar alertas
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const container = document.querySelector('.modal-body') || document.body;
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Vista previa de imagen
+        document.getElementById('bannerImage').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('imagePreview');
+                    preview.innerHTML = `<img src="${e.target.result}" class="img-fluid" style="max-height: 150px;">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
     </script>
 </body>
 </html>
