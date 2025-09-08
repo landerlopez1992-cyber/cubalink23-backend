@@ -19,11 +19,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   int _cartItemsCount = 0;
   String? _currentUserId;
   List<String> _bannerUrls = [];
+  List<String> _flightsBannerUrls = [];
   final CartService _cartService = CartService();
   final StoreService _storeService = StoreService();
   final FirebaseRepository _firebaseRepository = FirebaseRepository.instance;
   int _currentBannerIndex = 0;
+  int _currentFlightsBannerIndex = 0;
   PageController _bannerController = PageController();
+  PageController _flightsBannerController = PageController();
   List<Map<String, dynamic>> _categories = [];
   List<Map<String, dynamic>> _bestSellers = [];
   List<StoreProduct> _realFoodProducts = [];
@@ -48,6 +51,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     _loadRealProductsFromSupabase();
     _loadCategoriesAndBestSellers();
     _loadBannersFromSupabase();
+    _loadFlightsBannersFromSupabase();
     
     print('✅ WelcomeScreen - INICIADO CON CARGA DE PRODUCTOS REALES');
   }
@@ -370,6 +374,48 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     }
   }
 
+  /// Carga banners de tipo banner2 (vuelos) desde Supabase
+  Future<void> _loadFlightsBannersFromSupabase() async {
+    try {
+      print('✈️ Cargando banners de vuelos desde Supabase...');
+      
+      // Cargar banners desde Supabase
+      final banners = await _firebaseRepository.getBanners();
+      print('📸 Banners obtenidos de Supabase: ${banners.length}');
+      
+      if (banners.isNotEmpty) {
+        // Extraer URLs de los banners de tipo banner2 (vuelos)
+        final flightsBannerUrls = banners
+            .where((banner) => 
+                (banner['is_active'] == true || banner['active'] == true) && 
+                banner['image_url'] != null &&
+                banner['banner_type'] == 'banner2')
+            .map((banner) => banner['image_url'] as String)
+            .toList();
+
+        if (mounted) {
+          setState(() {
+            _flightsBannerUrls = flightsBannerUrls;
+          });
+        }
+
+        print('✅ Banners de vuelos cargados: ${flightsBannerUrls.length}');
+        for (var url in flightsBannerUrls) {
+          print('   - Banner de vuelos: $url');
+        }
+
+        // Iniciar auto-scroll si hay múltiples banners de vuelos
+        if (flightsBannerUrls.length > 1) {
+          _startFlightsBannerAutoScroll();
+        }
+      } else {
+        print('⚠️ No hay banners de vuelos en Supabase');
+      }
+    } catch (e) {
+      print('❌ Error cargando banners de vuelos: $e');
+    }
+  }
+
   /// Carga productos por defecto como fallback
   void _loadDefaultProducts() {
     if (mounted) {
@@ -407,6 +453,22 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             curve: Curves.easeInOut,
           );
           _startBannerAutoScroll(); // Continuar el ciclo
+        }
+      });
+    }
+  }
+
+  void _startFlightsBannerAutoScroll() {
+    if (_flightsBannerUrls.length > 1) {
+      Future.delayed(Duration(seconds: 4), () { // 4 segundos para banners de vuelos
+        if (mounted && _flightsBannerController.hasClients) {
+          final nextIndex = (_currentFlightsBannerIndex + 1) % _flightsBannerUrls.length;
+          _flightsBannerController.animateToPage(
+            nextIndex,
+            duration: Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+          );
+          _startFlightsBannerAutoScroll(); // Continuar el ciclo
         }
       });
     }
@@ -728,6 +790,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   SizedBox(height: 20),
                   // Sección "Lo más vendido"
                   _buildBestSellersSection(),
+                  SizedBox(height: 20),
+                  // Sección "Renta Car"
+                  _buildRentaCarSection(),
                   SizedBox(height: 30), // Espacio adicional al final
                 ],
               ),
@@ -1128,137 +1193,194 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       child: Container(
         height: 200,
         margin: EdgeInsets.symmetric(horizontal: 0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF1E88E5), // Azul cielo
-              Color(0xFF42A5F5), // Azul más claro
-              Color(0xFF64B5F6), // Azul aún más claro
-            ],
+        child: _flightsBannerUrls.isNotEmpty 
+            ? _buildDynamicFlightsBanner()
+            : _buildDefaultFlightsBanner(),
+      ),
+    );
+  }
+
+  Widget _buildDynamicFlightsBanner() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Stack(
+        children: [
+          PageView.builder(
+            controller: _flightsBannerController,
+            itemCount: _flightsBannerUrls.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentFlightsBannerIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              return Image.network(
+                _flightsBannerUrls[index],
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    _buildDefaultFlightsBanner(),
+              );
+            },
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.blue.withOpacity( 0.3),
-              blurRadius: 12,
-              offset: Offset(0, 6),
+          if (_flightsBannerUrls.length > 1)
+            Positioned(
+              bottom: 10,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: _flightsBannerUrls.asMap().entries.map((entry) {
+                  return Container(
+                    width: 8,
+                    height: 8,
+                    margin: EdgeInsets.symmetric(horizontal: 3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _currentFlightsBannerIndex == entry.key
+                          ? Colors.white
+                          : Colors.white.withOpacity(0.5),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDefaultFlightsBanner() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF1E88E5), // Azul cielo
+            Color(0xFF42A5F5), // Azul más claro
+            Color(0xFF64B5F6), // Azul aún más claro
           ],
         ),
-        child: Stack(
-          children: [
-            // Decoración con aviones
-            Positioned(
-              right: 20,
-              top: 15,
-              child: Icon(
-                Icons.flight_takeoff,
-                size: 50,
-                color: Colors.white.withOpacity( 0.3),
-              ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withOpacity(0.3),
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Decoración con aviones
+          Positioned(
+            right: 20,
+            top: 15,
+            child: Icon(
+              Icons.flight_takeoff,
+              size: 50,
+              color: Colors.white.withOpacity(0.3),
             ),
-            Positioned(
-              right: 60,
-              bottom: 15,
-              child: Icon(
-                Icons.flight,
-                size: 30,
-                color: Colors.white.withOpacity( 0.2),
-              ),
+          ),
+          Positioned(
+            right: 60,
+            bottom: 15,
+            child: Icon(
+              Icons.flight,
+              size: 30,
+              color: Colors.white.withOpacity(0.2),
             ),
-            // Contenido principal
-            Positioned(
-              left: 20,
-              top: 15,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.orange,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '🔥 OFERTAS ESPECIALES',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+          ),
+          // Contenido principal
+          Positioned(
+            left: 20,
+            top: 15,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.orange,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    '✈️ Los Mejores Precios',
+                  child: Text(
+                    '🔥 OFERTAS ESPECIALES',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 18,
+                      fontSize: 11,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  '✈️ Los Mejores Precios',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'en Pasajes Aéreos',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  '🌍 Para todo el mundo • Desde USA',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Botón de acción
+          Positioned(
+            right: 20,
+            bottom: 15,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   Text(
-                    'en Pasajes Aéreos',
+                    'Reservar Ahora',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1E88E5),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 4),
-                  Text(
-                    '🌍 Para todo el mundo • Desde USA',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity( 0.9),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Color(0xFF1E88E5),
+                    size: 16,
                   ),
                 ],
               ),
             ),
-            // Botón de acción
-            Positioned(
-              right: 20,
-              bottom: 15,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity( 0.1),
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Reservar Ahora',
-                      style: TextStyle(
-                        color: Color(0xFF1E88E5),
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      color: Color(0xFF1E88E5),
-                      size: 16,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1792,5 +1914,181 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         ),
       ],
     );
+  }
+
+  Widget _buildRentaCarSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4),
+          child: Row(
+            children: [
+              Icon(Icons.directions_car, color: Colors.blue, size: 24),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Renta Car',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  // TODO: Navegar a pantalla completa de renta car
+                },
+                child: Text(
+                  'Ver todos',
+                  style: TextStyle(
+                    color: Colors.blue,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 16),
+        Container(
+          height: 240,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: _getRentaCarData().length,
+            itemBuilder: (context, index) {
+              final car = _getRentaCarData()[index];
+              return _buildRentaCarCard(car);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRentaCarCard(Map<String, dynamic> car) {
+    return Container(
+      width: 180,
+      margin: EdgeInsets.only(right: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Imagen del auto
+          Container(
+            height: 120,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+              color: Colors.grey[100],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+              child: Container(
+                color: car['color'],
+                child: Center(
+                  child: Icon(
+                    Icons.directions_car,
+                    size: 60,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Información del auto
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    car['price'],
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green[700],
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    car['type'],
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // TODO: Implementar reserva de auto
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        'Reservar',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Map<String, dynamic>> _getRentaCarData() {
+    return [
+      {
+        'price': '\$107.00 /día',
+        'type': 'Económico Manual',
+        'color': Colors.grey[400],
+      },
+      {
+        'price': '\$113.00 /día',
+        'type': 'Económico Automático',
+        'color': Colors.white,
+      },
+      {
+        'price': '\$105.00 /día',
+        'type': 'Medio Automático',
+        'color': Colors.grey[300],
+      },
+      {
+        'price': '\$152.00 /día',
+        'type': 'SUV Automático',
+        'color': Colors.grey[500],
+      },
+    ];
   }
 }
