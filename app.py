@@ -22,10 +22,12 @@ app.secret_key = os.environ.get('SECRET_KEY', 'cubalink23-secret-key-2024')
 
 # Importar servicios necesarios
 try:
-    from supabase_storage_service import storage_service
-    print("✅ Servicio de storage importado correctamente")
+    from supabase_service import SupabaseService
+    supabase_service = SupabaseService()
+    print("✅ Servicio de Supabase importado correctamente")
 except ImportError as e:
-    print("⚠️ No se pudo importar storage service: {}".format(e))
+    print("⚠️ No se pudo importar Supabase service: {}".format(e))
+    supabase_service = None
 
 # Importar el panel de administración
 from admin_routes import admin
