@@ -2,7 +2,8 @@
   "project_info": {
     "project_number": "544367519155",
     "project_id": "cubalink23-cursor",
-    "storage_bucket": "cubalink23-cursor.appspot.com"
+    "storage_bucket": "cubalink23-cursor.appspot.com",
+    "firebase_url": "https://cubalink23-cursor-default-rtdb.firebaseio.com"
   },
   "client": [
     {
@@ -37,3 +38,4 @@
   ],
   "configuration_version": "1"
 }
+

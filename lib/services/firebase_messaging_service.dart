@@ -92,7 +92,7 @@ class FirebaseMessagingService {
     });
 
     // Manejar mensajes cuando la app está cerrada
-    FirebaseMessaging.getInitialMessage().then((RemoteMessage? message) {
+    _firebaseMessaging.getInitialMessage().then((RemoteMessage? message) {
       if (message != null) {
         print('📱 Mensaje recibido con app cerrada: ${message.notification?.title}');
         _handleBackgroundMessage(message);

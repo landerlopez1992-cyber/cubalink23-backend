@@ -750,3 +750,4 @@ class _ForceUpdateScreenState extends State<ForceUpdateScreen>
     );
   }
 }
+

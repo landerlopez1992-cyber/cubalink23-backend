@@ -50,8 +50,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       _cartItemsCount = _cartService.itemCount; // Inicializar contador del carrito
     });
     
-    // Inicializar Firebase Messaging
-    FirebaseMessagingService().initialize();
+    // Inicializar Firebase Messaging (opcional)
+    try {
+      FirebaseMessagingService().initialize();
+    } catch (e) {
+      print('⚠️ Firebase Messaging no disponible: $e');
+    }
     
     // Inicializar el manager de notificaciones push
     WidgetsBinding.instance.addPostFrameCallback((_) {
