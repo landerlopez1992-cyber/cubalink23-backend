@@ -47,6 +47,7 @@ print("🚀 CUBALINK23 BACKEND - MANTIENE TODO LO EXISTENTE + BANNERS + PUSH NOT
 print("🔧 Puerto: {}".format(PORT))
 print("🔑 API Key: {}".format('✅ Configurada' if DUFFEL_API_KEY else '❌ No configurada'))
 print("🔔 Push Notifications: ✅ Blueprint registrado")
+print("🔄 FORZANDO REINICIO COMPLETO DEL SERVIDOR")
 
 @app.route('/')
 def home():
