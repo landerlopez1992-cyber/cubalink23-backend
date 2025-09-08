@@ -94,11 +94,11 @@ class _StoreScreenState extends State<StoreScreen> {
           'Tienda',
           style: TextStyle(
             color: Colors.white,
-            fontSize: 18,
+            fontSize: 16, // Reducido de 18 a 16
             fontWeight: FontWeight.w600,
           ),
         ),
-        iconTheme: IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: Colors.white, size: 20), // Reducido tamaño
         actions: [
           IconButton(
             onPressed: () {
@@ -106,24 +106,24 @@ class _StoreScreenState extends State<StoreScreen> {
             },
             icon: Stack(
               children: [
-                Icon(Icons.shopping_cart, color: Colors.white, size: 26),
+                Icon(Icons.shopping_cart, color: Colors.white, size: 22), // Reducido de 26 a 22
                 if (_cartService.itemCount > 0)
                   Positioned(
                     right: 0,
                     top: 0,
                     child: Container(
-                      padding: EdgeInsets.all(4),
+                      padding: EdgeInsets.all(3), // Reducido de 4 a 3
                       decoration: BoxDecoration(
                         color: Colors.orange,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 1),
                       ),
-                      constraints: BoxConstraints(minWidth: 16, minHeight: 16),
+                      constraints: BoxConstraints(minWidth: 14, minHeight: 14), // Reducido de 16 a 14
                       child: Text(
                         _cartService.itemCount > 9 ? '9+' : _cartService.itemCount.toString(),
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 10,
+                          fontSize: 9, // Reducido de 10 a 9
                           fontWeight: FontWeight.bold,
                         ),
                         textAlign: TextAlign.center,
@@ -137,22 +137,24 @@ class _StoreScreenState extends State<StoreScreen> {
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              physics: BouncingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Banner informativo
-                  _buildInfoBanner(),
-                  
-                  // Categorías
-                  _buildCategoriesSection(),
-                  
-                  // Productos destacados
-                  if (_realProducts.isNotEmpty) _buildFeaturedProductsSection(),
-                  
-                  SizedBox(height: 20),
-                ],
+          : SafeArea(
+              child: SingleChildScrollView(
+                physics: BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Banner informativo
+                    _buildInfoBanner(),
+                    
+                    // Categorías
+                    _buildCategoriesSection(),
+                    
+                    // Productos destacados
+                    if (_realProducts.isNotEmpty) _buildFeaturedProductsSection(),
+                    
+                    SizedBox(height: 40), // Aumentado de 20 a 40 para bottom navigation
+                  ],
+                ),
               ),
             ),
     );
@@ -160,8 +162,8 @@ class _StoreScreenState extends State<StoreScreen> {
 
   Widget _buildInfoBanner() {
     return Container(
-      margin: EdgeInsets.all(16),
-      padding: EdgeInsets.all(16),
+      margin: EdgeInsets.all(12), // Reducido de 16 a 12
+      padding: EdgeInsets.all(12), // Reducido de 16 a 12
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -171,12 +173,12 @@ class _StoreScreenState extends State<StoreScreen> {
             Colors.green.shade400,
           ],
         ),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10), // Reducido de 12 a 10
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withOpacity( 0.3),
-            blurRadius: 8,
-            offset: Offset(0, 4),
+            color: Colors.green.withOpacity(0.3),
+            blurRadius: 6, // Reducido de 8 a 6
+            offset: Offset(0, 3), // Reducido de 4 a 3
           ),
         ],
       ),
@@ -185,24 +187,24 @@ class _StoreScreenState extends State<StoreScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.local_shipping, color: Colors.white, size: 24),
-              SizedBox(width: 8),
+              Icon(Icons.local_shipping, color: Colors.white, size: 20), // Reducido de 24 a 20
+              SizedBox(width: 6), // Reducido de 8 a 6
               Text(
                 'Entrega Rápida',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 18,
+                  fontSize: 16, // Reducido de 18 a 16
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          SizedBox(height: 8),
+          SizedBox(height: 6), // Reducido de 8 a 6
           Text(
             '📦 Entrega Express: Pinar del Río hasta Camagüey\\n🚢 Entrega por Barco: Todas las provincias',
             style: TextStyle(
-              color: Colors.white.withOpacity( 0.9),
-              fontSize: 14,
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 12, // Reducido de 14 a 12
             ),
           ),
         ],
@@ -212,33 +214,33 @@ class _StoreScreenState extends State<StoreScreen> {
 
   Widget _buildCategoriesSection() {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: 12), // Reducido de 16 a 12
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.category, color: Theme.of(context).colorScheme.primary, size: 24),
-              SizedBox(width: 8),
+              Icon(Icons.category, color: Theme.of(context).colorScheme.primary, size: 20), // Reducido de 24 a 20
+              SizedBox(width: 6), // Reducido de 8 a 6
               Text(
                 'Categorías',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 18, // Reducido de 20 a 18
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],
           ),
-          SizedBox(height: 16),
+          SizedBox(height: 12), // Reducido de 16 a 12
           GridView.builder(
             shrinkWrap: true,
             physics: NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              childAspectRatio: 1.2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
+              childAspectRatio: 1.1, // Reducido de 1.2 a 1.1 para más compacto
+              mainAxisSpacing: 10, // Reducido de 12 a 10
+              crossAxisSpacing: 10, // Reducido de 12 a 10
             ),
             itemCount: _realCategories.length,
             itemBuilder: (context, index) {
@@ -266,12 +268,12 @@ class _StoreScreenState extends State<StoreScreen> {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12), // Reducido de 16 a 12
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity( 0.1),
-              blurRadius: 8,
-              offset: Offset(0, 3),
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 6, // Reducido de 8 a 6
+              offset: Offset(0, 2), // Reducido de 3 a 2
             ),
           ],
         ),
@@ -279,32 +281,32 @@ class _StoreScreenState extends State<StoreScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: EdgeInsets.all(16),
+              padding: EdgeInsets.all(12), // Reducido de 16 a 12
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity( 0.1),
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 iconData,
-                size: 32,
+                size: 28, // Reducido de 32 a 28
                 color: Theme.of(context).colorScheme.primary,
               ),
             ),
-            SizedBox(height: 12),
+            SizedBox(height: 8), // Reducido de 12 a 8
             Text(
               category.name,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13, // Reducido de 14 a 13
                 fontWeight: FontWeight.w600,
                 color: Colors.black87,
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 4),
+            SizedBox(height: 2), // Reducido de 4 a 2
             Text(
               category.description,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10, // Reducido de 11 a 10
                 color: Colors.grey.shade600,
               ),
               textAlign: TextAlign.center,
@@ -319,28 +321,28 @@ class _StoreScreenState extends State<StoreScreen> {
 
   Widget _buildFeaturedProductsSection() {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: 12), // Reducido de 16 a 12
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: 24),
+          SizedBox(height: 20), // Reducido de 24 a 20
           Row(
             children: [
-              Icon(Icons.star, color: Colors.orange, size: 24),
-              SizedBox(width: 8),
+              Icon(Icons.star, color: Colors.orange, size: 20), // Reducido de 24 a 20
+              SizedBox(width: 6), // Reducido de 8 a 6
               Text(
                 'Productos Destacados',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 18, // Reducido de 20 a 18
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],
           ),
-          SizedBox(height: 16),
+          SizedBox(height: 12), // Reducido de 16 a 12
           Container(
-            height: 220,
+            height: 200, // Reducido de 220 a 200
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: _realProducts.take(10).length,
@@ -382,16 +384,16 @@ class _StoreScreenState extends State<StoreScreen> {
         );
       },
       child: Container(
-        width: 160,
-        margin: EdgeInsets.only(right: 12),
+        width: 150, // Reducido de 160 a 150
+        margin: EdgeInsets.only(right: 10), // Reducido de 12 a 10
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10), // Reducido de 12 a 10
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity( 0.1),
-              blurRadius: 8,
-              offset: Offset(0, 3),
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 6, // Reducido de 8 a 6
+              offset: Offset(0, 2), // Reducido de 3 a 2
             ),
           ],
         ),
@@ -401,9 +403,9 @@ class _StoreScreenState extends State<StoreScreen> {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(10)), // Reducido de 12 a 10
                   child: Container(
-                    height: 100,
+                    height: 90, // Reducido de 100 a 90
                     width: double.infinity,
                     child: Image.network(
                       product.imageUrl,
@@ -412,7 +414,7 @@ class _StoreScreenState extends State<StoreScreen> {
                         color: Colors.grey.shade200,
                         child: Icon(
                           Icons.image_not_supported,
-                          size: 40,
+                          size: 35, // Reducido de 40 a 35
                           color: Colors.grey.shade400,
                         ),
                       ),
@@ -421,19 +423,19 @@ class _StoreScreenState extends State<StoreScreen> {
                 ),
                 if (!product.isAvailable)
                   Positioned(
-                    top: 8,
-                    left: 8,
+                    top: 6, // Reducido de 8 a 6
+                    left: 6, // Reducido de 8 a 6
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: EdgeInsets.symmetric(horizontal: 5, vertical: 2), // Reducido padding
                       decoration: BoxDecoration(
                         color: Colors.red,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(6), // Reducido de 8 a 6
                       ),
                       child: Text(
                         'AGOTADO',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 10,
+                          fontSize: 9, // Reducido de 10 a 9
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -443,7 +445,7 @@ class _StoreScreenState extends State<StoreScreen> {
             ),
             Expanded(
               child: Padding(
-                padding: EdgeInsets.all(12),
+                padding: EdgeInsets.all(10), // Reducido de 12 a 10
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -451,7 +453,7 @@ class _StoreScreenState extends State<StoreScreen> {
                     Text(
                       product.name,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13, // Reducido de 14 a 13
                         fontWeight: FontWeight.w600,
                         color: Colors.black87,
                       ),
@@ -467,7 +469,7 @@ class _StoreScreenState extends State<StoreScreen> {
                             Text(
                               '\$${product.price.toStringAsFixed(2)}',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 15, // Reducido de 16 a 15
                                 fontWeight: FontWeight.bold,
                                 color: Theme.of(context).colorScheme.primary,
                               ),
@@ -475,7 +477,7 @@ class _StoreScreenState extends State<StoreScreen> {
                             Text(
                               'por ${product.unit}',
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 9, // Reducido de 10 a 9
                                 color: Colors.grey.shade600,
                               ),
                             ),
@@ -483,8 +485,8 @@ class _StoreScreenState extends State<StoreScreen> {
                         ),
                         if (product.isAvailable)
                           Container(
-                            width: 32,
-                            height: 32,
+                            width: 28, // Reducido de 32 a 28
+                            height: 28, // Reducido de 32 a 28
                             decoration: BoxDecoration(
                               color: Theme.of(context).colorScheme.primary,
                               shape: BoxShape.circle,
@@ -495,7 +497,7 @@ class _StoreScreenState extends State<StoreScreen> {
                               icon: Icon(
                                 Icons.add,
                                 color: Colors.white,
-                                size: 18,
+                                size: 16, // Reducido de 18 a 16
                               ),
                             ),
                           ),

@@ -32,8 +32,10 @@ except ImportError as e:
 # Importar el panel de administración
 from admin_routes import admin
 from auth_routes import auth
+from push_notifications_routes import push_bp
 app.register_blueprint(admin)
 app.register_blueprint(auth)
+app.register_blueprint(push_bp)
 
 # Configuración
 PORT = int(os.environ.get('PORT', 10000))

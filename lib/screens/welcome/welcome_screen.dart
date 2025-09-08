@@ -4,6 +4,7 @@ import 'package:cubalink23/screens/travel/flight_booking_screen.dart';
 import 'package:cubalink23/services/cart_service.dart';
 import 'package:cubalink23/services/store_service.dart';
 import 'package:cubalink23/services/firebase_repository.dart';
+import 'package:cubalink23/services/notification_manager.dart';
 import 'package:cubalink23/models/store_product.dart';
 import 'package:cubalink23/screens/shopping/product_details_screen.dart';
 
@@ -47,6 +48,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       _cartItemsCount = _cartService.itemCount; // Inicializar contador del carrito
     });
     
+    // Inicializar el manager de notificaciones push
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      NotificationManager().initialize(context);
+    });
+    
     // Cargar productos reales de Supabase inmediatamente
     _loadRealProductsFromSupabase();
     _loadCategoriesAndBestSellers();
@@ -60,7 +66,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   void dispose() {
     _bannerController.dispose();
+    _flightsBannerController.dispose();
     _cartService.removeListener(_updateCartCount);
+    NotificationManager().dispose();
     super.dispose();
   }
 
@@ -669,11 +677,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 children: [
                   // Grid de botones con altura fija apropiada
                   Container(
-                    height: 420, // Altura aumentada para mejor espaciado
+                    height: 480, // Aumentado de 420 a 480 para más espacio
                     child: GridView.count(
                       physics: NeverScrollableScrollPhysics(), // Desabilitar scroll interno del grid
                       crossAxisCount: 3,
-                      childAspectRatio: 0.9, // Mejor proporción para evitar corte
+                      childAspectRatio: 0.8, // Reducido de 0.9 a 0.8 para más altura
                       mainAxisSpacing: 20,
                       crossAxisSpacing: 16,
                       children: [
@@ -778,7 +786,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       ],
                     ),
                   ),
-                  SizedBox(height: 24), // Más espacio después del grid
+                  SizedBox(height: 40), // Aumentado de 24 a 40 para separar botonera del banner
                   // Segundo banner publicitario de vuelos (misma altura que el superior)
                   _buildFlightsBanner(),
                   SizedBox(height: 20),
@@ -861,7 +869,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity( 0.15),
+              color: Colors.grey.withOpacity(0.15),
               blurRadius: 12,
               offset: Offset(0, 4),
             ),
@@ -882,7 +890,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: cardGradient.first.withOpacity( 0.3),
+                    color: cardGradient.first.withOpacity(0.3),
                     blurRadius: 8,
                     offset: Offset(0, 3),
                   ),
@@ -894,13 +902,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 color: Colors.white,
               ),
             ),
-            SizedBox(height: 12),
+            SizedBox(height: 10), // Reducido de 12 a 10
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8),
+              padding: EdgeInsets.symmetric(horizontal: 6), // Reducido de 8 a 6
               child: Text(
                 title,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11, // Reducido de 12 a 11 para mejor ajuste
                   fontWeight: FontWeight.w600,
                   color: Colors.grey.shade700,
                 ),
@@ -961,13 +969,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 color: Colors.white,
               ),
             ),
-            SizedBox(height: 12),
+            SizedBox(height: 10), // Reducido de 12 a 10
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8),
+              padding: EdgeInsets.symmetric(horizontal: 6), // Reducido de 8 a 6
               child: Text(
                 title,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11, // Reducido de 12 a 11 para mejor ajuste
                   fontWeight: FontWeight.w600,
                   color: Colors.grey.shade700,
                 ),
@@ -1922,39 +1930,20 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       children: [
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 4),
-          child: Row(
-            children: [
-              Icon(Icons.directions_car, color: Colors.blue, size: 24),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Renta Car',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+          child: Center(
+            child: Text(
+              'Renta Car',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
               ),
-              TextButton(
-                onPressed: () {
-                  // TODO: Navegar a pantalla completa de renta car
-                },
-                child: Text(
-                  'Ver todos',
-                  style: TextStyle(
-                    color: Colors.blue,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
         SizedBox(height: 16),
         Container(
-          height: 240,
+          height: 180,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: _getRentaCarData().length,
@@ -1970,7 +1959,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   Widget _buildRentaCarCard(Map<String, dynamic> car) {
     return Container(
-      width: 180,
+      width: 160,
       margin: EdgeInsets.only(right: 16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1985,81 +1974,72 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
           // Imagen del auto
           Container(
-            height: 120,
+            height: 100,
             width: double.infinity,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-              color: Colors.grey[100],
+              color: car['color'],
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-              child: Container(
-                color: car['color'],
-                child: Center(
-                  child: Icon(
-                    Icons.directions_car,
-                    size: 60,
-                    color: Colors.white,
-                  ),
-                ),
+            child: Center(
+              child: Icon(
+                Icons.directions_car,
+                size: 50,
+                color: Colors.white,
               ),
             ),
           ),
           // Información del auto
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    car['price'],
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green[700],
-                    ),
+          Padding(
+            padding: EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  car['price'],
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green[700],
                   ),
-                  SizedBox(height: 4),
-                  Text(
-                    car['type'],
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                    ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  car['type'],
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
                   ),
-                  SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // TODO: Implementar reserva de auto
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                ),
+                SizedBox(height: 6),
+                SizedBox(
+                  width: double.infinity,
+                  height: 32,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // TODO: Implementar reserva de auto
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Text(
-                        'Reservar',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    ),
+                    child: Text(
+                      'Reservar',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],

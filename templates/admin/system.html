@@ -652,6 +652,7 @@ Para preguntas sobre privacidad, contáctenos.</textarea>
         // Cargar datos al iniciar
         document.addEventListener('DOMContentLoaded', function() {
             loadSystemData();
+            loadNotificationHistory();
         });
 
         function loadSystemData() {
@@ -814,10 +815,10 @@ Para preguntas sobre privacidad, contáctenos.</textarea>
                 title: title,
                 message: message,
                 type: type,
-                urgent: urgent
+                is_urgent: urgent
             };
             
-            fetch('/admin/api/send-push-notification', {
+            fetch('/api/push-notifications', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -835,7 +836,7 @@ Para preguntas sobre privacidad, contáctenos.</textarea>
                     // Actualizar historial
                     loadNotificationHistory();
                 } else {
-                    alert('Error al enviar notificación: ' + data.message);
+                    alert('Error al enviar notificación: ' + data.error);
                 }
             })
             .catch(error => {
@@ -845,19 +846,22 @@ Para preguntas sobre privacidad, contáctenos.</textarea>
         }
 
         function loadNotificationHistory() {
-            fetch('/admin/api/notification-history')
+            fetch('/api/push-notifications')
             .then(response => response.json())
             .then(data => {
                 const tbody = document.getElementById('notificationHistory');
-                if (data.notifications && data.notifications.length > 0) {
+                if (data.success && data.notifications && data.notifications.length > 0) {
                     tbody.innerHTML = data.notifications.map(notification => `
                         <tr>
-                            <td class="text-white">${notification.date}</td>
+                            <td class="text-white">${new Date(notification.sent_at).toLocaleString()}</td>
                             <td class="text-white">${notification.title}</td>
                             <td class="text-white">${notification.message}</td>
                             <td class="text-white">${notification.type}</td>
                             <td class="text-white">
                                 <span class="badge bg-success">Enviada</span>
+                                <button class="btn btn-sm btn-outline-danger ms-2" onclick="deleteNotification('${notification.id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </td>
                         </tr>
                     `).join('');
@@ -868,6 +872,27 @@ Para preguntas sobre privacidad, contáctenos.</textarea>
             .catch(error => {
                 console.error('Error cargando historial:', error);
             });
+        }
+
+        function deleteNotification(notificationId) {
+            if (confirm('¿Estás seguro de que quieres eliminar esta notificación?')) {
+                fetch(`/api/push-notifications/${notificationId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Notificación eliminada exitosamente');
+                        loadNotificationHistory();
+                    } else {
+                        alert('Error al eliminar notificación: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al eliminar notificación');
+                });
+            }
         }
 
         // Funciones para gestión del logo
