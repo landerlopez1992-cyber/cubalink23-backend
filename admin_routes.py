@@ -460,7 +460,16 @@ def create_product():
         # Manejar vendor_id - debe ser UUID válido o usar admin por defecto
         vendor_id = data.get('vendor_id')
         if vendor_id and vendor_id != 'test-vendor':
-            product_data['vendor_id'] = vendor_id
+            # Solo agregar si es un UUID válido
+            try:
+                import uuid
+                uuid.UUID(vendor_id)  # Validar que sea UUID
+                product_data['vendor_id'] = vendor_id
+            except ValueError:
+                # Si no es UUID válido, usar admin por defecto
+                admin_id = get_admin_user_id()
+                if admin_id:
+                    product_data['vendor_id'] = admin_id
         else:
             # Usar admin por defecto si no se especifica o es un valor de prueba
             admin_id = get_admin_user_id()
