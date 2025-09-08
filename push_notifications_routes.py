@@ -42,9 +42,9 @@ def send_push_notification():
                 'Content-Type': 'application/json'
             }
             
-            # Insertar notificación en la tabla push_notifications
+            # Insertar notificación en la tabla notifications
             response = requests.post(
-                f'{SUPABASE_URL}/rest/v1/push_notifications',
+                f'{SUPABASE_URL}/rest/v1/notifications',
                 headers=headers,
                 json=notification_data
             )
@@ -91,7 +91,7 @@ def get_push_notifications():
         
         # Obtener notificaciones ordenadas por fecha descendente
         response = requests.get(
-            f'{SUPABASE_URL}/rest/v1/push_notifications?order=sent_at.desc&limit=50',
+            f'{SUPABASE_URL}/rest/v1/notifications?order=sent_at.desc&limit=50',
             headers=headers
         )
         
@@ -130,7 +130,7 @@ def delete_push_notification(notification_id):
         
         # Eliminar notificación
         response = requests.delete(
-            f'{SUPABASE_URL}/rest/v1/push_notifications?id=eq.{notification_id}',
+            f'{SUPABASE_URL}/rest/v1/notifications?id=eq.{notification_id}',
             headers=headers
         )
         
@@ -148,4 +148,5 @@ def delete_push_notification(notification_id):
     except Exception as e:
         print(f"❌ Error eliminando notificación: {e}")
         return jsonify({'success': False, 'error': f'Error interno: {str(e)}'}), 500
+
 
