@@ -1,34 +1,53 @@
-# Variables de entorno
-.env
-config.env
-
-# Cache Python
+# Logs y caches
+*.log
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.Python
+
+# Python env
+.venv/
+venv/
+.env
+.env.*
+.env.local
+
+# Builds y empaques
 build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
-.installed.cfg
-*.egg
+*.zip
+*.tar
+*.tgz
 
-# Archivos temporales
-*.tmp
-*.log
-.DS_Store
+# Node/Frontend (si aplica)
+node_modules/
+dist/
+out/
 
-# Archivos locales de desarrollo
-static/uploads/
-instance/
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+pubspec.lock
+
+# Cursor
+.cursor/*
+!.cursor/rules/*.mdc
+
+# PROTECCIÓN DE PRODUCCIÓN - NO TOCAR ESTOS ARCHIVOS
+# Estos archivos están funcionando en producción, no los modifiques
+app.py
+admin_routes.py
+auth_routes.py
+database.py
+requirements.txt
+render.yaml
+Procfile
+runtime.txt
+
+# Archivos de configuración de producción
+config.env
+.env.production
+.env.render

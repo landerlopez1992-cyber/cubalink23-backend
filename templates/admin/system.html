@@ -531,6 +531,20 @@
                                                 <h5 class="text-white"><i class="fas fa-image text-white"></i> Gestión de Banners de la App</h5>
                                             </div>
                                             <div class="card-body">
+                                                <!-- Banners Existentes -->
+                                                <div class="mb-4">
+                                                    <h6 class="text-white"><i class="fas fa-images"></i> Banners Actuales</h6>
+                                                    <div id="currentBanners" class="row">
+                                                        <div class="col-12 text-center text-white-50">
+                                                            <i class="fas fa-spinner fa-spin"></i> Cargando banners...
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <hr class="text-white-50">
+                                                
+                                                <!-- Subir Nuevos Banners -->
+                                                <h6 class="text-white"><i class="fas fa-upload"></i> Subir Nuevos Banners</h6>
                                                 <div class="mb-3">
                                                     <label class="form-label text-white">Banner Principal (Home)</label>
                                                     <input type="file" class="form-control" id="mainBanner" accept="image/*">
@@ -741,6 +755,7 @@ Para preguntas sobre privacidad, contáctenos.</textarea>
         // Cargar datos al iniciar
         document.addEventListener('DOMContentLoaded', function() {
             loadSystemData();
+            loadCurrentBanners();
         });
 
         function loadSystemData() {
@@ -878,6 +893,8 @@ Para preguntas sobre privacidad, contáctenos.</textarea>
                     document.getElementById('mainBanner').value = '';
                     document.getElementById('secondaryBanner').value = '';
                     document.getElementById('promoBanner').value = '';
+                    // Recargar la lista de banners
+                    loadCurrentBanners();
                 } else {
                     alert('Error al actualizar banners: ' + data.message);
                 }
@@ -1048,6 +1065,115 @@ Para preguntas sobre privacidad, contáctenos.</textarea>
             };
             reader.readAsDataURL(file);
         }
+
+        // Funciones para gestión de banners existentes
+        function loadCurrentBanners() {
+            fetch('/admin/api/banners')
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('currentBanners');
+                
+                if (data && data.length > 0) {
+                    container.innerHTML = data.map(banner => `
+                        <div class="col-md-6 mb-3">
+                            <div class="card" style="background-color: #1a1a2e; border: 1px solid #16213e;">
+                                <div class="card-body p-2">
+                                    <div class="text-center">
+                                        <img src="${banner.image_url}" 
+                                             alt="${banner.title}" 
+                                             style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px;"
+                                             onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlbiBubyBkaXNwb25pYmxlPC90ZXh0Pjwvc3ZnPg=='">
+                                        <h6 class="text-white mt-2 mb-1">${banner.title}</h6>
+                                        <small class="text-white-50 d-block mb-2">${banner.banner_type || 'Sin tipo'}</small>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button class="btn btn-outline-primary btn-sm" onclick="toggleBannerStatus('${banner.id}', ${banner.is_active})">
+                                                <i class="fas fa-${banner.is_active ? 'eye-slash' : 'eye'}"></i>
+                                                ${banner.is_active ? 'Ocultar' : 'Mostrar'}
+                                            </button>
+                                            <button class="btn btn-outline-danger btn-sm" onclick="deleteBanner('${banner.id}')">
+                                                <i class="fas fa-trash"></i> Eliminar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = `
+                        <div class="col-12 text-center text-white-50">
+                            <i class="fas fa-image"></i>
+                            <p class="mt-2">No hay banners disponibles</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error cargando banners:', error);
+                document.getElementById('currentBanners').innerHTML = `
+                    <div class="col-12 text-center text-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p class="mt-2">Error al cargar banners</p>
+                    </div>
+                `;
+            });
+        }
+
+        function deleteBanner(bannerId) {
+            if (!confirm('¿Está seguro de que desea eliminar este banner? Esta acción no se puede deshacer.')) {
+                return;
+            }
+
+            fetch(`/admin/api/banners/${bannerId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success !== false) {
+                    alert('Banner eliminado correctamente');
+                    loadCurrentBanners(); // Recargar la lista
+                } else {
+                    alert('Error al eliminar el banner: ' + (data.error || 'Error desconocido'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al eliminar el banner');
+            });
+        }
+
+        function toggleBannerStatus(bannerId, currentStatus) {
+            const newStatus = !currentStatus;
+            
+            fetch(`/admin/api/banners/${bannerId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    is_active: newStatus
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success !== false) {
+                    alert(`Banner ${newStatus ? 'activado' : 'desactivado'} correctamente`);
+                    loadCurrentBanners(); // Recargar la lista
+                } else {
+                    alert('Error al cambiar el estado del banner: ' + (data.error || 'Error desconocido'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al cambiar el estado del banner');
+            });
+        }
     </script>
 </body>
 </html>
+<!-- Deploy test -->
+<!-- DEPLOY TEST -->
+<!-- DEPLOY FORCE -->
