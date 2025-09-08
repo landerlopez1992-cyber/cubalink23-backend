@@ -65,7 +65,16 @@ def health_check():
     return jsonify({
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "duffel_key_configured": bool(DUFFEL_API_KEY)
+        "duffel_key_configured": bool(DUFFEL_API_KEY),
+        "push_notifications": "✅ Available"
+    })
+
+@app.route('/api/test-push')
+def test_push():
+    """🧪 Test push notifications endpoint"""
+    return jsonify({
+        "message": "Push notifications endpoint is working!",
+        "timestamp": datetime.now().isoformat()
     })
 
 # ===== FUNCIONALIDADES DE VUELOS (MANTIENEN TODO LO EXISTENTE) =====
