@@ -203,37 +203,58 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      body: Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(24, 24, 24, 40),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              SizedBox(height: 40),
+              // Logo de la app
               Container(
-                width: 150,
-                height: 150,
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.phone_android,
-                    size: 60,
-                    color: Colors.white,
-                  ),
+                width: 140,
+                height: 140,
+                child: Image.asset(
+                  'assets/images/assets_task_01k3m7yveaebmtdrdnybpe7ngv_1756247471_img_1.webp',
+                  width: 140,
+                  height: 140,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 140,
+                      height: 140,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).primaryColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.phone_android,
+                        size: 60,
+                        color: Colors.white,
+                      ),
+                    );
+                  },
                 ),
               ),
-              SizedBox(height: 24),
+              SizedBox(height: 16),
+              // Nombre de la app
               Text(
-                'Bienvenido',
+                'Cubalink23',
                 style: TextStyle(
-                  fontSize: 32,
+                  fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).primaryColor,
                 ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Disfruta, Conecta con el Mundo',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                  fontStyle: FontStyle.italic,
+                ),
+                textAlign: TextAlign.center,
               ),
               SizedBox(height: 48),
               // Selector de tipo de login
@@ -426,6 +447,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   return SizedBox.shrink();
                 },
               ),
+              SizedBox(height: 20),
             ],
           ),
         ),
