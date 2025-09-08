@@ -60,11 +60,17 @@ print("🔄 REINICIO FORZADO - TIMESTAMP: {}".format(datetime.now().isoformat())
 def home():
     """🏠 Página principal"""
     return jsonify({
-        "message": "CubaLink23 Backend - MANTIENE TODO LO EXISTENTE + BANNERS",
+        "message": "CubaLink23 Backend - MANTIENE TODO LO EXISTENTE + BANNERS + PUSH NOTIFICATIONS",
         "status": "online",
         "timestamp": datetime.now().isoformat(),
         "version": "FINAL_100%",
-        "endpoints": ["/api/health", "/admin/api/flights/search", "/admin/api/flights/airports"]
+        "endpoints": [
+            "/api/health", 
+            "/admin/api/flights/search", 
+            "/admin/api/flights/airports",
+            "/api/push-notifications",
+            "/api/test-push"
+        ]
     })
 
 @app.route('/api/health')
