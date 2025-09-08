@@ -49,6 +49,7 @@ print("🔑 API Key: {}".format('✅ Configurada' if DUFFEL_API_KEY else '❌ No
 print("🔔 Push Notifications: ✅ Blueprint registrado")
 print("🔄 FORZANDO REINICIO COMPLETO DEL SERVIDOR")
 print("📱 PUSH NOTIFICATIONS ENDPOINTS: /api/push-notifications")
+print("🔄 REINICIO FORZADO - TIMESTAMP: {}".format(datetime.now().isoformat()))
 
 @app.route('/')
 def home():
