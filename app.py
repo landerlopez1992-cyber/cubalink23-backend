@@ -447,9 +447,10 @@ def delete_push_notification(notification_id):
         return jsonify({'success': False, 'error': f'Error interno: {str(e)}'}), 500
 
 if __name__ == '__main__':
-    print("🚀 FORZANDO DEPLOY RENDER - PUSH NOTIFICATIONS FIX - 2025-09-08 18:10")
+    print("🚀 FORZANDO DEPLOY RENDER - PUSH NOTIFICATIONS FIX - 2025-09-08 18:12")
     print("🔧 RUTAS REGISTRADAS:")
     for rule in app.url_map.iter_rules():
         print(f"   {rule.methods} {rule.rule}")
+    print("✅ PUSH NOTIFICATIONS ENDPOINTS DEBERÍAN ESTAR FUNCIONANDO")
     app.run(host='0.0.0.0', port=PORT, debug=False)
 
