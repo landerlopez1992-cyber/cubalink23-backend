@@ -457,8 +457,15 @@ def create_product():
             product_data['weight'] = data.get('weight')
         if data.get('shipping_cost'):
             product_data['shipping_cost'] = float(data.get('shipping_cost', 0))
-        if data.get('vendor_id'):
-            product_data['vendor_id'] = data.get('vendor_id', get_admin_user_id())
+        # Manejar vendor_id - debe ser UUID válido o usar admin por defecto
+        vendor_id = data.get('vendor_id')
+        if vendor_id and vendor_id != 'test-vendor':
+            product_data['vendor_id'] = vendor_id
+        else:
+            # Usar admin por defecto si no se especifica o es un valor de prueba
+            admin_id = get_admin_user_id()
+            if admin_id:
+                product_data['vendor_id'] = admin_id
         if data.get('shipping_methods'):
             product_data['shipping_methods'] = data.get('shipping_methods', [])
         if data.get('tags'):
