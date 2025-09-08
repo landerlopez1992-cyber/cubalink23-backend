@@ -13,9 +13,11 @@ import 'package:cubalink23/screens/communication/communication_screen.dart';
 import 'package:cubalink23/screens/history/history_screen.dart';
 import 'package:cubalink23/screens/notifications/notifications_screen.dart';
 import 'package:cubalink23/screens/help/help_screen.dart';
+import 'package:cubalink23/screens/news/news_screen.dart';
 import 'package:cubalink23/screens/activity/activity_screen.dart';
 import 'package:cubalink23/screens/transfer/transfer_screen.dart';
 import 'package:cubalink23/screens/recharge/recharge_home_screen.dart';
+import 'package:cubalink23/screens/profile/favorites_screen.dart';
 import 'package:cubalink23/screens/travel/flight_booking_screen.dart';
 import 'package:cubalink23/screens/travel/flight_results_screen.dart';
 import 'package:cubalink23/screens/travel/flight_detail_simple.dart';
@@ -65,9 +67,11 @@ class CubaLink23App extends StatelessWidget {
         '/history': (context) => HistoryScreen(),
         '/notifications': (context) => NotificationsScreen(),
         '/help': (context) => HelpScreen(),
+        '/news': (context) => NewsScreen(),
         '/activity': (context) => ActivityScreen(),
         '/transfer': (context) => TransferScreen(),
         '/recharge': (context) => RechargeHomeScreen(),
+        '/favorites': (context) => FavoritesScreen(),
         '/flights': (context) => FlightBookingScreen(),
         '/flight-search': (context) => FlightBookingScreen(),
         '/flight-results': (context) => FlightResultsScreen(

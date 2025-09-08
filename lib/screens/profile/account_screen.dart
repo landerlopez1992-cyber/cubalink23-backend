@@ -100,13 +100,15 @@ class _AccountScreenState extends State<AccountScreen> {
               color: Theme.of(context).colorScheme.primary,
             ),
           )
-        : SingleChildScrollView(
-            child: Column(
-              children: [
-                // Header con gradiente
+        : SafeArea(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(bottom: 20), // Padding inferior para evitar barra de navegación
+              child: Column(
+                children: [
+                // Header con gradiente - Optimizado para Motorola Edge 2024
                 Container(
                   width: double.infinity,
-                  padding: EdgeInsets.all(32),
+                  padding: EdgeInsets.all(20), // Reducido de 32 a 20
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -120,12 +122,12 @@ class _AccountScreenState extends State<AccountScreen> {
                   ),
                   child: Column(
                     children: [
-                      // Foto de perfil circular (táctil)
+                      // Foto de perfil circular (táctil) - Optimizada para Motorola
                       GestureDetector(
                         onTap: _changeProfileImage,
                         child: Container(
-                          width: 120,
-                          height: 120,
+                          width: 100, // Reducido de 120 a 100
+                          height: 100, // Reducido de 120 a 100
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: Colors.white,
@@ -137,17 +139,17 @@ class _AccountScreenState extends State<AccountScreen> {
                           child: Stack(
                             children: [
                               CircleAvatar(
-                                radius: 56,
+                                radius: 46, // Reducido de 56 a 46
                                 backgroundColor: Colors.grey[300],
                                 backgroundImage: _getProfileImage(),
                               ),
-                              // Icono de cámara
+                              // Icono de cámara - Optimizado para Motorola
                               Positioned(
                                 bottom: 0,
                                 right: 0,
                                 child: Container(
-                                  width: 36,
-                                  height: 36,
+                                  width: 30, // Reducido de 36 a 30
+                                  height: 30, // Reducido de 36 a 30
                                   decoration: BoxDecoration(
                                     color: Theme.of(context).colorScheme.primary,
                                     shape: BoxShape.circle,
@@ -156,7 +158,7 @@ class _AccountScreenState extends State<AccountScreen> {
                                   child: Icon(
                                     Icons.camera_alt,
                                     color: Colors.white,
-                                    size: 18,
+                                    size: 16, // Reducido de 18 a 16
                                   ),
                                 ),
                               ),
@@ -164,30 +166,30 @@ class _AccountScreenState extends State<AccountScreen> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 16),
+                      SizedBox(height: 12), // Reducido de 16 a 12
                       Text(
                         _nameController.text.isNotEmpty ? _nameController.text : 'Usuario',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 24,
+                          fontSize: 20, // Reducido de 24 a 20
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      SizedBox(height: 3), // Reducido de 4 a 3
                       Text(
                         _emailController.text,
                         style: TextStyle(
                           color: Colors.white70,
-                          fontSize: 16,
+                          fontSize: 14, // Reducido de 16 a 14
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                // Formulario de datos
+                // Formulario de datos - Optimizado para Motorola
                 Padding(
-                  padding: EdgeInsets.all(24),
+                  padding: EdgeInsets.all(16), // Reducido de 24 a 16
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -196,12 +198,12 @@ class _AccountScreenState extends State<AccountScreen> {
                         Text(
                           'Información Personal',
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 18, // Reducido de 20 a 18
                             fontWeight: FontWeight.bold,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
-                        SizedBox(height: 24),
+                        SizedBox(height: 16), // Reducido de 24 a 16
 
                         // Campo Nombre completo
                         _buildTextField(
@@ -215,7 +217,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             return null;
                           },
                         ),
-                        SizedBox(height: 16),
+                        SizedBox(height: 12), // Reducido de 16 a 12
 
                         // Campo Email
                         _buildTextField(
@@ -233,7 +235,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             return null;
                           },
                         ),
-                        SizedBox(height: 16),
+                        SizedBox(height: 12), // Reducido de 16 a 12
 
                         // Campo Teléfono
                         _buildTextField(
@@ -256,7 +258,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             return null;
                           },
                         ),
-                        SizedBox(height: 32),
+                        SizedBox(height: 20), // Reducido de 32 a 20
 
                         // Botón Actualizar Perfil
                         SizedBox(
@@ -303,18 +305,18 @@ class _AccountScreenState extends State<AccountScreen> {
                                 ),
                           ),
                         ),
-                        SizedBox(height: 32),
+                        SizedBox(height: 20), // Reducido de 32 a 20
 
                         // Sección Opciones de Cuenta
                         Text(
                           'Opciones de Cuenta',
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 18, // Reducido de 20 a 18
                             fontWeight: FontWeight.bold,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
-                        SizedBox(height: 16),
+                        SizedBox(height: 8), // Reducido de 12 a 8 para subir botón cerrar sesión
 
                         // Lista de opciones
                         _buildOptionTile(
@@ -354,7 +356,7 @@ class _AccountScreenState extends State<AccountScreen> {
                           onTap: _changePassword,
                         ),
                         
-                        SizedBox(height: 24),
+                        SizedBox(height: 8), // Reducido de 16 a 8 para subir botón cerrar sesión
 
                         // Botón Cerrar Sesión
                         SizedBox(
@@ -392,6 +394,7 @@ class _AccountScreenState extends State<AccountScreen> {
               ],
             ),
           ),
+        ),
     );
   }
 
@@ -490,25 +493,25 @@ class _AccountScreenState extends State<AccountScreen> {
     required VoidCallback onTap,
   }) {
     return Container(
-      margin: EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 4), // Reducido de 8 a 4 para subir botón cerrar sesión
       child: ListTile(
         leading: Container(
-          width: 48,
-          height: 48,
+          width: 40, // Reducido de 48 a 40
+          height: 40, // Reducido de 48 a 40
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.primary.withOpacity( 0.1),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10), // Reducido de 12 a 10
           ),
           child: Icon(
             icon,
             color: Theme.of(context).colorScheme.primary,
-            size: 24,
+            size: 20, // Reducido de 24 a 20
           ),
         ),
         title: Text(
           title,
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 15, // Reducido de 16 a 15
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurface,
           ),
@@ -516,16 +519,16 @@ class _AccountScreenState extends State<AccountScreen> {
         subtitle: Text(
           subtitle,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 13, // Reducido de 14 a 13
             color: Theme.of(context).colorScheme.onSurface.withOpacity( 0.7),
           ),
         ),
         trailing: Icon(
           Icons.arrow_forward_ios,
-          size: 16,
+          size: 14, // Reducido de 16 a 14
           color: Theme.of(context).colorScheme.onSurface.withOpacity( 0.5),
         ),
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 4), // Reducido de 6 a 4
         tileColor: Theme.of(context).colorScheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),

@@ -3,6 +3,7 @@ import 'package:cubalink23/screens/recharge/recharge_home_screen.dart';
 import 'package:cubalink23/screens/travel/flight_booking_screen.dart';
 import 'package:cubalink23/services/cart_service.dart';
 import 'package:cubalink23/services/store_service.dart';
+import 'package:cubalink23/services/firebase_repository.dart';
 import 'package:cubalink23/models/store_product.dart';
 import 'package:cubalink23/screens/shopping/product_details_screen.dart';
 
@@ -20,6 +21,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   List<String> _bannerUrls = [];
   final CartService _cartService = CartService();
   final StoreService _storeService = StoreService();
+  final FirebaseRepository _firebaseRepository = FirebaseRepository.instance;
   int _currentBannerIndex = 0;
   PageController _bannerController = PageController();
   List<Map<String, dynamic>> _categories = [];
@@ -45,6 +47,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     // Cargar productos reales de Supabase inmediatamente
     _loadRealProductsFromSupabase();
     _loadCategoriesAndBestSellers();
+    _loadBannersFromSupabase();
     
     print('✅ WelcomeScreen - INICIADO CON CARGA DE PRODUCTOS REALES');
   }
@@ -298,14 +301,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       if (allProducts.isNotEmpty) {
         // Mostrar los primeros 8 productos reales
         final realProducts = allProducts.take(8).toList();
-        
+
         if (mounted) {
           setState(() {
             _realFoodProducts = realProducts;
             _loadingProducts = false;
           });
         }
-        
+
         print('✅ Productos reales cargados: ${realProducts.length}');
         for (var product in realProducts) {
           print('   - ${product.name}: \$${product.price}');
@@ -317,6 +320,53 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     } catch (e) {
       print('❌ Error cargando productos reales: $e');
       _loadDefaultProducts();
+    }
+  }
+
+  /// Carga banners reales de Supabase para mostrar en la pantalla de bienvenida
+  Future<void> _loadBannersFromSupabase() async {
+    try {
+      print('🖼️ Cargando banners reales de Supabase...');
+      
+      // Cargar banners desde Supabase
+      final banners = await _firebaseRepository.getBanners();
+      print('📸 Banners obtenidos de Supabase: ${banners.length}');
+      
+      // Debug: mostrar todos los banners obtenidos
+      for (var banner in banners) {
+        print('🔍 Banner encontrado: ${banner.toString()}');
+      }
+
+      if (banners.isNotEmpty) {
+        // Extraer URLs de los banners activos (usando los campos correctos)
+        final bannerUrls = banners
+            .where((banner) => 
+                (banner['is_active'] == true || banner['active'] == true) && 
+                banner['image_url'] != null &&
+                (banner['banner_type'] == 'banner1' || banner['banner_type'] == 'welcome' || banner['banner_type'] == null))
+            .map((banner) => banner['image_url'] as String)
+            .toList();
+
+        if (mounted) {
+          setState(() {
+            _bannerUrls = bannerUrls;
+          });
+        }
+
+        print('✅ Banners reales cargados: ${bannerUrls.length}');
+        for (var url in bannerUrls) {
+          print('   - Banner: $url');
+        }
+
+        // Iniciar auto-scroll si hay múltiples banners
+        if (bannerUrls.length > 1) {
+          _startBannerAutoScroll();
+        }
+      } else {
+        print('⚠️ No hay banners en Supabase, usando banner por defecto');
+      }
+    } catch (e) {
+      print('❌ Error cargando banners reales: $e');
     }
   }
 
@@ -345,6 +395,22 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     }
   }
 
+  /// Inicia el auto-scroll de banners
+  void _startBannerAutoScroll() {
+    if (_bannerUrls.length > 1) {
+      Future.delayed(Duration(seconds: 3), () {
+        if (mounted && _bannerController.hasClients) {
+          final nextIndex = (_currentBannerIndex + 1) % _bannerUrls.length;
+          _bannerController.animateToPage(
+            nextIndex,
+            duration: Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+          );
+          _startBannerAutoScroll(); // Continuar el ciclo
+        }
+      });
+    }
+  }
 
   int _getCategoryColor(String iconName) {
     switch (iconName.toLowerCase()) {
@@ -638,6 +704,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             Navigator.pushNamed(context, '/store');
                           },
                         ),
+                        _buildOptionCard(
+                          context,
+                          icon: Icons.favorite,
+                          title: 'Favoritos',
+                          gradient: [Colors.red.shade400, Colors.red.shade600],
+                          onTap: () {
+                            Navigator.pushNamed(context, '/favorites');
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -672,7 +747,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               // Ya estamos en inicio
               break;
             case 1:
-              Navigator.pushNamed(context, '/help');
+              Navigator.pushNamed(context, '/news');
               break;
             case 2:
               Navigator.pushNamed(context, '/settings');
@@ -688,8 +763,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             label: 'Inicio',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.help_outline),
-            label: 'Ayuda',
+            icon: Icon(Icons.newspaper_outlined),
+            label: 'Noticias',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),

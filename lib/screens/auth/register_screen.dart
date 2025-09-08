@@ -88,39 +88,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(32),
-        child: Form(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(32, 32, 32, 40), // Padding inferior para evitar barra de navegación
+          child: Form(
           key: _formKey,
           child: Column(
             children: [
+              // Logo de la app (mismo que splash screen) - 30% más grande
               Container(
-                width: 130,
-                height: 130,
+                width: 156,
+                height: 156,
                 child: Image.asset(
                   'assets/images/assets_task_01k3m7yveaebmtdrdnybpe7ngv_1756247471_img_1.webp',
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) {
-                    // Fallback si no se encuentra la imagen
+                    // Fallback si no se encuentra el logo
                     return Container(
-                      width: 100,
-                      height: 100,
+                      width: 156,
+                      height: 156,
                       decoration: BoxDecoration(
                         color: Theme.of(context).primaryColor,
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(20),
                       ),
                       child: Icon(
                         Icons.person_add,
-                        size: 50,
+                        size: 65,
                         color: Colors.white,
                       ),
                     );
                   },
                 ),
               ),
-              SizedBox(height: 24),
+              SizedBox(height: 16),
+              // Nombre de la app
               Text(
-                'CREAR CUENTA',
+                'Cubalink23',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -129,9 +132,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               SizedBox(height: 8),
               Text(
+                'CREAR CUENTA',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700],
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
                 'Completa los datos para registrarte',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 14,
                   color: Colors.grey[600],
                 ),
               ),
@@ -295,6 +307,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

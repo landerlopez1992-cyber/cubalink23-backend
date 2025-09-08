@@ -16,6 +16,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   double _progress = 0.0;
   Timer? _progressTimer;
   Timer? _navigationTimer;
+  bool _isPaused = false;
+  bool _navigationStarted = false;
 
   @override
   void initState() {
@@ -63,30 +65,88 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     _logoAnimationController.forward();
     print('▶️ Animación de logo iniciada');
     
-    // Después de 500ms, iniciar la barra de progreso
+    // Después de 500ms, iniciar la barra de progreso realista
     Timer(Duration(milliseconds: 500), () {
       if (mounted) {
-        print('📊 Iniciando animación de progreso...');
-        _progressAnimationController.forward();
-        
-        // Actualizar progreso cada 100ms para efecto suave
-        _progressTimer = Timer.periodic(Duration(milliseconds: 100), (timer) {
-          if (mounted) {
-            setState(() {
-              _progress = _progressAnimationController.value;
-            });
-          } else {
-            timer.cancel();
-          }
-        });
+        print('📊 Iniciando progreso realista...');
+        _startRealisticProgress();
       }
     });
-    
-    // Navegar después de 2 segundos para mostrar animación completa
-    _navigationTimer = Timer(Duration(milliseconds: 2000), () {
-      if (mounted) {
-        _navigateToWelcome();
+  }
+
+  void _startRealisticProgress() {
+    // Progreso realista con pausas - Lógica completamente nueva
+    _progressTimer = Timer.periodic(Duration(milliseconds: 200), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
       }
+
+      if (_isPaused) {
+        return; // No hacer nada si está pausado
+      }
+
+      setState(() {
+        if (_progress < 0.30) {
+          // 0% a 30% - Progreso normal
+          _progress += 0.02;
+          if (_progress >= 0.30) {
+            _progress = 0.30; // Asegurar que llegue exactamente a 30%
+            _isPaused = true;
+            print('⏸️ Pausa en 30% iniciada');
+            Timer(Duration(milliseconds: 500), () {
+              if (mounted) {
+                _isPaused = false;
+                print('⏸️ Pausa en 30% completada');
+              }
+            });
+          }
+        } else if (_progress >= 0.30 && _progress < 0.60) {
+          // 30% a 60% - Progreso normal
+          _progress += 0.015;
+          if (_progress >= 0.60) {
+            _progress = 0.60; // Asegurar que llegue exactamente a 60%
+            _isPaused = true;
+            print('⏸️ Pausa en 60% iniciada');
+            Timer(Duration(milliseconds: 1000), () {
+              if (mounted) {
+                _isPaused = false;
+                print('⏸️ Pausa en 60% completada');
+              }
+            });
+          }
+        } else if (_progress >= 0.60 && _progress < 0.80) {
+          // 60% a 80% - Progreso normal
+          _progress += 0.012;
+          if (_progress >= 0.80) {
+            _progress = 0.80; // Asegurar que llegue exactamente a 80%
+            _isPaused = true;
+            print('⏸️ Pausa en 80% iniciada');
+            Timer(Duration(milliseconds: 1000), () {
+              if (mounted) {
+                _isPaused = false;
+                print('⏸️ Pausa en 80% completada');
+              }
+            });
+          }
+        } else if (_progress >= 0.80 && _progress < 1.0) {
+          // 80% a 100% - Progreso normal
+          _progress += 0.01;
+          if (_progress >= 1.0) {
+            _progress = 1.0; // Asegurar que llegue exactamente a 100%
+            timer.cancel();
+            if (!_navigationStarted) {
+              _navigationStarted = true;
+              print('✅ Progreso completado al 100%');
+              Timer(Duration(milliseconds: 1000), () {
+                if (mounted) {
+                  _navigateToWelcome();
+                }
+              });
+            }
+          }
+        }
+      });
     });
   }
   
@@ -129,6 +189,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     _progressAnimationController.dispose();
     _progressTimer?.cancel();
     _navigationTimer?.cancel();
+    _isPaused = false;
+    _navigationStarted = false;
     super.dispose();
   }
 
@@ -137,36 +199,35 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     print('🏗️ SplashScreen build() llamado');
     
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      body: SafeArea(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Spacer(flex: 2),
-            
-            // Logo con animación
-            AnimatedBuilder(
-              animation: _logoAnimation,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: _logoAnimation.value,
-                  child: Opacity(
-                    opacity: _logoAnimation.value,
-                    child: Container(
-                      width: 150,
-                      height: 150,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity( 0.3),
-                            blurRadius: 20,
-                            offset: Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.blue.shade50,
+              Colors.cyan.shade50,
+              Colors.teal.shade50,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Spacer(flex: 2),
+              
+              // Logo con animación - Más grande y sin fondo oscuro
+              AnimatedBuilder(
+                animation: _logoAnimation,
+                builder: (context, child) {
+                  return Transform.scale(
+                    scale: _logoAnimation.value,
+                    child: Opacity(
+                      opacity: _logoAnimation.value,
+                      child: Container(
+                        width: 280, // Más grande para mejor visibilidad
+                        height: 280, // Más grande para mejor visibilidad
                         child: Image.asset(
                           'assets/images/assets_task_01k3m7yveaebmtdrdnybpe7ngv_1756247471_img_1.webp',
                           fit: BoxFit.contain,
@@ -174,123 +235,167 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                             print('⚠️ Error cargando imagen del logo: $error');
                             // Fallback si no se encuentra la imagen
                             return Container(
-                              width: 150,
-                              height: 150,
+                              width: 280,
+                              height: 280,
                               decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.onPrimary,
-                                borderRadius: BorderRadius.circular(20),
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(40),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.blue.withOpacity(0.1),
+                                    blurRadius: 25,
+                                    offset: Offset(0, 12),
+                                  ),
+                                ],
                               ),
                               child: Icon(
-                                Icons.phone_android,
-                                size: 60,
-                                color: Theme.of(context).colorScheme.primary,
+                                Icons.flight_takeoff,
+                                size: 100, // Icono más grande también
+                                color: Colors.blue.shade600,
                               ),
                             );
                           },
                         ),
                       ),
                     ),
-                  ),
-                );
-              },
-            ),
-            
-            Spacer(),
-            
-            // Título de la app
-            AnimatedBuilder(
-              animation: _logoAnimation,
-              builder: (context, child) {
-                return Opacity(
-                  opacity: _logoAnimation.value,
-                  child: Text(
-                    'CubaLink23',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      letterSpacing: 1.2,
+                  );
+                },
+              ),
+              
+              SizedBox(height: 20),
+              
+              // Título de la app - Pegado al logo
+              AnimatedBuilder(
+                animation: _logoAnimation,
+                builder: (context, child) {
+                  return Opacity(
+                    opacity: _logoAnimation.value,
+                    child: Text(
+                      'CubaLink23',
+                      style: TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade800,
+                        letterSpacing: 1.5,
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-            
-            SizedBox(height: 8),
-            
-            // Subtítulo
-            AnimatedBuilder(
-              animation: _logoAnimation,
-              builder: (context, child) {
-                return Opacity(
-                  opacity: _logoAnimation.value * 0.8,
-                  child: Text(
-                    'Recargas Telefónicas',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Theme.of(context).colorScheme.onPrimary.withOpacity( 0.9),
-                      letterSpacing: 0.5,
+                  );
+                },
+              ),
+              
+              SizedBox(height: 12),
+              
+              // Subtítulo - Tema de viajes
+              AnimatedBuilder(
+                animation: _logoAnimation,
+                builder: (context, child) {
+                  return Opacity(
+                    opacity: _logoAnimation.value * 0.8,
+                    child: Text(
+                      'Disfruta, Conecta con el Mundo',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.blue.shade600,
+                        letterSpacing: 0.8,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-            
-            Spacer(),
-            
-            // Barra de progreso
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 60),
-              child: Column(
-                children: [
-                  // Texto "Cargando..."
-                  Text(
-                    'Cargando${_getLoadingDots()}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Theme.of(context).colorScheme.onPrimary.withOpacity( 0.9),
-                      fontWeight: FontWeight.w500,
+                  );
+                },
+              ),
+              
+              SizedBox(height: 8),
+              
+              // Subtítulo adicional
+              AnimatedBuilder(
+                animation: _logoAnimation,
+                builder: (context, child) {
+                  return Opacity(
+                    opacity: _logoAnimation.value * 0.7,
+                    child: Text(
+                      'Tu puerta de entrada a nuevas aventuras',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                        letterSpacing: 0.5,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
-                  ),
-                  
-                  SizedBox(height: 16),
-                  
-                  // Barra de progreso
-                  Container(
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.onPrimary.withOpacity( 0.3),
-                      borderRadius: BorderRadius.circular(3),
+                  );
+                },
+              ),
+              
+              Spacer(),
+              
+              // Barra de progreso moderna
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 60),
+                child: Column(
+                  children: [
+                    // Texto "Cargando..." con emoji de avión
+                    Text(
+                      'Preparando tu viaje${_getLoadingDots()}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.blue.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(3),
-                      child: LinearProgressIndicator(
-                        value: _progress,
-                        backgroundColor: Colors.transparent,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Theme.of(context).colorScheme.onPrimary,
+                    
+                    SizedBox(height: 20),
+                    
+                    // Barra de progreso moderna
+                    Container(
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade100,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.blue.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: LinearProgressIndicator(
+                          value: _progress,
+                          backgroundColor: Colors.transparent,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.blue.shade600,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  
-                  SizedBox(height: 8),
-                  
-                  // Porcentaje
-                  Text(
-                    '${(_progress * 100).toInt()}%',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Theme.of(context).colorScheme.onPrimary.withOpacity( 0.8),
-                      fontWeight: FontWeight.w500,
+                    
+                    SizedBox(height: 12),
+                    
+                    // Porcentaje con estilo moderno
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.blue.shade200),
+                      ),
+                      child: Text(
+                        '${(_progress * 100).toInt()}%',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.blue.shade700,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            
-            Spacer(),
-          ],
+              
+              Spacer(),
+            ],
+          ),
         ),
       ),
     );

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cubalink23/services/cart_service.dart';
+import 'package:cubalink23/services/likes_service.dart';
 import 'package:cubalink23/models/amazon_product.dart';
 import 'package:cubalink23/models/walmart_product.dart';
 
@@ -41,8 +43,123 @@ class ProductDetailsScreen extends StatefulWidget {
 
 class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   final CartService _cartService = CartService();
+  final LikesService _likesService = LikesService.instance;
   int _quantity = 1;
   int _selectedImageIndex = 0;
+  bool _isLiked = false;
+  bool _isLoadingLike = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLikeStatus();
+  }
+
+  Future<void> _loadLikeStatus() async {
+    final productId = widget.productId ?? widget.product?['id'] ?? '';
+    if (productId.isNotEmpty) {
+      final isLiked = await _likesService.isLiked(productId);
+      setState(() {
+        _isLiked = isLiked;
+      });
+    }
+  }
+
+  Future<void> _toggleLike() async {
+    if (_isLoadingLike) return;
+    
+    setState(() {
+      _isLoadingLike = true;
+    });
+
+    try {
+      final productId = widget.productId ?? widget.product?['id'] ?? '';
+      final productName = widget.productTitle ?? widget.product?['title'] ?? widget.product?['name'] ?? 'Producto';
+      final productImage = widget.productImage ?? widget.product?['image'] ?? widget.product?['imageUrl'] ?? '';
+      final productPrice = widget.productPrice ?? widget.product?['price']?.toDouble() ?? 0.0;
+
+      if (productId.isNotEmpty) {
+        final newLikeStatus = await _likesService.toggleLike(
+          productId,
+          productName,
+          productImage,
+          productPrice,
+        );
+
+        setState(() {
+          _isLiked = newLikeStatus;
+        });
+
+        // Mostrar mensaje
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                _isLiked 
+                  ? 'Agregado a favoritos ❤️' 
+                  : 'Removido de favoritos 💔',
+              ),
+              backgroundColor: _isLiked ? Colors.red : Colors.orange,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('❌ Error en toggleLike: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al actualizar favoritos'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() {
+        _isLoadingLike = false;
+      });
+    }
+  }
+
+  Future<void> _shareProduct() async {
+    try {
+      final productName = widget.productTitle ?? widget.product?['title'] ?? widget.product?['name'] ?? 'Producto';
+      final productPrice = widget.productPrice ?? widget.product?['price']?.toDouble() ?? 0.0;
+      final productImage = widget.productImage ?? widget.product?['image'] ?? widget.product?['imageUrl'] ?? '';
+      
+      final shareText = '''
+🛍️ ¡Mira este producto en CubaLink23!
+
+📦 $productName
+💰 \$${productPrice.toStringAsFixed(2)}
+
+Descarga la app CubaLink23 para ver más productos increíbles! 🚀
+      ''';
+
+      await Clipboard.setData(ClipboardData(text: shareText));
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Información del producto copiada al portapapeles 📋'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Error compartiendo producto: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al compartir producto'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,20 +187,16 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     
     // Get store colors
     Color primaryColor;
-    Color backgroundColor;
     String storeName;
     
     if (widget.isFromWalmart) {
       primaryColor = Color(0xFF004C91);
-      backgroundColor = Color(0xFFFFC220);
       storeName = 'Walmart';
     } else if (widget.isFromAmazon) {
       primaryColor = Color(0xFFFF9900);
-      backgroundColor = Color(0xFF232F3E);
       storeName = 'Amazon';
     } else {
       primaryColor = Theme.of(context).colorScheme.primary;
-      backgroundColor = Theme.of(context).colorScheme.surface;
       storeName = widget.product?['store'] ?? 'Tienda';
     }
 
@@ -109,75 +222,178 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           SliverAppBar(
             expandedHeight: 400,
             pinned: true,
-            backgroundColor: primaryColor,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: Container(
+              margin: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                icon: Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                onPressed: () => Navigator.pop(context),
+              ),
             ),
             actions: [
-              IconButton(
-                icon: Icon(Icons.share, color: Colors.white),
-                onPressed: () {
-                  // Implement share functionality
-                },
+              Container(
+                margin: EdgeInsets.only(right: 8, top: 8, bottom: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: Icon(Icons.share, color: Colors.white, size: 22),
+                  onPressed: _shareProduct,
+                  tooltip: 'Compartir producto',
+                ),
               ),
-              IconButton(
-                icon: Icon(Icons.favorite_border, color: Colors.white),
-                onPressed: () {
-                  // Implement favorite functionality
-                },
+              Container(
+                margin: EdgeInsets.only(right: 16, top: 8, bottom: 8),
+                decoration: BoxDecoration(
+                  color: _isLiked 
+                    ? Colors.red.withOpacity(0.8)
+                    : Colors.black.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (_isLiked ? Colors.red : Colors.black).withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: _isLoadingLike
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Icon(
+                          _isLiked ? Icons.favorite : Icons.favorite_border,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                  onPressed: _toggleLike,
+                  tooltip: _isLiked ? 'Quitar de favoritos' : 'Agregar a favoritos',
+                ),
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Product Image
-                  PageView.builder(
-                    itemCount: images.length,
-                    onPageChanged: (index) {
-                      setState(() {
-                        _selectedImageIndex = index;
-                      });
-                    },
-                    itemBuilder: (context, index) {
-                      return Hero(
-                        tag: 'product-${widget.productId ?? title}',
-                        child: Image.network(
-                          images[index],
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(
-                                color: Colors.grey.shade300,
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.image_not_supported,
-                                      size: 80,
-                                      color: Colors.grey.shade500,
-                                    ),
-                                    SizedBox(height: 16),
-                                    Text(
-                                      'Imagen no disponible',
-                                      style: TextStyle(
-                                        color: Colors.grey.shade600,
-                                        fontSize: 16,
+                  // Product Image with modern overlay
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withOpacity(0.1),
+                          Colors.black.withOpacity(0.3),
+                        ],
+                      ),
+                    ),
+                    child: PageView.builder(
+                      itemCount: images.length,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _selectedImageIndex = index;
+                        });
+                      },
+                      itemBuilder: (context, index) {
+                        return Hero(
+                          tag: 'product-${widget.productId ?? title}',
+                          child: Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 20,
+                                  offset: Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                            child: Image.network(
+                              images[index],
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          Colors.grey.shade200,
+                                          Colors.grey.shade300,
+                                        ],
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ),
-                        ),
-                      );
-                    },
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          padding: EdgeInsets.all(20),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withOpacity(0.8),
+                                            borderRadius: BorderRadius.circular(20),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withOpacity(0.1),
+                                                blurRadius: 10,
+                                                offset: Offset(0, 5),
+                                              ),
+                                            ],
+                                          ),
+                                          child: Icon(
+                                            Icons.image_not_supported,
+                                            size: 60,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+                                        SizedBox(height: 16),
+                                        Text(
+                                          'Imagen no disponible',
+                                          style: TextStyle(
+                                            color: Colors.grey.shade700,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                  // Gradient overlay at bottom
+                  // Modern gradient overlay at bottom
                   Positioned(
                     bottom: 0,
                     left: 0,
                     right: 0,
-                    height: 100,
+                    height: 120,
                     child: Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -185,30 +401,39 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity( 0.7),
+                            Colors.black.withOpacity(0.4),
+                            Colors.black.withOpacity(0.8),
                           ],
                         ),
                       ),
                     ),
                   ),
-                  // Page indicators
+                  // Modern page indicators
                   if (images.length > 1)
                     Positioned(
-                      bottom: 20,
+                      bottom: 30,
                       left: 0,
                       right: 0,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: images.asMap().entries.map((entry) {
-                          return Container(
-                            width: 8,
+                          return AnimatedContainer(
+                            duration: Duration(milliseconds: 300),
+                            width: _selectedImageIndex == entry.key ? 24 : 8,
                             height: 8,
                             margin: EdgeInsets.symmetric(horizontal: 4),
                             decoration: BoxDecoration(
-                              shape: BoxShape.circle,
+                              borderRadius: BorderRadius.circular(4),
                               color: _selectedImageIndex == entry.key
                                   ? Colors.white
-                                  : Colors.white.withOpacity( 0.5),
+                                  : Colors.white.withOpacity(0.4),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 4,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
                             ),
                           );
                         }).toList(),
@@ -224,12 +449,19 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(24),
-                  topRight: Radius.circular(24),
+                  topLeft: Radius.circular(28),
+                  topRight: Radius.circular(28),
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: Offset(0, -5),
+                  ),
+                ],
               ),
               child: Padding(
-                padding: EdgeInsets.all(20),
+                padding: EdgeInsets.all(24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -484,38 +716,90 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     
                     SizedBox(height: 32),
                     
-                    // Add to Cart Button
-                    SizedBox(
+                    // Modern Add to Cart Button
+                    Container(
                       width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: () => _addToCart(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryColor,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 2,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.shopping_cart, size: 24),
-                            SizedBox(width: 8),
-                            Text(
-                              'Agregar al carrito - \$${(price * _quantity).toStringAsFixed(2)}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                      height: 60,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            primaryColor,
+                            primaryColor.withOpacity(0.8),
                           ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: primaryColor.withOpacity(0.3),
+                            blurRadius: 15,
+                            offset: Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () => _addToCart(),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 24),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.shopping_cart,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+                                ),
+                                SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Agregar al carrito',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        '\$${(price * _quantity).toStringAsFixed(2)}',
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.9),
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.arrow_forward_ios,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
                     
                     SizedBox(height: 20),
+                    // Bottom padding for Android navigation bar
+                    SizedBox(height: 40),
                   ],
                 ),
               ),

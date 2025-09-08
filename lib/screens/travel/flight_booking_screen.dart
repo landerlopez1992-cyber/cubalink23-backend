@@ -65,22 +65,22 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
       backgroundColor: Colors.grey[100],
       body: CustomScrollView(
         slivers: [
-          // Header moderno estilo referencia
+          // Header optimizado para Motorola Edge 2024
           SliverAppBar(
-            expandedHeight: 120.0,
+            expandedHeight: 100.0, // Reducido de 120 a 100
             floating: false,
             pinned: true,
             backgroundColor: Theme.of(context).colorScheme.primary,
             elevation: 0,
             leading: Container(
-              margin: EdgeInsets.all(8),
+              margin: EdgeInsets.all(6), // Reducido de 8 a 6
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity( 0.2),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10), // Reducido de 12 a 10
                 border: Border.all(color: Colors.white.withOpacity( 0.3), width: 1),
               ),
               child: IconButton(
-                icon: Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 20),
+                icon: Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 18), // Reducido de 20 a 18
                 onPressed: () => Navigator.pop(context),
               ),
             ),
@@ -99,15 +99,15 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                 ),
                 child: SafeArea(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), // Reducido padding
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center, // Centrado
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Text(
                           'Reserva',
                           style: TextStyle(
-                            fontSize: 28,
+                            fontSize: 24, // Reducido de 28 a 24
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
                             height: 1.1,
@@ -116,7 +116,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                         Text(
                           'Tu vuelo ideal',
                           style: TextStyle(
-                            fontSize: 28,
+                            fontSize: 24, // Reducido de 28 a 24
                             fontWeight: FontWeight.w300,
                             color: Colors.white.withOpacity( 0.9),
                             height: 1.1,
@@ -130,25 +130,25 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
             ),
           ),
           
-          // Contenido principal
+          // Contenido principal optimizado para Motorola Edge 2024
           SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.all(20),
+              padding: EdgeInsets.all(16), // Reducido de 20 a 16
               child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Toggle de ida y vuelta
+                    // Toggle de ida y vuelta optimizado
                     Container(
-                      margin: EdgeInsets.only(bottom: 20),
+                      margin: EdgeInsets.only(bottom: 16), // Reducido de 20 a 16
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(14), // Reducido de 16 a 14
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity( 0.08),
-                            blurRadius: 10,
+                            blurRadius: 8, // Reducido de 10 a 8
                             offset: Offset(0, 2),
                           ),
                         ],
@@ -159,12 +159,12 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                             child: GestureDetector(
                               onTap: () => setState(() => _isRoundTrip = false),
                               child: Container(
-                                padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                                padding: EdgeInsets.symmetric(vertical: 14, horizontal: 16), // Reducido padding
                                 decoration: BoxDecoration(
                                   color: !_isRoundTrip 
                                       ? Theme.of(context).colorScheme.primary 
                                       : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(14), // Reducido de 16 a 14
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -174,9 +174,9 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                       color: !_isRoundTrip 
                                           ? Colors.white 
                                           : Colors.grey[600],
-                                      size: 20,
+                                      size: 18, // Reducido de 20 a 18
                                     ),
-                                    SizedBox(width: 8),
+                                    SizedBox(width: 6), // Reducido de 8 a 6
                                     Text(
                                       'Solo ida',
                                       style: TextStyle(
@@ -184,7 +184,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                             ? Colors.white 
                                             : Colors.grey[600],
                                         fontWeight: FontWeight.w600,
-                                        fontSize: 16,
+                                        fontSize: 15, // Reducido de 16 a 15
                                       ),
                                     ),
                                   ],
@@ -196,12 +196,12 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                             child: GestureDetector(
                               onTap: () => setState(() => _isRoundTrip = true),
                               child: Container(
-                                padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                                padding: EdgeInsets.symmetric(vertical: 14, horizontal: 16), // Reducido padding
                                 decoration: BoxDecoration(
                                   color: _isRoundTrip 
                                       ? Theme.of(context).colorScheme.primary 
                                       : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(14), // Reducido de 16 a 14
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -211,9 +211,9 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                       color: _isRoundTrip 
                                           ? Colors.white 
                                           : Colors.grey[600],
-                                      size: 20,
+                                      size: 18, // Reducido de 20 a 18
                                     ),
-                                    SizedBox(width: 8),
+                                    SizedBox(width: 6), // Reducido de 8 a 6
                                     Text(
                                       'Ida y vuelta',
                                       style: TextStyle(
@@ -221,7 +221,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                             ? Colors.white 
                                             : Colors.grey[600],
                                         fontWeight: FontWeight.w600,
-                                        fontSize: 16,
+                                        fontSize: 15, // Reducido de 16 a 15
                                       ),
                                     ),
                                   ],
@@ -233,16 +233,16 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                       ),
                     ),
                     
-                    // Campos de origen y destino con intercambio
+                    // Campos de origen y destino optimizados
                     Container(
-                      margin: EdgeInsets.only(bottom: 20),
+                      margin: EdgeInsets.only(bottom: 16), // Reducido de 20 a 16
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(14), // Reducido de 16 a 14
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity( 0.08),
-                            blurRadius: 10,
+                            blurRadius: 8, // Reducido de 10 a 8
                             offset: Offset(0, 2),
                           ),
                         ],
@@ -253,7 +253,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                           Stack(
                             children: [
                               Container(
-                                padding: EdgeInsets.all(16),
+                                padding: EdgeInsets.all(14), // Reducido de 16 a 14
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -262,20 +262,20 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                         Icon(
                                           Icons.flight_takeoff,
                                           color: Theme.of(context).colorScheme.primary,
-                                          size: 18,
+                                          size: 16, // Reducido de 18 a 16
                                         ),
-                                        SizedBox(width: 8),
+                                        SizedBox(width: 6), // Reducido de 8 a 6
                                         Text(
                                           'Desde',
                                           style: TextStyle(
-                                            fontSize: 13,
+                                            fontSize: 12, // Reducido de 13 a 12
                                             color: Colors.grey[600],
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
                                       ],
                                     ),
-                                    SizedBox(height: 8),
+                                    SizedBox(height: 6), // Reducido de 8 a 6
                                     TextFormField(
                                       controller: _fromController,
                                       decoration: InputDecoration(
@@ -283,12 +283,12 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                         border: InputBorder.none,
                                         hintStyle: TextStyle(
                                           color: Colors.grey[400],
-                                          fontSize: 16,
+                                          fontSize: 15, // Reducido de 16 a 15
                                         ),
                                         contentPadding: EdgeInsets.zero,
                                       ),
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 15, // Reducido de 16 a 15
                                         fontWeight: FontWeight.w600,
                                         color: Colors.grey[800],
                                       ),
@@ -374,7 +374,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                           Stack(
                             children: [
                               Container(
-                                padding: EdgeInsets.all(16),
+                                padding: EdgeInsets.all(14), // Reducido de 16 a 14
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -383,20 +383,20 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                         Icon(
                                           Icons.flight_land,
                                           color: Theme.of(context).colorScheme.secondary,
-                                          size: 18,
+                                          size: 16, // Reducido de 18 a 16
                                         ),
-                                        SizedBox(width: 8),
+                                        SizedBox(width: 6), // Reducido de 8 a 6
                                         Text(
                                           'Hasta',
                                           style: TextStyle(
-                                            fontSize: 13,
+                                            fontSize: 12, // Reducido de 13 a 12
                                             color: Colors.grey[600],
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
                                       ],
                                     ),
-                                    SizedBox(height: 8),
+                                    SizedBox(height: 6), // Reducido de 8 a 6
                                     TextFormField(
                                       controller: _toController,
                                       decoration: InputDecoration(
@@ -404,12 +404,12 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                         border: InputBorder.none,
                                         hintStyle: TextStyle(
                                           color: Colors.grey[400],
-                                          fontSize: 16,
+                                          fontSize: 15, // Reducido de 16 a 15
                                         ),
                                         contentPadding: EdgeInsets.zero,
                                       ),
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 15, // Reducido de 16 a 15
                                         fontWeight: FontWeight.w600,
                                         color: Colors.grey[800],
                                       ),
@@ -488,13 +488,13 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                       ),
                     ),
                     
-                    // Botón de intercambio
+                    // Botón de intercambio optimizado
                     Center(
                       child: GestureDetector(
                         onTap: _swapAirports,
                         child: Container(
-                          margin: EdgeInsets.only(bottom: 20),
-                          padding: EdgeInsets.all(12),
+                          margin: EdgeInsets.only(bottom: 16), // Reducido de 20 a 16
+                          padding: EdgeInsets.all(10), // Reducido de 12 a 10
                           decoration: BoxDecoration(
                             color: Colors.white,
                             shape: BoxShape.circle,
@@ -502,14 +502,14 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity( 0.1),
-                                blurRadius: 8,
+                                blurRadius: 6, // Reducido de 8 a 6
                                 offset: Offset(0, 2),
                               ),
                             ],
                           ),
                           child: Icon(
                             Icons.swap_vert,
-                            size: 24,
+                            size: 20, // Reducido de 24 a 20
                             color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
@@ -534,25 +534,35 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                             ),
                             child: Column(
                               children: [
-                                GestureDetector(
+                                InkWell(
                                   onTap: () => _selectDate(true),
+                                  borderRadius: BorderRadius.circular(14),
+                                  splashColor: Colors.orange.withOpacity(0.1),
+                                  highlightColor: Colors.orange.withOpacity(0.05),
                                   child: Container(
-                                    padding: EdgeInsets.all(16),
+                                    padding: EdgeInsets.all(14),
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
-                                            Icon(
-                                              Icons.calendar_today,
-                                              color: Colors.orange[600],
-                                              size: 18,
+                                            Container(
+                                              padding: EdgeInsets.all(6),
+                                              decoration: BoxDecoration(
+                                                color: Colors.orange.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Icon(
+                                                Icons.calendar_today,
+                                                color: Colors.orange[600],
+                                                size: 16,
+                                              ),
                                             ),
                                             SizedBox(width: 8),
                                             Text(
                                               'Salida',
                                               style: TextStyle(
-                                                fontSize: 13,
+                                                fontSize: 12,
                                                 color: Colors.grey[600],
                                                 fontWeight: FontWeight.w500,
                                               ),
@@ -560,17 +570,29 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                           ],
                                         ),
                                         SizedBox(height: 8),
-                                        Text(
-                                          _departureDate != null
-                                              ? '${_departureDate!.day}/${_departureDate!.month}/${_departureDate!.year}'
-                                              : 'Seleccionar fecha',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                            color: _departureDate != null 
-                                                ? Colors.grey[800] 
-                                                : Colors.grey[400],
-                                          ),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                _departureDate != null
+                                                    ? '${_departureDate!.day}/${_departureDate!.month}/${_departureDate!.year}'
+                                                    : 'Seleccionar fecha',
+                                                style: TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: _departureDate != null 
+                                                      ? Colors.grey[800] 
+                                                      : Colors.grey[400],
+                                                ),
+                                              ),
+                                            ),
+                                            Icon(
+                                              Icons.arrow_forward_ios,
+                                              color: Colors.grey[400],
+                                              size: 14,
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
@@ -583,25 +605,35 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                     color: Colors.grey[100],
                                   ),
                                   
-                                  GestureDetector(
+                                  InkWell(
                                     onTap: () => _selectDate(false),
+                                    borderRadius: BorderRadius.circular(14),
+                                    splashColor: Colors.blue.withOpacity(0.1),
+                                    highlightColor: Colors.blue.withOpacity(0.05),
                                     child: Container(
-                                      padding: EdgeInsets.all(16),
+                                      padding: EdgeInsets.all(14),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Row(
                                             children: [
-                                              Icon(
-                                                Icons.calendar_today,
-                                                color: Colors.blue[600],
-                                                size: 18,
+                                              Container(
+                                                padding: EdgeInsets.all(6),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.blue.withOpacity(0.1),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: Icon(
+                                                  Icons.calendar_today,
+                                                  color: Colors.blue[600],
+                                                  size: 16,
+                                                ),
                                               ),
                                               SizedBox(width: 8),
                                               Text(
                                                 'Regreso',
                                                 style: TextStyle(
-                                                  fontSize: 13,
+                                                  fontSize: 12,
                                                   color: Colors.grey[600],
                                                   fontWeight: FontWeight.w500,
                                                 ),
@@ -609,17 +641,29 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                             ],
                                           ),
                                           SizedBox(height: 8),
-                                          Text(
-                                            _returnDate != null
-                                                ? '${_returnDate!.day}/${_returnDate!.month}/${_returnDate!.year}'
-                                                : 'Seleccionar fecha',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                              color: _returnDate != null 
-                                                  ? Colors.grey[800] 
-                                                  : Colors.grey[400],
-                                            ),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  _returnDate != null
+                                                      ? '${_returnDate!.day}/${_returnDate!.month}/${_returnDate!.year}'
+                                                      : 'Seleccionar fecha',
+                                                  style: TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: _returnDate != null 
+                                                        ? Colors.grey[800] 
+                                                        : Colors.grey[400],
+                                                  ),
+                                                ),
+                                              ),
+                                              Icon(
+                                                Icons.arrow_forward_ios,
+                                                color: Colors.grey[400],
+                                                size: 14,
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
@@ -649,15 +693,18 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                             ),
                             child: Column(
                               children: [
-                                // Pasajeros
-                                GestureDetector(
+                                // Pasajeros con mejor respuesta táctil
+                                InkWell(
                                   onTap: () {
                                     setState(() {
                                       _showPassengerSelector = !_showPassengerSelector;
                                     });
                                   },
+                                  borderRadius: BorderRadius.circular(14),
+                                  splashColor: Colors.green.withOpacity(0.1),
+                                  highlightColor: Colors.green.withOpacity(0.05),
                                   child: Container(
-                                    padding: EdgeInsets.all(16),
+                                    padding: EdgeInsets.all(14),
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -666,27 +713,39 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                             Icon(
                                               Icons.person,
                                               color: Colors.green[600],
-                                              size: 18,
+                                              size: 16,
                                             ),
-                                            SizedBox(width: 8),
+                                            SizedBox(width: 6),
                                             Text(
                                               'Pasajeros',
                                               style: TextStyle(
-                                                fontSize: 13,
+                                                fontSize: 12,
                                                 color: Colors.grey[600],
                                                 fontWeight: FontWeight.w500,
                                               ),
                                             ),
                                           ],
                                         ),
-                                        SizedBox(height: 8),
-                                        Text(
-                                          '${_getTotalPassengers()}',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.grey[800],
-                                          ),
+                                        SizedBox(height: 6),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              '${_getTotalPassengers()}',
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.grey[800],
+                                              ),
+                                            ),
+                                            Icon(
+                                              _showPassengerSelector 
+                                                  ? Icons.keyboard_arrow_up 
+                                                  : Icons.keyboard_arrow_down,
+                                              color: Colors.grey[600],
+                                              size: 20,
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
@@ -698,9 +757,9 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                   color: Colors.grey[100],
                                 ),
                                 
-                                // Clase
+                                // Clase optimizada para Motorola Edge 2024
                                 Container(
-                                  padding: EdgeInsets.all(16),
+                                  padding: EdgeInsets.all(14), // Reducido de 16 a 14
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -709,35 +768,45 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                           Icon(
                                             Icons.airline_seat_recline_normal,
                                             color: Colors.blue[600],
-                                            size: 18,
+                                            size: 16, // Reducido de 18 a 16
                                           ),
-                                          SizedBox(width: 8),
+                                          SizedBox(width: 6), // Reducido de 8 a 6
                                           Text(
                                             'Clase',
                                             style: TextStyle(
-                                              fontSize: 13,
+                                              fontSize: 12, // Reducido de 13 a 12
                                               color: Colors.grey[600],
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),
                                         ],
                                       ),
-                                      SizedBox(height: 8),
+                                      SizedBox(height: 6), // Reducido de 8 a 6
                                       DropdownButtonFormField<String>(
                                         value: _selectedClass,
                                         decoration: InputDecoration(
                                           border: InputBorder.none,
                                           contentPadding: EdgeInsets.zero,
+                                          isDense: true, // Agregado para reducir altura
                                         ),
                                         style: TextStyle(
-                                          fontSize: 16,
+                                          fontSize: 14, // Reducido de 16 a 14
                                           fontWeight: FontWeight.w600,
                                           color: Colors.grey[800],
                                         ),
+                                        dropdownColor: Colors.white,
+                                        isExpanded: true, // Agregado para evitar overflow
                                         items: _flightClasses.map((String value) {
                                           return DropdownMenuItem<String>(
                                             value: value,
-                                            child: Text(value),
+                                            child: Text(
+                                              value,
+                                              style: TextStyle(
+                                                fontSize: 14, // Tamaño consistente
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              overflow: TextOverflow.ellipsis, // Agregado para evitar overflow
+                                            ),
                                           );
                                         }).toList(),
                                         onChanged: (String? newValue) {
@@ -756,18 +825,18 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                       ],
                     ),
                     
-                    // Selector de pasajeros (desplegable)
+                    // Selector de pasajeros optimizado para Motorola Edge 2024
                     if (_showPassengerSelector)
                       Container(
-                        margin: EdgeInsets.only(top: 16),
-                        padding: EdgeInsets.all(20),
+                        margin: EdgeInsets.only(top: 12), // Reducido de 16 a 12
+                        padding: EdgeInsets.all(16), // Reducido de 20 a 16
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(14), // Reducido de 16 a 14
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity( 0.08),
-                              blurRadius: 10,
+                              blurRadius: 8, // Reducido de 10 a 8
                               offset: Offset(0, 2),
                             ),
                           ],
@@ -778,12 +847,12 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                             Text(
                               'Seleccionar pasajeros',
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 16, // Reducido de 18 a 16
                                 fontWeight: FontWeight.w600,
                                 color: Colors.grey[800],
                               ),
                             ),
-                            SizedBox(height: 20),
+                            SizedBox(height: 16), // Reducido de 20 a 16
                             _buildPassengerSelector(
                               'Adultos',
                               '18 - 64 años',
@@ -791,7 +860,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                               _adults,
                               (value) => setState(() => _adults = value),
                             ),
-                            SizedBox(height: 16),
+                            SizedBox(height: 12), // Reducido de 16 a 12
                             _buildPassengerSelector(
                               'Personas mayores',
                               '65+ años',
@@ -799,7 +868,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                               _seniors,
                               (value) => setState(() => _seniors = value),
                             ),
-                            SizedBox(height: 16),
+                            SizedBox(height: 12), // Reducido de 16 a 12
                             _buildPassengerSelector(
                               'Niños',
                               '3 - 17 años',
@@ -807,7 +876,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                               _children,
                               (value) => setState(() => _children = value),
                             ),
-                            SizedBox(height: 16),
+                            SizedBox(height: 12), // Reducido de 16 a 12
                             _buildPassengerSelector(
                               'Bebés',
                               '0 - 2 años',
@@ -815,7 +884,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                               _infants,
                               (value) => setState(() => _infants = value),
                             ),
-                            SizedBox(height: 20),
+                            SizedBox(height: 16), // Reducido de 20 a 16
                             Row(
                               children: [
                                 Expanded(
@@ -831,13 +900,21 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                     style: OutlinedButton.styleFrom(
                                       side: BorderSide(color: Colors.grey[300]!),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(10), // Reducido de 12 a 10
+                                      ),
+                                      padding: EdgeInsets.symmetric(vertical: 12), // Agregado padding
+                                    ),
+                                    child: Text(
+                                      'Reiniciar', 
+                                      style: TextStyle(
+                                        color: Colors.grey[700],
+                                        fontSize: 14, // Agregado tamaño de fuente
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                    child: Text('Reiniciar', style: TextStyle(color: Colors.grey[700])),
                                   ),
                                 ),
-                                SizedBox(width: 12),
+                                SizedBox(width: 10), // Reducido de 12 a 10
                                 Expanded(
                                   child: ElevatedButton(
                                     onPressed: () {
@@ -850,10 +927,17 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                       backgroundColor: Theme.of(context).colorScheme.primary,
                                       foregroundColor: Colors.white,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(10), // Reducido de 12 a 10
+                                      ),
+                                      padding: EdgeInsets.symmetric(vertical: 12), // Agregado padding
+                                    ),
+                                    child: Text(
+                                      'Confirmar',
+                                      style: TextStyle(
+                                        fontSize: 14, // Agregado tamaño de fuente
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
-                                    child: Text('Confirmar'),
                                   ),
                                 ),
                               ],
@@ -862,12 +946,12 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                         ),
                       ),
                     
-                    SizedBox(height: 32),
+                    SizedBox(height: 24), // Reducido de 32 a 24
                     
-                    // Botón de búsqueda principal estilo referencia
+                    // Botón de búsqueda optimizado para Motorola Edge 2024
                     Container(
                       width: double.infinity,
-                      height: 56,
+                      height: 50, // Reducido de 56 a 50
                       child: ElevatedButton(
                         onPressed: _isLoadingFlights ? null : () {
                           if (_formKey.currentState!.validate()) {
@@ -902,7 +986,7 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                           elevation: 3,
                           shadowColor: Theme.of(context).colorScheme.primary.withOpacity( 0.3),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(14), // Reducido de 16 a 14
                           ),
                         ),
                         child: _isLoadingFlights
@@ -910,18 +994,18 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   SizedBox(
-                                    width: 20,
-                                    height: 20,
+                                    width: 18, // Reducido de 20 a 18
+                                    height: 18, // Reducido de 20 a 18
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                     ),
                                   ),
-                                  SizedBox(width: 12),
+                                  SizedBox(width: 10), // Reducido de 12 a 10
                                   Text(
                                     'Buscando...',
                                     style: TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 16, // Reducido de 18 a 16
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -930,12 +1014,12 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                             : Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.search_rounded, size: 22),
-                                  SizedBox(width: 12),
+                                  Icon(Icons.search_rounded, size: 20), // Reducido de 22 a 20
+                                  SizedBox(width: 10), // Reducido de 12 a 10
                                   Text(
                                     'Buscar Vuelos',
                                     style: TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 16, // Reducido de 18 a 16
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -944,20 +1028,20 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                       ),
                     ),
                     
-                    SizedBox(height: 20),
+                    SizedBox(height: 16), // Reducido de 20 a 16
 
                     // Mostrar resultados de vuelos si existen
                     if (_flightOffers.isNotEmpty) ...[
-                      SizedBox(height: 20),
+                      SizedBox(height: 16), // Reducido de 20 a 16
                       Text(
                         '✈️ ${_flightOffers.length} vuelos encontrados',
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: 18, // Reducido de 20 a 18
                           fontWeight: FontWeight.w700,
                           color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
-                      SizedBox(height: 16),
+                      SizedBox(height: 12), // Reducido de 16 a 12
                       ...List.generate(_flightOffers.length, (index) => 
                         _buildFlightOfferCard(_flightOffers[index])
                       ),
@@ -990,6 +1074,11 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
                 ),
               ),
             ),
+          ),
+          
+          // Padding inferior para evitar barra de navegación
+          SliverToBoxAdapter(
+            child: SizedBox(height: 40),
           ),
         ],
       ),
@@ -1413,9 +1502,31 @@ class _FlightBookingScreenState extends State<FlightBookingScreen> {
   Future<void> _selectDate(bool isDeparture) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
+      initialDate: isDeparture 
+          ? (_departureDate ?? DateTime.now())
+          : (_returnDate ?? _departureDate ?? DateTime.now().add(Duration(days: 1))),
+      firstDate: isDeparture 
+          ? DateTime.now()
+          : (_departureDate ?? DateTime.now()),
       lastDate: DateTime.now().add(Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Theme.of(context).colorScheme.primary,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
     
     if (picked != null) {

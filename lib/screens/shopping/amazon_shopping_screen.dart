@@ -26,7 +26,7 @@ class _AmazonShoppingScreenState extends State<AmazonShoppingScreen> {
   final List<Map<String, dynamic>> _availableStores = [
     {
       'name': 'Amazon',
-      'color': Color(0xFFFF9900),
+      'color': Color(0xFF146EB4),
       'backgroundColor': Color(0xFF232F3E),
       'icon': Icons.shopping_cart,
     },
@@ -59,161 +59,237 @@ class _AmazonShoppingScreenState extends State<AmazonShoppingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: currentStoreBackgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Compras $_selectedStore',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          Stack(
-            children: [
-              IconButton(
-                icon: Icon(Icons.shopping_cart, color: Colors.white),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => CartScreen(),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header simple y limpio
+            Container(
+              color: currentStoreColor,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.arrow_back, color: Colors.white, size: 24),
+                      onPressed: () => Navigator.pop(context),
                     ),
-                  );
-                },
-              ),
-              if (_cartService.itemCount > 0)
-                Positioned(
-                  right: 6,
-                  top: 6,
-                  child: Container(
-                    padding: EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    constraints: BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
-                    ),
-                    child: Text(
-                      '${_cartService.itemCount}',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Compras $_selectedStore',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Encuentra millones de productos',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
-                      textAlign: TextAlign.center,
                     ),
-                  ),
+                    Stack(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.shopping_cart, color: Colors.white, size: 24),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => CartScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        if (_cartService.itemCount > 0)
+                          Positioned(
+                            right: 6,
+                            top: 6,
+                            child: Container(
+                              padding: EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              constraints: BoxConstraints(
+                                minWidth: 16,
+                                minHeight: 16,
+                              ),
+                              child: Text(
+                                '${_cartService.itemCount}',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
-            ],
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Store Selector - MOVED TO TOP
-          Container(
-            padding: EdgeInsets.all(16),
-            color: Colors.white,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Selecciona la tienda:',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[800],
-                  ),
-                ),
-                SizedBox(height: 12),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: _availableStores.map((store) => _buildStoreSelector(store)).toList(),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-          
-          // Search Bar - MOVED BELOW STORE SELECTOR
-          Container(
-            padding: EdgeInsets.all(16),
-            color: Colors.grey[50],
-            child: Container(
-              height: 50,
+            // Store Selector simple
+            Container(
+              margin: EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
-                    spreadRadius: 1,
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
+                border: Border.all(color: Colors.grey[200]!, width: 1),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.store,
+                        color: currentStoreColor,
+                        size: 20,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Selecciona la tienda:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 12),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _availableStores.map((store) => _buildStoreSelector(store)).toList(),
+                    ),
                   ),
                 ],
               ),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Buscar en $_selectedStore',
-                  hintStyle: TextStyle(color: Colors.grey[500], fontSize: 16),
-                  prefixIcon: Icon(Icons.search, color: currentStoreColor),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(Icons.clear, color: Colors.grey[500]),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {
-                              _searchResults.clear();
-                              _hasSearched = false;
-                            });
-                          },
-                        )
-                      : null,
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+            ),
+            // Search Bar limpio y simple
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[300]!, width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
                 ),
-                onSubmitted: _performSearch,
-                onChanged: (value) {
-                  setState(() {}); // Para actualizar el botón clear
-                },
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Buscar en $_selectedStore',
+                    hintStyle: TextStyle(
+                      color: Colors.grey[500], 
+                      fontSize: 15,
+                    ),
+                    prefixIcon: Icon(Icons.search, color: currentStoreColor, size: 22),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                margin: EdgeInsets.only(right: 4),
+                                child: Material(
+                                  color: currentStoreColor,
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(6),
+                                    onTap: () {
+                                      if (_searchController.text.isNotEmpty) {
+                                        _performSearch(_searchController.text);
+                                      }
+                                    },
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      child: Text(
+                                        'Ir',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.clear, color: Colors.grey[600], size: 18),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() {
+                                    _searchResults.clear();
+                                    _hasSearched = false;
+                                  });
+                                },
+                              ),
+                            ],
+                          )
+                        : Container(
+                            margin: EdgeInsets.only(right: 4),
+                            child: Material(
+                              color: currentStoreColor,
+                              borderRadius: BorderRadius.circular(6),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(6),
+                                onTap: () {
+                                  if (_searchController.text.isNotEmpty) {
+                                    _performSearch(_searchController.text);
+                                  }
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  child: Text(
+                                    'Ir',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+                  ),
+                  onSubmitted: _performSearch,
+                  onChanged: (value) {
+                    setState(() {}); // Para actualizar el botón clear
+                  },
+                ),
               ),
             ),
-          ),
-          
-          // Barra de categorías
-          Container(
-            height: 50,
-            color: currentStoreBackgroundColor.withOpacity(0.8),
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                _buildCategoryChip('Todos'),
-                _buildCategoryChip('Electrónicos'),
-                _buildCategoryChip('Moda'),
-                _buildCategoryChip('Casa y Jardín'),
-                _buildCategoryChip('Deportes'),
-                _buildCategoryChip('Libros'),
-                _buildCategoryChip('Juguetes'),
-              ],
-            ),
-          ),
+            SizedBox(height: 20),
 
-          Expanded(
-            child: _buildContent(),
-          ),
-        ],
+            Expanded(
+              child: _buildContent(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -224,7 +300,6 @@ class _AmazonShoppingScreenState extends State<AmazonShoppingScreen> {
       margin: EdgeInsets.only(right: 12),
       child: GestureDetector(
         onTap: () {
-          // Solo cambiar la tienda seleccionada, mantener la misma pantalla
           setState(() {
             _selectedStore = store['name'];
             _searchResults.clear();
@@ -235,19 +310,12 @@ class _AmazonShoppingScreenState extends State<AmazonShoppingScreen> {
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? store['color'] : Colors.grey[200],
-            borderRadius: BorderRadius.circular(25),
+            color: isSelected ? store['color'] : Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected ? store['color'] : Colors.grey[300]!,
-              width: 2,
+              width: 1,
             ),
-            boxShadow: isSelected ? [
-              BoxShadow(
-                color: store['color'].withOpacity(0.3),
-                blurRadius: 8,
-                offset: Offset(0, 3),
-              ),
-            ] : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -255,13 +323,13 @@ class _AmazonShoppingScreenState extends State<AmazonShoppingScreen> {
               Icon(
                 store['icon'],
                 color: isSelected ? Colors.white : Colors.grey[600],
-                size: 20,
+                size: 18,
               ),
               SizedBox(width: 8),
               Text(
                 store['name'],
                 style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.grey[600],
+                  color: isSelected ? Colors.white : Colors.grey[700],
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                   fontSize: 14,
                 ),
@@ -274,37 +342,6 @@ class _AmazonShoppingScreenState extends State<AmazonShoppingScreen> {
   }
 
 
-  Widget _buildCategoryChip(String title) {
-    bool isSelected = _selectedCategory == title;
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-      child: FilterChip(
-        label: Text(
-          title,
-          style: TextStyle(
-            color: isSelected ? currentStoreBackgroundColor : Colors.white,
-            fontWeight: FontWeight.w500,
-            fontSize: 14,
-          ),
-        ),
-        backgroundColor: isSelected ? Colors.white : currentStoreBackgroundColor.withOpacity(0.7),
-        selectedColor: Colors.white,
-        selected: isSelected,
-        onSelected: (selected) {
-          setState(() {
-            _selectedCategory = title;
-          });
-          if (_hasSearched && _searchController.text.isNotEmpty) {
-            _performSearch(_searchController.text);
-          }
-        },
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: Colors.white.withOpacity(0.3)),
-        ),
-      ),
-    );
-  }
 
   Widget _buildContent() {
     if (_isLoading) {
@@ -341,83 +378,98 @@ class _AmazonShoppingScreenState extends State<AmazonShoppingScreen> {
 
   Widget _buildWelcomeContent() {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 40), // Padding inferior para Motorola
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Banner principal simple
           Container(
             width: double.infinity,
             padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [currentStoreColor, currentStoreColor.withOpacity(0.7)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: currentStoreColor,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Align(
-                  alignment: Alignment.center,
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(Icons.local_shipping,
-                            color: Colors.white, size: 24),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.local_shipping,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Compras $_selectedStore',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Encuentra millones de productos',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
-                      SizedBox(width: 12),
-                      Text(
-                        'Compras $_selectedStore',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.flash_on,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      'Envío a Cuba en 48-72h',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
                       ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'Encuentra millones de productos',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  'Busca el producto que desees enviar a Cuba y lo enviamos en menos de 48h en la puerta de tu familiar',
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(0.9), fontSize: 14),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
+          
           SizedBox(height: 24),
+          
+          // Título de categorías
           Text(
             'Categorías populares',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[600],
+              color: Colors.grey[800],
             ),
           ),
+          
           SizedBox(height: 16),
+          
+          // Grid de categorías optimizado
           GridView.count(
             shrinkWrap: true,
             physics: NeverScrollableScrollPhysics(),
             crossAxisCount: 2,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.5,
+            childAspectRatio: 1.2,
             children: [
               _buildCategoryCard(
                   'Electrónicos', Icons.devices, 'iPhone, TV, Laptops'),
@@ -460,6 +512,7 @@ class _AmazonShoppingScreenState extends State<AmazonShoppingScreen> {
             padding: EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   icon,
@@ -470,19 +523,22 @@ class _AmazonShoppingScreenState extends State<AmazonShoppingScreen> {
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey[600],
+                    color: Colors.grey[800],
                   ),
                 ),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
+                SizedBox(height: 4),
+                Expanded(
+                  child: Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey[600],
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),

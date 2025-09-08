@@ -398,13 +398,27 @@ class CartService extends ChangeNotifier {
           print('   - ${item.name}: ${item.quantity} unidades');
         }
         
-        await client
+        // Primero intentar actualizar, si no existe, insertar
+        final response = await client
             .from('user_carts')
-            .upsert({
-              'user_id': user.id,
+            .update({
               'items': _items.map((item) => item.toJson()).toList(),
               'updated_at': DateTime.now().toIso8601String(),
-            });
+            })
+            .eq('user_id', user.id);
+        
+        // Si no se actualizó ninguna fila, insertar nueva
+        if (response == null || response.isEmpty) {
+          print('📝 No existe carrito, creando nuevo...');
+          await client
+              .from('user_carts')
+              .insert({
+                'user_id': user.id,
+                'items': _items.map((item) => item.toJson()).toList(),
+                'created_at': DateTime.now().toIso8601String(),
+                'updated_at': DateTime.now().toIso8601String(),
+              });
+        }
         
         print('✅ Carrito guardado exitosamente en Supabase');
       } else {

@@ -3,6 +3,8 @@ import 'package:cubalink23/services/cart_service.dart';
 import 'package:cubalink23/models/cart_item.dart';
 import 'package:cubalink23/screens/shopping/shipping_screen.dart';
 import 'package:cubalink23/services/auth_guard_service.dart';
+import 'package:cubalink23/services/likes_service.dart';
+import 'package:cubalink23/models/store_product.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({Key? key}) : super(key: key);
@@ -13,12 +15,16 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   final CartService _cartService = CartService();
+  final LikesService _likesService = LikesService.instance;
+  List<StoreProduct> _favoriteProducts = [];
+  bool _isLoadingFavorites = false;
 
   @override
   void initState() {
     super.initState();
     _cartService.addListener(_onCartChanged);
     _checkAuthAndLoadCart();
+    _loadFavoriteProducts();
   }
 
   Future<void> _checkAuthAndLoadCart() async {
@@ -39,6 +45,39 @@ class _CartScreenState extends State<CartScreen> {
 
   void _onCartChanged() {
     if (mounted) setState(() {});
+  }
+
+  Future<void> _loadFavoriteProducts() async {
+    setState(() {
+      _isLoadingFavorites = true;
+    });
+
+    try {
+      final favoritesData = await _likesService.getUserLikes();
+      final favorites = favoritesData.map((data) => StoreProduct.fromJson({
+        'id': data['product_id'],
+        'name': data['product_name'],
+        'price': data['product_price'],
+        'image_url': data['product_image_url'] ?? '',
+        'description': '',
+        'category': '',
+        'subcategory': '',
+        'stock': 0,
+        'is_active': true,
+        'created_at': data['created_at'],
+        'updated_at': data['updated_at'],
+      })).toList();
+      
+      setState(() {
+        _favoriteProducts = favorites;
+        _isLoadingFavorites = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingFavorites = false;
+      });
+      print('Error cargando favoritos: $e');
+    }
   }
 
   @override
@@ -97,65 +136,72 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _buildEmptyCart() {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: Color(0xFFFF9900).withOpacity( 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.shopping_cart_outlined,
-                size: 60,
-                color: Color(0xFFFF9900),
+    return Column(
+      children: [
+        // Mensaje de carrito vacío
+        Expanded(
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: Color(0xFFFF9900).withOpacity( 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.shopping_cart_outlined,
+                      size: 60,
+                      color: Color(0xFFFF9900),
+                    ),
+                  ),
+                  SizedBox(height: 24),
+                  Text(
+                    'Tu carrito está vacío',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF232F3E),
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'Agrega productos desde nuestras tiendas',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 32),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFFFF9900),
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Continuar Comprando',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(height: 24),
-            Text(
-              'Tu carrito está vacío',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF232F3E),
-              ),
-            ),
-            SizedBox(height: 12),
-            Text(
-              'Agrega productos desde nuestras tiendas',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFFF9900),
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                'Continuar Comprando',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -193,20 +239,35 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ),
         
-        // Lista de productos
+        // Lista de productos del carrito
         Expanded(
-          child: ListView.builder(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _cartService.items.length,
-            itemBuilder: (context, index) {
-              final item = _cartService.items[index];
-              return _buildCartItem(item);
-            },
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Lista de productos del carrito
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _cartService.items.length,
+                  itemBuilder: (context, index) {
+                    final item = _cartService.items[index];
+                    return _buildCartItem(item);
+                  },
+                ),
+                
+                // Resumen de precios
+                _buildPriceSummary(),
+                
+                // Sección de favoritos al final
+                _buildFavoritesSection(),
+                
+                // Padding inferior para evitar la barra de navegación de Android
+                SizedBox(height: 100),
+              ],
+            ),
           ),
         ),
-        
-        // Resumen de precios
-        _buildPriceSummary(),
       ],
     );
   }
@@ -359,6 +420,358 @@ class _CartScreenState extends State<CartScreen> {
           size: 16,
           color: Color(0xFF232F3E),
         ),
+      ),
+    );
+  }
+
+
+  Widget _buildFavoritesSection() {
+    if (_favoriteProducts.isEmpty && !_isLoadingFavorites) {
+      return SizedBox.shrink();
+    }
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.15),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header de favoritos modernizado
+          Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFFF9900).withOpacity(0.1),
+                  Color(0xFFFF9900).withOpacity(0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFFF9900).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.favorite,
+                    color: Color(0xFFFF9900),
+                    size: 20,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tus Productos Favoritos',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF232F3E),
+                        ),
+                      ),
+                      if (_favoriteProducts.isNotEmpty)
+                        Text(
+                          '${_favoriteProducts.length} producto${_favoriteProducts.length != 1 ? 's' : ''} guardado${_favoriteProducts.length != 1 ? 's' : ''}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFFFF9900),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Lista de productos favoritos
+          if (_isLoadingFavorites)
+            Container(
+              padding: EdgeInsets.all(40),
+              child: Center(
+                child: Column(
+                  children: [
+                    CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF9900)),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Cargando favoritos...',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else if (_favoriteProducts.isEmpty)
+            Container(
+              padding: EdgeInsets.all(40),
+              child: Center(
+                child: Column(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Icon(
+                        Icons.favorite_border,
+                        size: 48,
+                        color: Colors.grey[400],
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'No tienes productos favoritos',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Marca productos con ❤️ para verlos aquí',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[500],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            Container(
+              height: 220,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.all(16),
+                itemCount: _favoriteProducts.length,
+                itemBuilder: (context, index) {
+                  final product = _favoriteProducts[index];
+                  return _buildFavoriteProductCard(product);
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFavoriteProductCard(StoreProduct product) {
+    return Container(
+      width: 170,
+      margin: EdgeInsets.only(right: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Imagen del producto
+          Container(
+            height: 110,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+              child: product.imageUrl.isNotEmpty
+                  ? Image.network(
+                      product.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.grey[200]!,
+                                Colors.grey[300]!,
+                              ],
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.image,
+                            color: Colors.grey[500],
+                            size: 40,
+                          ),
+                        );
+                      },
+                    )
+                  : Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.grey[200]!,
+                            Colors.grey[300]!,
+                          ],
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.image,
+                        color: Colors.grey[500],
+                        size: 40,
+                      ),
+                    ),
+            ),
+          ),
+          
+          // Información del producto
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.name,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF232F3E),
+                      height: 1.2,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    '\$${product.price.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFB12704),
+                    ),
+                  ),
+                  Spacer(),
+                  
+                  // Botón para agregar al carrito modernizado
+                  Container(
+                    width: double.infinity,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFFFF9900),
+                          Color(0xFFFF9900).withOpacity(0.8),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0xFFFF9900).withOpacity(0.3),
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: () => _addFavoriteToCart(product),
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add_shopping_cart,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'Agregar',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _addFavoriteToCart(StoreProduct product) {
+    final cartItem = CartItem(
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+      imageUrl: product.imageUrl,
+      type: 'product',
+      description: product.description,
+    );
+    
+    _cartService.addItem(cartItem);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${product.name} agregado al carrito'),
+        backgroundColor: Color(0xFF4CAF50),
+        duration: Duration(seconds: 2),
       ),
     );
   }

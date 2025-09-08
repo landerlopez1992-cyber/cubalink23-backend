@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cubalink23/services/auth_service_bypass.dart';
+import 'package:cubalink23/services/credentials_storage_service.dart';
 import 'package:cubalink23/screens/auth/register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -12,6 +13,31 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _isEmailLogin = true; // true para email, false para teléfono
+  bool _saveCredentials = false; // Nueva variable para la casilla
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  // Cargar credenciales guardadas al inicializar
+  Future<void> _loadSavedCredentials() async {
+    try {
+      final savedCredentials = await CredentialsStorageService.getSavedCredentials();
+      if (savedCredentials != null) {
+        setState(() {
+          _identifierController.text = savedCredentials['identifier'] ?? '';
+          _passwordController.text = savedCredentials['password'] ?? '';
+          _isEmailLogin = savedCredentials['isEmailLogin'] ?? true;
+          _saveCredentials = true;
+        });
+        print('✅ Credenciales cargadas automáticamente');
+      }
+    } catch (e) {
+      print('❌ Error cargando credenciales: $e');
+    }
+  }
 
   Future<void> _login() async {
     print('🔐 === INICIANDO PROCESO LOGIN ===');
@@ -50,6 +76,21 @@ class _LoginScreenState extends State<LoginScreen> {
         
         if (user != null) {
           print('✅ Usuario logueado exitosamente: ${user.name}');
+          
+          // Guardar credenciales si la casilla está marcada
+          if (_saveCredentials) {
+            await CredentialsStorageService.saveCredentials(
+              identifier: email,
+              password: password,
+              isEmailLogin: true,
+            );
+            print('✅ Credenciales guardadas para futuros logins');
+          } else {
+            // Si no está marcada, eliminar credenciales guardadas
+            await CredentialsStorageService.clearSavedCredentials();
+            print('✅ Credenciales no guardadas');
+          }
+          
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('¡Bienvenido, ${user.name}!'),
@@ -95,6 +136,21 @@ class _LoginScreenState extends State<LoginScreen> {
         
         if (user != null) {
           print('✅ Usuario logueado exitosamente: ${user.name}');
+          
+          // Guardar credenciales si la casilla está marcada
+          if (_saveCredentials) {
+            await CredentialsStorageService.saveCredentials(
+              identifier: phone,
+              password: password,
+              isEmailLogin: false,
+            );
+            print('✅ Credenciales guardadas para futuros logins');
+          } else {
+            // Si no está marcada, eliminar credenciales guardadas
+            await CredentialsStorageService.clearSavedCredentials();
+            print('✅ Credenciales no guardadas');
+          }
+          
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('¡Bienvenido, ${user.name}!'),
@@ -279,7 +335,37 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               SizedBox(height: 16),
-              SizedBox(height: 24),
+              // Casilla para guardar credenciales
+              Row(
+                children: [
+                  Checkbox(
+                    value: _saveCredentials,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        _saveCredentials = value ?? false;
+                      });
+                    },
+                    activeColor: Theme.of(context).primaryColor,
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _saveCredentials = !_saveCredentials;
+                        });
+                      },
+                      child: Text(
+                        'Guardar usuario para futuros logins',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16),
               _isLoading
                   ? CircularProgressIndicator()
                   : ElevatedButton(
@@ -305,6 +391,40 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: Theme.of(context).primaryColor,
                   ),
                 ),
+              ),
+              SizedBox(height: 16),
+              // Botón para limpiar credenciales guardadas
+              FutureBuilder<bool>(
+                future: CredentialsStorageService.hasSavedCredentials(),
+                builder: (context, snapshot) {
+                  if (snapshot.data == true) {
+                    return TextButton(
+                      onPressed: () async {
+                        await CredentialsStorageService.clearSavedCredentials();
+                        setState(() {
+                          _identifierController.clear();
+                          _passwordController.clear();
+                          _saveCredentials = false;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('✅ Credenciales guardadas eliminadas'),
+                            backgroundColor: Colors.orange,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        'Limpiar credenciales guardadas',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.orange[700],
+                        ),
+                      ),
+                    );
+                  }
+                  return SizedBox.shrink();
+                },
               ),
             ],
           ),
