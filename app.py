@@ -293,6 +293,15 @@ def search_flights():
 
 # ===== RUTAS DE NOTIFICACIONES PUSH (DIRECTAS) =====
 
+@app.route('/api/test-push', methods=['GET'])
+def test_push_endpoint():
+    """Endpoint de prueba para verificar que las rutas funcionan"""
+    return jsonify({
+        'success': True,
+        'message': 'Push notifications endpoint funcionando correctamente',
+        'timestamp': datetime.utcnow().isoformat()
+    })
+
 @app.route('/api/push-notifications', methods=['POST'])
 def send_push_notification():
     """Enviar notificación push a usuarios"""
