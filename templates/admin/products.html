@@ -237,10 +237,8 @@
                                     <option value="farmacia">Farmacia</option>
                                     <option value="electronicos">Electrónicos</option>
                                     <option value="ropa">Ropa</option>
-                                    <option value="servicios">Servicios</option>
-                                    <option value="motos">Motos</option>
-                                    <option value="amazon">Amazon</option>
-                                    <option value="walmart">Walmart</option>
+                                    <option value="hogar">Hogar</option>
+                                    <option value="deportes">Deportes</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
@@ -454,10 +452,8 @@
                                         <option value="farmacia">Farmacia</option>
                                         <option value="electronicos">Electrónicos</option>
                                         <option value="ropa">Ropa</option>
-                                        <option value="servicios">Servicios</option>
-                                        <option value="motos">Motos</option>
-                                        <option value="amazon">Amazon</option>
-                                        <option value="walmart">Walmart</option>
+                                        <option value="hogar">Hogar</option>
+                                        <option value="deportes">Deportes</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">
@@ -858,17 +854,42 @@
             
             subcategorySelect.innerHTML = '<option value="">Seleccionar subcategoría</option>';
             
-            if (category === 'motos') {
+            if (category === 'alimentos') {
                 subcategorySelect.innerHTML += `
-                    <option value="Motos Eléctricas">Motos Eléctricas</option>
-                    <option value="Motos Gasolina">Motos Gasolina</option>
+                    <option value="Carnes">Carnes</option>
+                    <option value="Lácteos">Lácteos</option>
+                    <option value="Frutas & Verduras">Frutas & Verduras</option>
+                    <option value="Panadería">Panadería</option>
+                    <option value="Mariscos">Mariscos</option>
+                    <option value="Congelados">Congelados</option>
+                `;
+            } else if (category === 'materiales') {
+                subcategorySelect.innerHTML += `
+                    <option value="Construcción">Construcción</option>
+                    <option value="Pintura">Pintura</option>
+                    <option value="Madera">Madera</option>
+                    <option value="Metal">Metal</option>
+                `;
+            } else if (category === 'ferreteria') {
+                subcategorySelect.innerHTML += `
+                    <option value="Herramientas">Herramientas</option>
+                    <option value="Tornillos">Tornillos</option>
+                    <option value="Clavos">Clavos</option>
+                    <option value="Candados">Candados</option>
+                `;
+            } else if (category === 'farmacia') {
+                subcategorySelect.innerHTML += `
+                    <option value="Medicamentos">Medicamentos</option>
+                    <option value="Vitaminas">Vitaminas</option>
+                    <option value="Primeros Auxilios">Primeros Auxilios</option>
+                    <option value="Cuidado Personal">Cuidado Personal</option>
                 `;
             } else if (category === 'electronicos') {
                 subcategorySelect.innerHTML += `
-                    <option value="Smartphones">Smartphones</option>
-                    <option value="Laptops">Laptops</option>
-                    <option value="Tablets">Tablets</option>
+                    <option value="Teléfonos">Teléfonos</option>
+                    <option value="Computadoras">Computadoras</option>
                     <option value="Accesorios">Accesorios</option>
+                    <option value="Electrodomésticos">Electrodomésticos</option>
                 `;
             } else if (category === 'ropa') {
                 subcategorySelect.innerHTML += `
@@ -877,41 +898,19 @@
                     <option value="Niños">Niños</option>
                     <option value="Accesorios">Accesorios</option>
                 `;
-            } else if (category === 'alimentos') {
+            } else if (category === 'hogar') {
                 subcategorySelect.innerHTML += `
-                    <option value="Restaurantes">Restaurantes</option>
-                    <option value="Delivery">Delivery</option>
-                    <option value="Supermercado">Supermercado</option>
+                    <option value="Muebles">Muebles</option>
+                    <option value="Decoración">Decoración</option>
+                    <option value="Cocina">Cocina</option>
+                    <option value="Baño">Baño</option>
                 `;
-            } else if (category === 'servicios') {
+            } else if (category === 'deportes') {
                 subcategorySelect.innerHTML += `
-                    <option value="Transporte">Transporte</option>
-                    <option value="Hospedaje">Hospedaje</option>
-                    <option value="Entretenimiento">Entretenimiento</option>
-                `;
-            } else if (category === 'alimentos') {
-                subcategorySelect.innerHTML += `
-                    <option value="Carnes">Carnes</option>
-                    <option value="Verduras">Verduras</option>
-                    <option value="Frutas">Frutas</option>
-                    <option value="Lácteos">Lácteos</option>
-                    <option value="Granos">Granos</option>
-                `;
-            } else if (category === 'amazon') {
-                subcategorySelect.innerHTML += `
-                    <option value="electronicos">Electrónicos</option>
-                    <option value="Hogar">Hogar</option>
-                    <option value="ropa">Ropa</option>
-                    <option value="Deportes">Deportes</option>
-                    <option value="Libros">Libros</option>
-                `;
-            } else if (category === 'walmart') {
-                subcategorySelect.innerHTML += `
-                    <option value="alimentos">Alimentos</option>
-                    <option value="Hogar">Hogar</option>
-                    <option value="ropa">Ropa</option>
-                    <option value="electronicos">Electrónicos</option>
-                    <option value="Farmacia">Farmacia</option>
+                    <option value="Fútbol">Fútbol</option>
+                    <option value="Béisbol">Béisbol</option>
+                    <option value="Basketball">Basketball</option>
+                    <option value="Fitness">Fitness</option>
                 `;
             }
             
@@ -927,17 +926,42 @@
             
             subcategorySelect.innerHTML = '<option value="">Seleccionar subcategoría</option>';
             
-            if (category === 'motos') {
+            if (category === 'alimentos') {
                 subcategorySelect.innerHTML += `
-                    <option value="Motos Eléctricas">Motos Eléctricas</option>
-                    <option value="Motos Gasolina">Motos Gasolina</option>
+                    <option value="Carnes">Carnes</option>
+                    <option value="Lácteos">Lácteos</option>
+                    <option value="Frutas & Verduras">Frutas & Verduras</option>
+                    <option value="Panadería">Panadería</option>
+                    <option value="Mariscos">Mariscos</option>
+                    <option value="Congelados">Congelados</option>
+                `;
+            } else if (category === 'materiales') {
+                subcategorySelect.innerHTML += `
+                    <option value="Construcción">Construcción</option>
+                    <option value="Pintura">Pintura</option>
+                    <option value="Madera">Madera</option>
+                    <option value="Metal">Metal</option>
+                `;
+            } else if (category === 'ferreteria') {
+                subcategorySelect.innerHTML += `
+                    <option value="Herramientas">Herramientas</option>
+                    <option value="Tornillos">Tornillos</option>
+                    <option value="Clavos">Clavos</option>
+                    <option value="Candados">Candados</option>
+                `;
+            } else if (category === 'farmacia') {
+                subcategorySelect.innerHTML += `
+                    <option value="Medicamentos">Medicamentos</option>
+                    <option value="Vitaminas">Vitaminas</option>
+                    <option value="Primeros Auxilios">Primeros Auxilios</option>
+                    <option value="Cuidado Personal">Cuidado Personal</option>
                 `;
             } else if (category === 'electronicos') {
                 subcategorySelect.innerHTML += `
-                    <option value="Smartphones">Smartphones</option>
-                    <option value="Laptops">Laptops</option>
-                    <option value="Tablets">Tablets</option>
+                    <option value="Teléfonos">Teléfonos</option>
+                    <option value="Computadoras">Computadoras</option>
                     <option value="Accesorios">Accesorios</option>
+                    <option value="Electrodomésticos">Electrodomésticos</option>
                 `;
             } else if (category === 'ropa') {
                 subcategorySelect.innerHTML += `
@@ -946,43 +970,24 @@
                     <option value="Niños">Niños</option>
                     <option value="Accesorios">Accesorios</option>
                 `;
-            } else if (category === 'alimentos') {
+            } else if (category === 'hogar') {
                 subcategorySelect.innerHTML += `
-                    <option value="Restaurantes">Restaurantes</option>
-                    <option value="Delivery">Delivery</option>
-                    <option value="Supermercado">Supermercado</option>
+                    <option value="Muebles">Muebles</option>
+                    <option value="Decoración">Decoración</option>
+                    <option value="Cocina">Cocina</option>
+                    <option value="Baño">Baño</option>
                 `;
-            } else if (category === 'servicios') {
+            } else if (category === 'deportes') {
                 subcategorySelect.innerHTML += `
-                    <option value="Transporte">Transporte</option>
-                    <option value="Hospedaje">Hospedaje</option>
-                    <option value="Entretenimiento">Entretenimiento</option>
-                `;
-            } else if (category === 'alimentos') {
-                subcategorySelect.innerHTML += `
-                    <option value="Carnes">Carnes</option>
-                    <option value="Verduras">Verduras</option>
-                    <option value="Frutas">Frutas</option>
-                    <option value="Lácteos">Lácteos</option>
-                    <option value="Granos">Granos</option>
-                `;
-            } else if (category === 'amazon') {
-                subcategorySelect.innerHTML += `
-                    <option value="electronicos">Electrónicos</option>
-                    <option value="Hogar">Hogar</option>
-                    <option value="ropa">Ropa</option>
-                    <option value="Deportes">Deportes</option>
-                    <option value="Libros">Libros</option>
-                `;
-            } else if (category === 'walmart') {
-                subcategorySelect.innerHTML += `
-                    <option value="alimentos">Alimentos</option>
-                    <option value="Hogar">Hogar</option>
-                    <option value="ropa">Ropa</option>
-                    <option value="electronicos">Electrónicos</option>
-                    <option value="Farmacia">Farmacia</option>
+                    <option value="Fútbol">Fútbol</option>
+                    <option value="Béisbol">Béisbol</option>
+                    <option value="Basketball">Basketball</option>
+                    <option value="Fitness">Fitness</option>
                 `;
             }
+            
+            // Habilitar el select de subcategoría
+            subcategorySelect.disabled = false;
         }
 
         // Preview de imagen al agregar
