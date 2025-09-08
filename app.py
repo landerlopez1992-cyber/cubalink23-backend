@@ -307,14 +307,16 @@ def send_push_notification():
         if not title or not message:
             return jsonify({'success': False, 'error': 'Título y mensaje son requeridos'}), 400
         
-        # Crear notificación en Supabase
+        # Crear notificación en Supabase (usando la estructura real de la tabla)
         notification_data = {
             'title': title,
             'message': message,
             'type': notification_type,
-            'is_urgent': is_urgent,
-            'sent_at': datetime.utcnow().isoformat(),
-            'status': 'sent'
+            'data': {
+                'is_urgent': is_urgent,
+                'sent_at': datetime.utcnow().isoformat(),
+                'status': 'sent'
+            }
         }
         
         # Guardar en Supabase
@@ -370,9 +372,9 @@ def get_push_notifications():
             'Content-Type': 'application/json'
         }
         
-        # Obtener notificaciones ordenadas por fecha descendente
+        # Obtener notificaciones ordenadas por fecha descendente (usando created_at que sí existe)
         response = requests.get(
-            f'{SUPABASE_URL}/rest/v1/notifications?order=sent_at.desc&limit=50',
+            f'{SUPABASE_URL}/rest/v1/notifications?order=created_at.desc&limit=50',
             headers=headers
         )
         
