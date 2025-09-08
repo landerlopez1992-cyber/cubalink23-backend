@@ -48,6 +48,7 @@ print("🔧 Puerto: {}".format(PORT))
 print("🔑 API Key: {}".format('✅ Configurada' if DUFFEL_API_KEY else '❌ No configurada'))
 print("🔔 Push Notifications: ✅ Blueprint registrado")
 print("🔄 FORZANDO REINICIO COMPLETO DEL SERVIDOR")
+print("📱 PUSH NOTIFICATIONS ENDPOINTS: /api/push-notifications")
 
 @app.route('/')
 def home():
