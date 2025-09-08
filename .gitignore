@@ -73,3 +73,6 @@ backend-duffel_backup_*/
 IMPLEMENTACION_PROGRESS.md
 NOTAS_PROYECTO.md
 deploy_render.md
+
+# ---- Firebase credentials
+firebase_config.json

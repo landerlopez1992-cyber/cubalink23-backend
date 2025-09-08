@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:cubalink23/supabase/supabase_config.dart';
 import 'package:cubalink23/screens/splash/splash_screen.dart';
 import 'package:cubalink23/screens/home/home_screen.dart';
@@ -13,7 +14,6 @@ import 'package:cubalink23/screens/communication/communication_screen.dart';
 import 'package:cubalink23/screens/history/history_screen.dart';
 import 'package:cubalink23/screens/notifications/notifications_screen.dart';
 import 'package:cubalink23/screens/help/help_screen.dart';
-import 'package:cubalink23/screens/news/news_screen.dart';
 import 'package:cubalink23/screens/activity/activity_screen.dart';
 import 'package:cubalink23/screens/transfer/transfer_screen.dart';
 import 'package:cubalink23/screens/recharge/recharge_home_screen.dart';
@@ -34,6 +34,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   print('🚀 Inicializando CubaLink23...');
+  
+  // Initialize Firebase
+  await Firebase.initializeApp();
+  print('✅ Firebase inicializado');
   
   // Initialize Supabase
   await SupabaseConfig.initialize();
@@ -67,7 +71,6 @@ class CubaLink23App extends StatelessWidget {
         '/history': (context) => HistoryScreen(),
         '/notifications': (context) => NotificationsScreen(),
         '/help': (context) => HelpScreen(),
-        '/news': (context) => NewsScreen(),
         '/activity': (context) => ActivityScreen(),
         '/transfer': (context) => TransferScreen(),
         '/recharge': (context) => RechargeHomeScreen(),

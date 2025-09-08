@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cubalink23/screens/recharge/recharge_home_screen.dart';
 import 'package:cubalink23/screens/travel/flight_booking_screen.dart';
+import 'package:cubalink23/screens/travel/renta_car_screen.dart';
 import 'package:cubalink23/services/cart_service.dart';
 import 'package:cubalink23/services/store_service.dart';
 import 'package:cubalink23/services/firebase_repository.dart';
 import 'package:cubalink23/services/notification_manager.dart';
+import 'package:cubalink23/services/firebase_messaging_service.dart';
 import 'package:cubalink23/models/store_product.dart';
 import 'package:cubalink23/screens/shopping/product_details_screen.dart';
 
@@ -47,6 +49,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       _currentBalance = 0.0; // Balance por defecto
       _cartItemsCount = _cartService.itemCount; // Inicializar contador del carrito
     });
+    
+    // Inicializar Firebase Messaging
+    FirebaseMessagingService().initialize();
     
     // Inicializar el manager de notificaciones push
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1943,7 +1948,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         ),
         SizedBox(height: 16),
         Container(
-          height: 180,
+          height: 200, // Aumentado de 180 a 200 para más espacio
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: _getRentaCarData().length,
@@ -1993,7 +1998,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           ),
           // Información del auto
           Padding(
-            padding: EdgeInsets.all(8),
+            padding: EdgeInsets.all(10), // Aumentado de 8 a 10
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -2014,26 +2019,32 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                SizedBox(height: 6),
+                SizedBox(height: 8), // Aumentado de 6 a 8
                 SizedBox(
                   width: double.infinity,
-                  height: 32,
+                  height: 36, // Aumentado de 32 a 36
                   child: ElevatedButton(
                     onPressed: () {
-                      // TODO: Implementar reserva de auto
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RentaCarScreen(),
+                        ),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                       foregroundColor: Colors.white,
-                      padding: EdgeInsets.zero,
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Agregado padding
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(8), // Aumentado de 6 a 8
                       ),
+                      elevation: 2, // Agregada elevación
                     ),
                     child: Text(
                       'Reservar',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 12, // Aumentado de 11 a 12
                         fontWeight: FontWeight.w600,
                       ),
                     ),

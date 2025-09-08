@@ -310,6 +310,39 @@ def send_push_notification():
         if not title or not message:
             return jsonify({'success': False, 'error': 'Título y mensaje son requeridos'}), 400
         
+        # Inicializar Firebase Admin SDK para FCM
+        try:
+            import firebase_admin
+            from firebase_admin import credentials, messaging
+            
+            # Verificar si Firebase ya está inicializado
+            if not firebase_admin._apps:
+                cred = credentials.Certificate('firebase_config.json')
+                firebase_admin.initialize_app(cred)
+                print("✅ Firebase Admin SDK inicializado correctamente")
+            
+            # Crear mensaje FCM
+            fcm_message = messaging.Message(
+                notification=messaging.Notification(
+                    title=title,
+                    body=message
+                ),
+                data={
+                    'type': notification_type,
+                    'is_urgent': str(is_urgent).lower(),
+                    'sent_at': datetime.utcnow().isoformat()
+                },
+                topic='all'  # Enviar a todos los usuarios suscritos al topic 'all'
+            )
+            
+            # Enviar notificación FCM
+            response = messaging.send(fcm_message)
+            print(f"✅ Notificación FCM enviada exitosamente: {response}")
+            
+        except Exception as fcm_error:
+            print(f"⚠️ Error con Firebase FCM: {fcm_error}")
+            # Continuar con el método de respaldo (Supabase)
+        
         # Crear notificación en Supabase (usando la estructura real de la tabla)
         notification_data = {
             'title': title,
