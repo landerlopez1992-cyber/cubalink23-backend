@@ -452,7 +452,7 @@ if __name__ == '__main__':
     for rule in app.url_map.iter_rules():
         print(f"   {rule.methods} {rule.rule}")
     print("✅ PUSH NOTIFICATIONS ENDPOINTS DEBERÍAN ESTAR FUNCIONANDO")
-    print("🚨 RENDER DEPLOY FORZADO - 18:18 - VERIFICAR RAMA MAIN")
+    print("🚨 RENDER DEPLOY FORZADO - 18:20 - RAMA MAIN CONFIGURADA")
     print("🔍 COMMIT: 0f601d8 - PUSH NOTIFICATIONS ROUTES")
     print("📋 RUTAS DISPONIBLES:")
     for rule in app.url_map.iter_rules():
