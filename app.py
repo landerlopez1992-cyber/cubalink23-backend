@@ -452,6 +452,11 @@ if __name__ == '__main__':
     for rule in app.url_map.iter_rules():
         print(f"   {rule.methods} {rule.rule}")
     print("✅ PUSH NOTIFICATIONS ENDPOINTS DEBERÍAN ESTAR FUNCIONANDO")
-    print("🔥 ESTE ES EL DEPLOY MÁS RECIENTE - 18:16 - PUSH NOTIFICATIONS ROUTES")
+    print("🚨 RENDER DEPLOY FORZADO - 18:18 - VERIFICAR RAMA MAIN")
+    print("🔍 COMMIT: 0f601d8 - PUSH NOTIFICATIONS ROUTES")
+    print("📋 RUTAS DISPONIBLES:")
+    for rule in app.url_map.iter_rules():
+        if 'push' in rule.rule or 'test' in rule.rule:
+            print(f"   ✅ {rule.methods} {rule.rule}")
     app.run(host='0.0.0.0', port=PORT, debug=False)
 
