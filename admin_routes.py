@@ -26,7 +26,7 @@ def get_admin_user_id():
         SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpncXJoenVocnd1ZGNrd2VzeWJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTI3OTgsImV4cCI6MjA3MTM2ODc5OH0.lUVK99zmOYD7bNTxilJZWHTmYPfZF5YeMJDVUaJ-FsQ'
         headers = {
             'apikey': SUPABASE_KEY,
-            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Authorization': 'Bearer {}'.format(SUPABASE_KEY),
             'Content-Type': 'application/json'
         }
         
@@ -143,12 +143,12 @@ def get_banners():
         
         headers = {
             'apikey': SUPABASE_KEY,
-            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Authorization': 'Bearer {}'.format(SUPABASE_KEY),
             'Content-Type': 'application/json'
         }
         
         response = requests.get(
-            f'{SUPABASE_URL}/rest/v1/banners?select=*&order=display_order.asc',
+            '{}/rest/v1/banners?select=*&order=display_order.asc'.format(SUPABASE_URL),
             headers=headers
         )
         
@@ -162,7 +162,7 @@ def get_banners():
         else:
             return jsonify({
                 'success': False,
-                'error': f'Error obteniendo banners: {response.status_code}',
+                'error': 'Error obteniendo banners: {}'.format(response.status_code),
                 'banners': []
             }), 500
             
@@ -200,7 +200,7 @@ def create_banner():
         
         headers = {
             'apikey': SUPABASE_KEY,
-            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Authorization': 'Bearer {}'.format(SUPABASE_KEY),
             'Content-Type': 'application/json'
         }
         
@@ -368,7 +368,7 @@ def get_products():
         
         headers = {
             'apikey': SUPABASE_KEY,
-            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Authorization': 'Bearer {}'.format(SUPABASE_KEY),
             'Content-Type': 'application/json'
         }
         
@@ -423,7 +423,7 @@ def create_product():
         
         headers = {
             'apikey': SUPABASE_KEY,
-            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Authorization': 'Bearer {}'.format(SUPABASE_KEY),
             'Content-Type': 'application/json'
         }
         
@@ -599,7 +599,7 @@ def update_product(product_id):
         
         headers = {
             'apikey': SUPABASE_KEY,
-            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Authorization': 'Bearer {}'.format(SUPABASE_KEY),
             'Content-Type': 'application/json'
         }
         
@@ -679,7 +679,7 @@ def delete_product(product_id):
         
         headers = {
             'apikey': SUPABASE_KEY,
-            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Authorization': 'Bearer {}'.format(SUPABASE_KEY),
             'Content-Type': 'application/json'
         }
         
@@ -821,7 +821,7 @@ def update_banner(banner_id):
         
         headers = {
             'apikey': SUPABASE_KEY,
-            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Authorization': 'Bearer {}'.format(SUPABASE_KEY),
             'Content-Type': 'application/json'
         }
         
@@ -884,7 +884,7 @@ def delete_banner(banner_id):
         
         headers = {
             'apikey': SUPABASE_KEY,
-            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Authorization': 'Bearer {}'.format(SUPABASE_KEY),
             'Content-Type': 'application/json'
         }
         
@@ -961,7 +961,7 @@ def upload_banners():
         
         headers = {
             'apikey': SUPABASE_KEY,
-            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Authorization': 'Bearer {}'.format(SUPABASE_KEY),
             'Content-Type': 'application/json'
         }
         
@@ -1132,7 +1132,7 @@ def update_product(product_id):
         
         headers = {
             'apikey': SUPABASE_KEY,
-            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Authorization': 'Bearer {}'.format(SUPABASE_KEY),
             'Content-Type': 'application/json'
         }
         
@@ -1212,7 +1212,7 @@ def delete_product(product_id):
         
         headers = {
             'apikey': SUPABASE_KEY,
-            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Authorization': 'Bearer {}'.format(SUPABASE_KEY),
             'Content-Type': 'application/json'
         }
         
@@ -1354,7 +1354,7 @@ def update_banner(banner_id):
         
         headers = {
             'apikey': SUPABASE_KEY,
-            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Authorization': 'Bearer {}'.format(SUPABASE_KEY),
             'Content-Type': 'application/json'
         }
         
@@ -1417,7 +1417,7 @@ def delete_banner(banner_id):
         
         headers = {
             'apikey': SUPABASE_KEY,
-            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Authorization': 'Bearer {}'.format(SUPABASE_KEY),
             'Content-Type': 'application/json'
         }
         
@@ -1494,7 +1494,7 @@ def upload_banners():
         
         headers = {
             'apikey': SUPABASE_KEY,
-            'Authorization': f'Bearer {SUPABASE_KEY}',
+            'Authorization': 'Bearer {}'.format(SUPABASE_KEY),
             'Content-Type': 'application/json'
         }
         
