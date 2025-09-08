@@ -41,9 +41,10 @@ app.register_blueprint(push_bp)
 PORT = int(os.environ.get('PORT', 10000))
 DUFFEL_API_KEY = os.environ.get('DUFFEL_API_KEY')
 
-print("🚀 CUBALINK23 BACKEND - MANTIENE TODO LO EXISTENTE + BANNERS")
+print("🚀 CUBALINK23 BACKEND - MANTIENE TODO LO EXISTENTE + BANNERS + PUSH NOTIFICATIONS")
 print("🔧 Puerto: {}".format(PORT))
 print("🔑 API Key: {}".format('✅ Configurada' if DUFFEL_API_KEY else '❌ No configurada'))
+print("🔔 Push Notifications: ✅ Blueprint registrado")
 
 @app.route('/')
 def home():
