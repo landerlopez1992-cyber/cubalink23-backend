@@ -1190,6 +1190,22 @@ Para preguntas sobre privacidad, contáctenos.</textarea>
                         <div class="card-body">
                             <h6 class="card-title mb-1">${banner.title}</h6>
                             <small class="text-muted">Orden: ${banner.display_order}</small>
+                            
+                            <!-- Control de tiempo de rotación -->
+                            <div class="mt-2 mb-2">
+                                <label class="form-label small">Tiempo de rotación (segundos):</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="rotationTime_${banner.id}" 
+                                           value="${Math.round(banner.rotation_speed / 1000)}" 
+                                           min="1" 
+                                           max="30"
+                                           onchange="updateBannerRotationTime('${banner.id}', this.value)">
+                                    <span class="input-group-text">seg</span>
+                                </div>
+                            </div>
+                            
                             <div class="mt-2">
                                 <button class="btn btn-sm btn-outline-primary me-1" onclick="editBanner('${banner.id}')">
                                     <i class="fas fa-edit"></i>
@@ -1327,6 +1343,38 @@ Para preguntas sobre privacidad, contáctenos.</textarea>
             .catch(error => {
                 console.error('Error saving banner:', error);
                 showAlert('Error al guardar el banner', 'danger');
+            });
+        }
+
+        // Actualizar tiempo de rotación de un banner
+        function updateBannerRotationTime(bannerId, seconds) {
+            const milliseconds = parseInt(seconds) * 1000;
+            
+            fetch(`/admin/api/banners/${bannerId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    rotation_speed: milliseconds
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    // Actualizar el banner en la lista local
+                    const banner = banners.find(b => b.id === bannerId);
+                    if (banner) {
+                        banner.rotation_speed = milliseconds;
+                    }
+                    showAlert(`Tiempo de rotación actualizado a ${seconds} segundos`, 'success');
+                } else {
+                    showAlert('Error al actualizar el tiempo de rotación', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating rotation time:', error);
+                showAlert('Error al actualizar el tiempo de rotación', 'danger');
             });
         }
 
