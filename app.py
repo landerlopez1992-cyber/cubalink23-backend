@@ -13,6 +13,7 @@ from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 from datetime import datetime
 import time
+from collections import deque
 
 app = Flask(__name__)
 CORS(app)
@@ -55,6 +56,10 @@ print("🔄 REINICIO FORZADO - TIMESTAMP: {}".format(datetime.now().isoformat())
 print("🔄 REINICIO FORZADO - TIMESTAMP: {}".format(datetime.now().isoformat()))
 print("🔄 REINICIO FORZADO - TIMESTAMP: {}".format(datetime.now().isoformat()))
 print("🔄 REINICIO FORZADO - TIMESTAMP: {}".format(datetime.now().isoformat()))
+
+# ===== SISTEMA DE NOTIFICACIONES SIMPLE =====
+notification_queue = deque()
+notification_counter = 0
 
 @app.route('/')
 def home():
@@ -451,6 +456,81 @@ def delete_push_notification(notification_id):
     except Exception as e:
         print(f"❌ Error eliminando notificación: {e}")
         return jsonify({'success': False, 'error': f'Error interno: {str(e)}'}), 500
+
+# ===== ENDPOINTS DE NOTIFICACIONES =====
+
+@app.route('/api/supabase-notifications', methods=['POST'])
+def create_supabase_notification():
+    """📱 Endpoint para crear notificaciones desde el panel admin"""
+    global notification_counter
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        # Incrementar contador para ID único
+        notification_counter += 1
+        
+        # Crear notificación
+        notification = {
+            "id": notification_counter,
+            "title": data.get('title', 'Notificación'),
+            "message": data.get('message', 'Mensaje de notificación'),
+            "is_urgent": data.get('is_urgent', False),
+            "read": False,
+            "created_at": datetime.now().isoformat(),
+            "user_id": data.get('user_id', 'admin')
+        }
+        
+        # Agregar a la cola
+        notification_queue.append(notification)
+        
+        print("🔔 Notificación creada y agregada a la cola:")
+        print("   📋 ID: {}".format(notification['id']))
+        print("   📝 Título: {}".format(notification['title']))
+        print("   💬 Mensaje: {}".format(notification['message']))
+        print("   📊 Cola actual: {} notificaciones".format(len(notification_queue)))
+        
+        return jsonify({
+            "success": True,
+            "message": "Notificación creada exitosamente",
+            "notification_id": notification['id'],
+            "queue_size": len(notification_queue)
+        })
+        
+    except Exception as e:
+        print("❌ Error creando notificación: {}".format(str(e)))
+        return jsonify({"error": "Error interno del servidor"}), 500
+
+@app.route('/api/notifications/next', methods=['GET'])
+def get_next_notification():
+    """📱 Endpoint para obtener la siguiente notificación (para la app)"""
+    try:
+        user_id = request.args.get('user_id', 'admin')
+        
+        if notification_queue:
+            # Obtener la primera notificación de la cola
+            notification = notification_queue.popleft()
+            
+            print("🔔 Notificación enviada a la app:")
+            print("   📋 ID: {}".format(notification['id']))
+            print("   📝 Título: {}".format(notification['title']))
+            print("   📊 Cola restante: {} notificaciones".format(len(notification_queue)))
+            
+            return jsonify({
+                "success": True,
+                "notification": notification
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": "No hay notificaciones pendientes"
+            })
+            
+    except Exception as e:
+        print("❌ Error obteniendo notificación: {}".format(str(e)))
+        return jsonify({"error": "Error interno del servidor"}), 500
 
 if __name__ == '__main__':
     print("🚀 FORZANDO DEPLOY RENDER - PUSH NOTIFICATIONS FIX - 2025-09-08 18:12")
