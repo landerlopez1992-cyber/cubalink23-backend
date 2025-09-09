@@ -63,7 +63,7 @@ def home():
         "message": "CubaLink23 Backend - MANTIENE TODO LO EXISTENTE + BANNERS + PUSH NOTIFICATIONS",
         "status": "online",
         "timestamp": datetime.now().isoformat(),
-        "version": "FINAL_100%",
+        "version": "PUSH_NOTIFICATIONS_READY_2025",
         "endpoints": [
             "/api/health", 
             "/admin/api/flights/search", 
