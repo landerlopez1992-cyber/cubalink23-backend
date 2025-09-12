@@ -31,6 +31,7 @@ class SquareService:
                 'Square-Version': '2024-12-01'
             }
             self.is_configured = True
+            print("✅ Square configurado correctamente")
         else:
             self.headers = None
             self.is_configured = False
@@ -38,7 +39,146 @@ class SquareService:
     
     def is_available(self):
         """Verificar si Square está disponible"""
-        return self.is_configured and self.client is not None
+        return self.is_configured
+    
+    def process_payment_with_nonce(self, payment_data):
+        """Procesar pago real con Square API usando nonce del SDK oficial"""
+        try:
+            if not self.is_available():
+                return {
+                    'success': False,
+                    'error': 'Square no está configurado'
+                }
+            
+            nonce = payment_data['nonce']
+            amount = payment_data['amount']
+            description = payment_data['description']
+            location_id = payment_data['location_id']
+            
+            print(f"💳 Procesando pago con nonce del SDK oficial de Square...")
+            print(f"🔑 Nonce: {nonce}")
+            print(f"💰 Monto: ${amount}")
+            print(f"📝 Descripción: {description}")
+            print(f"📍 Location ID: {location_id}")
+            
+            # Crear pago usando la API de Payments con nonce
+            payment_request = {
+                "source_id": nonce,
+                "amount_money": {
+                    "amount": int(amount * 100),  # Convertir a centavos
+                    "currency": "USD"
+                },
+                "idempotency_key": str(uuid.uuid4()),
+                "location_id": location_id,
+                "note": description
+            }
+            
+            response = requests.post(
+                f"{self.base_url}/v2/payments",
+                headers=self.headers,
+                json=payment_request,
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                payment = result.get('payment', {})
+                
+                return {
+                    'success': True,
+                    'transaction_id': payment.get('id'),
+                    'status': payment.get('status', 'COMPLETED'),
+                    'amount': amount,
+                    'message': 'Pago procesado exitosamente'
+                }
+            else:
+                error_data = response.json()
+                errors = error_data.get('errors', [])
+                error_message = errors[0].get('detail', 'Error desconocido') if errors else 'Error de pago'
+                
+                return {
+                    'success': False,
+                    'error': error_message,
+                    'status_code': response.status_code
+                }
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'Error procesando pago con nonce: {str(e)}'
+            }
+    
+    def process_real_payment(self, payment_data):
+        """Procesar pago real con Square API usando Payment Links"""
+        try:
+            if not self.is_available():
+                return {
+                    'success': False,
+                    'error': 'Square no está configurado'
+                }
+            
+            # Crear Payment Link en lugar de pago directo
+            payment_link_request = {
+                "idempotency_key": str(uuid.uuid4()),
+                "checkout_options": {
+                    "ask_for_shipping_address": False,
+                    "merchant_support_email": "support@cubalink23.com"
+                },
+                "order": {
+                    "location_id": self.location_id,
+                    "line_items": [
+                        {
+                            "name": payment_data.get('description', 'Recarga de saldo'),
+                            "quantity": "1",
+                            "item_type": "ITEM",
+                            "base_price_money": {
+                                "amount": int(payment_data['amount'] * 100),
+                                "currency": "USD"
+                            }
+                        }
+                    ]
+                },
+                "pre_populated_data": {
+                    "buyer_email": payment_data.get('email', 'user@cubalink23.com')
+                }
+            }
+            
+            # Hacer petición a Square API para crear Payment Link
+            response = requests.post(
+                f"{self.base_url}/v2/online-checkout/payment-links",
+                headers=self.headers,
+                json=payment_link_request,
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                payment_link = result.get('payment_link', {})
+                
+                return {
+                    'success': True,
+                    'transaction_id': payment_link.get('id'),
+                    'status': 'PENDING',
+                    'amount': payment_data['amount'],
+                    'checkout_url': payment_link.get('url'),
+                    'message': 'Payment Link creado exitosamente'
+                }
+            else:
+                error_data = response.json()
+                errors = error_data.get('errors', [])
+                error_message = errors[0].get('detail', 'Error desconocido') if errors else 'Error de pago'
+                
+                return {
+                    'success': False,
+                    'error': error_message,
+                    'status_code': response.status_code
+                }
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'Error procesando pago: {str(e)}'
+            }
     
     def create_payment_link(self, order_data):
         """Crear enlace de pago para un pedido"""
@@ -46,7 +186,14 @@ class SquareService:
             if not self.is_available():
                 return self._create_mock_payment_link(order_data)
             
-            # Crear Quick Pay link usando la API REST
+            # Crear orden estructurada primero
+            order_result = self._create_order(order_data)
+            if not order_result.get('success'):
+                return self._create_mock_payment_link(order_data)
+            
+            order_id = order_result.get('order_id')
+            
+            # Crear Quick Pay link usando la API REST con orden
             body = {
                 "quick_pay": {
                     "name": f"Pedido {order_data.get('order_number', 'N/A')}",
@@ -55,7 +202,8 @@ class SquareService:
                         "currency": order_data.get('currency', 'USD')
                     },
                     "location_id": self.location_id
-                }
+                },
+                "order_id": order_id  # Vincular con la orden creada
             }
             
             response = requests.post(
@@ -69,7 +217,7 @@ class SquareService:
                 return {
                     'success': True,
                     'payment_link_id': payment_link.get('id'),
-                    'checkout_url': payment_link.get('checkout_page_url'),
+                    'checkout_url': payment_link.get('url'),
                     'order_id': order_data.get('id'),
                     'amount': order_data.get('total_amount'),
                     'currency': order_data.get('currency')
@@ -355,6 +503,91 @@ class SquareService:
         except Exception as e:
             print(f"Error getting transaction history: {e}")
             return self._get_mock_transaction_history()
+    
+    def _create_order(self, order_data):
+        """Crear orden estructurada en Square"""
+        try:
+            if not self.is_available():
+                return {'success': False, 'error': 'Square no disponible'}
+            
+            # Construir line items
+            line_items = []
+            items = order_data.get('items', [])
+            
+            if not items:
+                # Si no hay items específicos, crear uno genérico
+                line_items.append({
+                    "name": order_data.get('description', 'Recarga de saldo'),
+                    "quantity": "1",
+                    "item_type": "ITEM",
+                    "base_price_money": {
+                        "amount": int(float(order_data.get('total_amount', 0)) * 100),
+                        "currency": order_data.get('currency', 'USD')
+                    }
+                })
+            else:
+                # Crear line items desde los datos
+                for item in items:
+                    line_items.append({
+                        "name": item.get('name', 'Item'),
+                        "quantity": str(item.get('quantity', 1)),
+                        "item_type": "ITEM",
+                        "base_price_money": {
+                            "amount": int(float(item.get('price', 0)) * 100),
+                            "currency": order_data.get('currency', 'USD')
+                        }
+                    })
+            
+            # Crear orden
+            order_body = {
+                "idempotency_key": str(uuid.uuid4()),
+                "order": {
+                    "location_id": self.location_id,
+                    "reference_id": order_data.get('id'),
+                    "line_items": line_items,
+                    "state": "DRAFT"
+                }
+            }
+            
+            response = requests.post(
+                f'{self.base_url}/v2/orders',
+                headers=self.headers,
+                json=order_body
+            )
+            
+            if response.status_code == 200:
+                order = response.json().get('order', {})
+                return {
+                    'success': True,
+                    'order_id': order.get('id')
+                }
+            else:
+                print(f"Error creating order: {response.status_code} - {response.text}")
+                return {'success': False, 'error': response.text}
+                
+        except Exception as e:
+            print(f"Error creating order: {e}")
+            return {'success': False, 'error': str(e)}
+    
+    def verify_payment_completion(self, payment_id, max_attempts=10, delay=2):
+        """Verificar que un pago se complete con reintentos"""
+        import time
+        
+        for attempt in range(max_attempts):
+            try:
+                result = self.get_payment_status(payment_id)
+                if result.get('success'):
+                    status = result.get('status')
+                    if status in ['COMPLETED', 'FAILED', 'CANCELED']:
+                        return result
+                
+                print(f"Intento {attempt + 1}: Pago {payment_id} aún pendiente...")
+                time.sleep(delay)
+                
+            except Exception as e:
+                print(f"Error verificando pago en intento {attempt + 1}: {e}")
+                
+        return {'success': False, 'error': 'Timeout verificando pago'}
     
     # ===== MÉTODOS MOCK PARA DESARROLLO =====
     
