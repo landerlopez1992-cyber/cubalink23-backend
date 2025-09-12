@@ -30,7 +30,7 @@ app.register_blueprint(admin)
 
 # Importar rutas de pagos Square
 try:
-    from payment_routes_simple import payment_bp
+    from payment_routes_test import payment_bp
     app.register_blueprint(payment_bp)
     print("✅ Rutas de pagos Square importadas correctamente")
 except ImportError as e:
