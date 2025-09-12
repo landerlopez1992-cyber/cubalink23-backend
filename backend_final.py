@@ -361,9 +361,57 @@ def search_flights():
 # ENDPOINTS DE PAGOS SQUARE
 @app.route('/api/payments/process', methods=['POST'])
 def process_payment():
-    """Procesar pago con Square API usando Payment Links"""
+    """Procesar pago con Square API - Soporta tanto Nonce como Payment Links"""
     try:
         data = request.get_json()
+        
+        # Verificar si es un pago con nonce (SDK nativo) o Payment Link
+        if 'nonce' in data:
+            return _process_payment_with_nonce(data)
+        else:
+            return _process_payment_with_links(data)
+            
+    except Exception as e:
+        print(f"❌ Error procesando pago: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Error interno: {str(e)}'
+        }), 500
+
+def _process_payment_with_nonce(data):
+    """Procesar pago con nonce del SDK nativo"""
+    try:
+        nonce = data.get('nonce')
+        amount = data.get('amount')
+        description = data.get('description')
+        location_id = data.get('location_id')
+        
+        if not all([nonce, amount, description, location_id]):
+            return jsonify({
+                'success': False,
+                'error': 'Faltan datos requeridos (nonce, amount, description, location_id)'
+            }), 400
+
+        print(f"💳 Procesando pago con nonce: ${amount} - {description}")
+        
+        # Por ahora simulamos el procesamiento exitoso
+        # En producción, aquí harías la llamada real a Square API
+        return jsonify({
+            'success': True,
+            'transaction_id': f'txn_{int(time.time())}',
+            'message': 'Pago procesado exitosamente con SDK nativo'
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Error procesando pago con nonce: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Error procesando nonce: {str(e)}'
+        }), 500
+
+def _process_payment_with_links(data):
+    """Procesar pago con Payment Links (método anterior)"""
+    try:
         amount = data.get('amount')
         description = data.get('description')
         
@@ -373,7 +421,7 @@ def process_payment():
                 'error': 'Faltan datos requeridos (amount, description)'
             }), 400
 
-        print(f"💳 Procesando pago: ${amount} - {description}")
+        print(f"💳 Procesando pago con Payment Links: ${amount} - {description}")
         
         # Por ahora retornamos una URL de prueba
         return jsonify({
@@ -383,10 +431,10 @@ def process_payment():
         }), 200
         
     except Exception as e:
-        print(f"❌ Error procesando pago: {str(e)}")
+        print(f"❌ Error procesando pago con links: {str(e)}")
         return jsonify({
             'success': False,
-            'error': f'Error interno: {str(e)}'
+            'error': f'Error procesando links: {str(e)}'
         }), 500
 
 @app.route('/api/payments/status', methods=['GET'])
