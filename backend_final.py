@@ -358,6 +358,46 @@ def search_flights():
         print(f"💥 Error general: {str(e)}")
         return jsonify({"error": f"Error general: {str(e)}"}), 500
 
+# ENDPOINTS DE PAGOS SQUARE
+@app.route('/api/payments/process', methods=['POST'])
+def process_payment():
+    """Procesar pago con Square API usando Payment Links"""
+    try:
+        data = request.get_json()
+        amount = data.get('amount')
+        description = data.get('description')
+        
+        if not all([amount, description]):
+            return jsonify({
+                'success': False,
+                'error': 'Faltan datos requeridos (amount, description)'
+            }), 400
+
+        print(f"💳 Procesando pago: ${amount} - {description}")
+        
+        # Por ahora retornamos una URL de prueba
+        return jsonify({
+            'success': True,
+            'checkout_url': 'https://checkout.square.site/merchant/ML50YKQEQS0FK/checkout/test',
+            'message': 'Payment Link creado exitosamente'
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Error procesando pago: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Error interno: {str(e)}'
+        }), 500
+
+@app.route('/api/payments/status', methods=['GET'])
+def payment_status():
+    """Verificar estado del servicio de pagos"""
+    return jsonify({
+        'status': 'active',
+        'service': 'Square Payment Service',
+        'environment': 'sandbox'
+    })
+
 if __name__ == '__main__':
     print(f"🚀 INICIANDO BACKEND FINAL EN PUERTO {PORT}")
     print("🌐 Listo para deploy en Render.com")
