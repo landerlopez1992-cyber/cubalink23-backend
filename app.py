@@ -33,6 +33,14 @@ from auth_routes import auth
 app.register_blueprint(admin)
 app.register_blueprint(auth)
 
+# Importar rutas de pagos Square
+try:
+    from payment_routes import payment_bp
+    app.register_blueprint(payment_bp)
+    print("✅ Rutas de pagos Square importadas correctamente")
+except ImportError as e:
+    print(f"⚠️ No se pudieron importar las rutas de pagos: {e}")
+
 # Configuración
 PORT = int(os.environ.get('PORT', 10000))
 DUFFEL_API_KEY = os.environ.get('DUFFEL_API_KEY')
