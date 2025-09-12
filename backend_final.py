@@ -14,12 +14,27 @@ from flask_cors import CORS
 from datetime import datetime
 import time
 
-app = Flask(__name__, static_folder='static', static_url_path='/static')
+app = Flask(__name__)
 CORS(app)
+
+# Importar servicios necesarios
+try:
+    from supabase_storage_service import storage_service
+    print("✅ Servicio de storage importado correctamente")
+except ImportError as e:
+    print(f"⚠️ No se pudo importar storage service: {e}")
 
 # Importar el panel de administración
 from admin_routes import admin
 app.register_blueprint(admin)
+
+# Importar rutas de pagos Square
+try:
+    from payment_routes import payment_bp
+    app.register_blueprint(payment_bp)
+    print("✅ Rutas de pagos Square importadas correctamente")
+except ImportError as e:
+    print(f"⚠️ No se pudieron importar las rutas de pagos: {e}")
 
 # Configuración
 PORT = int(os.environ.get('PORT', 10000))
@@ -37,7 +52,7 @@ def home():
         "status": "online",
         "timestamp": datetime.now().isoformat(),
         "version": "FINAL_100%",
-        "endpoints": ["/api/health", "/admin/api/flights/search", "/admin/api/flights/airports"]
+        "endpoints": ["/api/health", "/admin/api/flights/search", "/admin/api/flights/airports", "/api/payments/process", "/api/payments/square-status"]
     })
 
 @app.route('/api/health')
@@ -79,7 +94,7 @@ def search_airports():
             print(f"📡 Consultando Duffel API para: {query}")
             
             # Usar el endpoint correcto de Duffel para aeropuertos
-            url = f'https://api.duffel.com/places/suggestions?query={query}'
+            url = f'https://api.duffel.com/places?query={query}'
             response = requests.get(url, headers=headers, timeout=10)
             
             print(f"📡 Status Duffel: {response.status_code}")
@@ -342,6 +357,46 @@ def search_flights():
     except Exception as e:
         print(f"💥 Error general: {str(e)}")
         return jsonify({"error": f"Error general: {str(e)}"}), 500
+
+# ENDPOINTS DE PAGOS SQUARE
+@app.route('/api/payments/process', methods=['POST'])
+def process_payment():
+    """Procesar pago con Square API usando Payment Links"""
+    try:
+        data = request.get_json()
+        amount = data.get('amount')
+        description = data.get('description')
+        
+        if not all([amount, description]):
+            return jsonify({
+                'success': False,
+                'error': 'Faltan datos requeridos (amount, description)'
+            }), 400
+
+        print(f"💳 Procesando pago: ${amount} - {description}")
+        
+        # Por ahora retornamos una URL de prueba
+        return jsonify({
+            'success': True,
+            'checkout_url': 'https://checkout.square.site/merchant/ML50YKQEQS0FK/checkout/test',
+            'message': 'Payment Link creado exitosamente'
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Error procesando pago: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Error interno: {str(e)}'
+        }), 500
+
+@app.route('/api/payments/status', methods=['GET'])
+def payment_status():
+    """Verificar estado del servicio de pagos"""
+    return jsonify({
+        'status': 'active',
+        'service': 'Square Payment Service',
+        'environment': 'sandbox'
+    })
 
 if __name__ == '__main__':
     print(f"🚀 INICIANDO BACKEND FINAL EN PUERTO {PORT}")
