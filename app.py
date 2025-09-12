@@ -359,6 +359,7 @@ def search_flights():
         return jsonify({"error": f"Error general: {str(e)}"}), 500
 
 if __name__ == '__main__':
+    # Solo para desarrollo local
     print(f"🚀 INICIANDO BACKEND FINAL EN PUERTO {PORT}")
     print("🌐 Listo para deploy en Render.com")
     
