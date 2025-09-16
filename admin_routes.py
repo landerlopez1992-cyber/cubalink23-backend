@@ -690,9 +690,9 @@ def search_airports():
             
             for airport in airports:
                 # Verificar si coincide con IATA, nombre, ciudad
-                iata_code = airport.get('iata_code', '').lower()
-                name = airport.get('name', '').lower()
-                city = airport.get('city_name', '').lower()
+                iata_code = (airport.get('iata_code') or '').lower()
+                name = (airport.get('name') or '').lower()
+                city = (airport.get('city_name') or '').lower()
                 
                 if (query_lower in iata_code or 
                     query_lower in name or 
