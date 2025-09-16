@@ -16,13 +16,7 @@ import time
 from collections import deque
 
 app = Flask(__name__)
-
-# Configurar CORS para Square WebView
-CORS(app, resources={r"/api/*": {"origins": [
-    "http://localhost:3000", "http://localhost:3005", "http://127.0.0.1:3000",
-    "http://127.0.0.1:3005", "capacitor://localhost", "http://localhost",
-    "https://cubalink23-backend.onrender.com"
-]}})
+CORS(app)
 
 # Configuración de sesión para autenticación
 app.secret_key = os.environ.get('SECRET_KEY', 'cubalink23-secret-key-2024')
@@ -53,14 +47,6 @@ app.register_blueprint(payment_bp)
 # Importar webhooks de Square
 from webhook_routes import webhook_bp
 app.register_blueprint(webhook_bp)
-
-# Importar nuevo módulo de pagos Square (tokenización nativa)
-try:
-    from payments_square import bp as square_bp
-    app.register_blueprint(square_bp)
-    print("✅ Módulo de pagos Square nativo importado correctamente")
-except ImportError as e:
-    print(f"⚠️ No se pudo importar payments_square: {e}")
 
 # Configuración
 PORT = int(os.environ.get('PORT', 10000))
@@ -285,7 +271,7 @@ def get_airports():
         print("📡 Consultando Duffel API para: {}".format(query))
         
         # Usar el endpoint correcto de Duffel para aeropuertos
-        url = 'https://api.duffel.com/air/airports?search={}&limit=20'.format(query)
+        url = 'https://api.duffel.com/places/suggestions?query={}'.format(query)
         
         response = requests.get(url, headers=headers, timeout=10)
         print("📡 Status Duffel: {}".format(response.status_code))
