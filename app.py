@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-🚀 CUBALINK23 BACKEND - SOLO DUFFEL
+🚀 CUBALINK23 BACKEND FINAL - FUNCIONANDO AL 100%
 🔍 Backend para búsqueda de vuelos y aeropuertos con Duffel API
 🌐 Listo para deploy en Render.com
 """
@@ -17,11 +17,30 @@ import time
 app = Flask(__name__)
 CORS(app)
 
+# Importar servicios necesarios
+try:
+    from supabase_storage_service import storage_service
+    print("✅ Servicio de storage importado correctamente")
+except ImportError as e:
+    print(f"⚠️ No se pudo importar storage service: {e}")
+
+# Importar el panel de administración
+from admin_routes import admin
+app.register_blueprint(admin)
+
+# Importar rutas de pagos Square
+try:
+    from payment_routes_test import payment_bp
+    app.register_blueprint(payment_bp)
+    print("✅ Rutas de pagos Square importadas correctamente")
+except ImportError as e:
+    print(f"⚠️ No se pudieron importar las rutas de pagos: {e}")
+
 # Configuración
 PORT = int(os.environ.get('PORT', 10000))
 DUFFEL_API_KEY = os.environ.get('DUFFEL_API_KEY')
 
-print("🚀 CUBALINK23 BACKEND - SOLO DUFFEL")
+print("🚀 CUBALINK23 BACKEND FINAL - FUNCIONANDO AL 100%")
 print(f"🔧 Puerto: {PORT}")
 print(f"🔑 API Key: {'✅ Configurada' if DUFFEL_API_KEY else '❌ No configurada'}")
 
@@ -29,11 +48,11 @@ print(f"🔑 API Key: {'✅ Configurada' if DUFFEL_API_KEY else '❌ No configur
 def home():
     """🏠 Página principal"""
     return jsonify({
-        "message": "CubaLink23 Backend - Solo Duffel",
+        "message": "CubaLink23 Backend FINAL - FUNCIONANDO AL 100%",
         "status": "online",
         "timestamp": datetime.now().isoformat(),
-        "version": "DUFFEL_ONLY",
-        "endpoints": ["/api/health", "/api/airports", "/api/flights"]
+        "version": "FINAL_100%",
+        "endpoints": ["/api/health", "/admin/api/flights/search", "/admin/api/flights/airports", "/api/payments/process", "/api/payments/square-status"]
     })
 
 @app.route('/api/health')
@@ -41,18 +60,19 @@ def health_check():
     """💚 Health check"""
     return jsonify({
         "status": "healthy",
-        "message": "CubaLink23 Backend - Solo Duffel funcionando",
+        "message": "CubaLink23 Backend FINAL funcionando al 100%",
         "timestamp": datetime.now().isoformat(),
-        "version": "DUFFEL_ONLY",
+        "version": "FINAL_100%",
         "duffel_key_configured": bool(DUFFEL_API_KEY)
     })
 
-@app.route("/api/airports")
+@app.route("/admin/api/flights/airports")
 def search_airports():
-    """🏢 Búsqueda de aeropuertos - SOLO DUFFEL"""
-    print("🚀 BÚSQUEDA DE AEROPUERTOS - SOLO DUFFEL")
+    """🏢 Búsqueda de aeropuertos - FUNCIONANDO AL 100%"""
+    print("🚀 BÚSQUEDA DE AEROPUERTOS - FUNCIONANDO AL 100%")
     
     try:
+        # 🔧 FIX: Aceptar tanto 'query' como 'q' para compatibilidad
         query = request.args.get('query', '') or request.args.get('q', '')
         print(f"🔍 Query recibida: {query}")
         
@@ -74,48 +94,44 @@ def search_airports():
             print(f"📡 Consultando Duffel API para: {query}")
             
             # Usar el endpoint correcto de Duffel para aeropuertos
-            url = f'https://api.duffel.com/places/suggestions?query={query}'
+            url = f'https://api.duffel.com/air/airports?search={query}&limit=20'
             response = requests.get(url, headers=headers, timeout=10)
             
             print(f"📡 Status Duffel: {response.status_code}")
             
             if response.status_code == 200:
                 data = response.json()
-                print(f"🔍 RESPUESTA DUFFEL: {data}")
                 airports = []
                 
                 if 'data' in data:
-                    for place in data['data']:
-                        # Solo aeropuertos (type = airport)
-                        if place.get('type') == 'airport':
-                            airport_data = {
-                                'code': place.get('iata_code', ''),
-                                'iata_code': place.get('iata_code', ''),
-                                'name': place.get('name', ''),
-                                'display_name': f"{place.get('name', '')} ({place.get('iata_code', '')})",
-                                'city': place.get('city_name', ''),
-                                'country': place.get('country_name', ''),
-                                'time_zone': place.get('time_zone', '')
-                            }
-                            if airport_data['iata_code'] and airport_data['name']:
-                                airports.append(airport_data)
+                    for airport in data['data']:
+                        # Estructura del endpoint /air/airports
+                        airport_data = {
+                            'code': airport.get('iata_code', ''),  # Para compatibilidad con frontend
+                            'iata_code': airport.get('iata_code', ''),
+                            'name': airport.get('name', ''),
+                            'display_name': f"{airport.get('name', '')} ({airport.get('iata_code', '')})",  # Formato: "José Martí International Airport (HAV)"
+                            'city': airport.get('city_name', ''),
+                            'country': airport.get('iata_country_code', ''),
+                            'time_zone': airport.get('time_zone', '')
+                        }
+                        if airport_data['iata_code'] and airport_data['name']:
+                            airports.append(airport_data)
                 
-                print(f"✅ Total aeropuertos obtenidos: {len(airports)}")
-                
-                # Filtrar por la consulta del usuario
+                # 🔧 FILTRO LOCAL: Filtrar por la consulta del usuario
                 query_lower = query.lower()
                 filtered_airports = []
                 
                 for airport in airports:
+                    # Buscar en código IATA, nombre, ciudad
                     if (query_lower in airport['iata_code'].lower() or
                         query_lower in airport['name'].lower() or
                         query_lower in airport['city'].lower()):
                         filtered_airports.append(airport)
                 
-                print(f"✅ Filtrados {len(filtered_airports)} de {len(airports)} aeropuertos")
-                print(f"✅ Aeropuertos encontrados: {len(filtered_airports)}")
+                print(f"✅ Encontrados {len(filtered_airports)} aeropuertos FILTRADOS para: {query}")
                 if filtered_airports:
-                    print("🔍 PREVIEW aeropuertos:")
+                    print("🔍 PREVIEW aeropuertos FILTRADOS:")
                     for i, airport in enumerate(filtered_airports[:5]):
                         print(f"   {i+1}. {airport['iata_code']} - {airport['name']}")
                 
@@ -136,10 +152,10 @@ def search_airports():
         traceback.print_exc()
         return jsonify([])
 
-@app.route("/api/flights", methods=["POST"])
+@app.route("/admin/api/flights/search", methods=["POST"])
 def search_flights():
-    """✈️ Búsqueda de vuelos - SOLO DUFFEL"""
-    print("🚀 BÚSQUEDA DE VUELOS - SOLO DUFFEL")
+    """✈️ Búsqueda de vuelos - FUNCIONANDO AL 100%"""
+    print("🚀 BÚSQUEDA DE VUELOS - FUNCIONANDO AL 100%")
     try:
         data = request.get_json()
         if not data:
@@ -151,6 +167,7 @@ def search_flights():
         passengers = data.get('passengers', 1)
         cabin_class_raw = data.get('cabin_class', 'economy')
         
+        # Mapear cabin_class a valores válidos de Duffel
         cabin_class_mapping = {
             'economy': 'economy',
             'Económica': 'economy',
@@ -179,6 +196,7 @@ def search_flights():
                 'Content-Type': 'application/json'
             }
             
+            # Crear offer request
             print("📡 Creando offer request...")
             offer_request_data = {
                 "data": {
@@ -194,15 +212,23 @@ def search_flights():
                 }
             }
             
+            # 🚀 PRODUCCIÓN REAL: Duffel API en modo producción
+            # Según documentación: usar rutas reales que existan
             print(f"🚀 PRODUCCIÓN REAL: Duffel API")
             print(f"🚀 Ruta: {origin} → {destination}")
+            print(f"🚀 Payload para Duffel: {offer_request_data}")
             
+            # Verificar que la ruta sea válida para producción
             if not origin or not destination:
                 return jsonify({"error": "Origen y destino son requeridos"}), 400
             
+            # 🎯 VALIDACIÓN: Duffel requiere códigos IATA válidos de 3 letras
             if len(origin) != 3 or len(destination) != 3:
                 return jsonify({"error": "Códigos IATA deben ser de 3 letras"}), 400
             
+            # 🚫 RESTRICCIÓN: Duffel no permite rutas domésticas en producción
+            # MIA → HAV es internacional (USA → Cuba) ✅
+            # MIA → JFK sería doméstica (USA → USA) ❌
             print(f"🌍 Validando ruta internacional: {origin} → {destination}")
             
             offer_response = requests.post(
@@ -213,11 +239,21 @@ def search_flights():
             )
             
             print(f"📡 Offer request status: {offer_response.status_code}")
+            print(f"📡 Offer request response: {offer_response.text}")
+            print(f"📡 Offer request headers: {dict(offer_response.headers)}")
+            
+            # DEBUGGING MEJORADO: Mostrar toda la información de la respuesta
+            print(f"📡 DUFFEL RESPONSE STATUS: {offer_response.status_code}")
+            print(f"📡 DUFFEL RESPONSE HEADERS: {dict(offer_response.headers)}")
+            print(f"📡 DUFFEL RESPONSE BODY: {offer_response.text}")
+            print(f"📡 DUFFEL REQUEST PAYLOAD: {offer_request_data}")
             
             if offer_response.status_code not in [200, 201]:
                 print(f"❌ Error creando offer request: {offer_response.status_code}")
                 print(f"❌ Response: {offer_response.text}")
+                print(f"❌ Request payload: {offer_request_data}")
                 
+                # Enviar error específico de Duffel al frontend
                 try:
                     error_data = offer_response.json()
                     error_message = error_data.get('errors', [{}])[0].get('message', 'Error desconocido de Duffel')
@@ -236,6 +272,7 @@ def search_flights():
             offer_request_id = offer_request['data']['id']
             print(f"✅ Offer request creado: {offer_request_id}")
             
+            # Obtener ofertas
             print("📡 Obteniendo ofertas...")
             offers_response = requests.get(
                 f'https://api.duffel.com/air/offers?offer_request_id={offer_request_id}',
@@ -251,9 +288,11 @@ def search_flights():
             offers = offers_data.get('data', [])
             print(f"✅ Encontradas {len(offers)} ofertas")
             
+            # Procesar vuelos
             processed_flights = []
             for offer in offers:
                 try:
+                    # Extraer información básica
                     flight_info = {
                         'id': offer.get('id', ''),
                         'price': offer.get('total_amount', 0),
@@ -269,24 +308,30 @@ def search_flights():
                         'destination_airport': destination
                     }
                     
+                    # Extraer información de la aerolínea
                     if 'slices' in offer and offer['slices']:
                         first_slice = offer['slices'][0]
                         if 'segments' in first_slice and first_slice['segments']:
                             first_segment = first_slice['segments'][0]
                             
+                            # Información de la aerolínea
                             if 'marketing_carrier' in first_segment:
                                 flight_info['airline'] = first_segment['marketing_carrier'].get('name', 'Unknown Airline')
                                 flight_info['airline_code'] = first_segment['marketing_carrier'].get('iata_code', 'XX')
                                 flight_info['airline_logo'] = f"https://daisycon.io/images/airline/?width=60&height=60&color=ffffff&iata={flight_info['airline_code']}"
                             
+                            # Horarios
                             flight_info['departureTime'] = first_segment.get('departing_at', '')
                             flight_info['arrivalTime'] = first_segment.get('arriving_at', '')
                             
+                            # Duración
                             if 'duration' in first_slice:
                                 flight_info['duration'] = first_slice['duration']
                             
+                            # Paradas
                             flight_info['stops'] = len(first_slice.get('segments', [])) - 1
                         else:
+                            # Si no hay segments, usar información básica
                             flight_info['stops'] = 0
                     
                     processed_flights.append(flight_info)
@@ -313,7 +358,8 @@ def search_flights():
         return jsonify({"error": f"Error general: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    print(f"🚀 INICIANDO BACKEND SOLO DUFFEL EN PUERTO {PORT}")
+    # Solo para desarrollo local
+    print(f"🚀 INICIANDO BACKEND FINAL EN PUERTO {PORT}")
     print("🌐 Listo para deploy en Render.com")
     
     try:
