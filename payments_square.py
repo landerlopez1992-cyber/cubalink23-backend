@@ -23,36 +23,56 @@ ENV = os.getenv("SQUARE_ENV", "sandbox")
 SQUARE_ACCESS_TOKEN = os.environ.get("SQUARE_ACCESS_TOKEN")
 SQUARE_LOCATION_ID = os.environ.get("SQUARE_LOCATION_ID")
 
-if not SQUARE_ACCESS_TOKEN:
-    log.error("❌ SQUARE_ACCESS_TOKEN no configurado")
-    raise ValueError("SQUARE_ACCESS_TOKEN es requerido")
+# Inicializar cliente Square de forma segura
+client = None
+payments = None
+cards = None
+customers = None
 
-# Inicializar cliente Square
-client = Client(
-    access_token=SQUARE_ACCESS_TOKEN,
-    environment="production" if ENV == "production" else "sandbox"
-)
+def init_square_client():
+    """Inicializar cliente Square de forma segura"""
+    global client, payments, cards, customers
+    
+    if not SQUARE_ACCESS_TOKEN:
+        log.warning("⚠️ SQUARE_ACCESS_TOKEN no configurado - Square deshabilitado")
+        return False
+    
+    try:
+        client = Client(
+            access_token=SQUARE_ACCESS_TOKEN,
+            environment="production" if ENV == "production" else "sandbox"
+        )
+        payments = client.payments
+        cards = client.cards
+        customers = client.customers
+        
+        print(f"✅ Square client inicializado - ENV: {ENV}")
+        print(f"📍 Location ID: {SQUARE_LOCATION_ID}")
+        return True
+    except Exception as e:
+        log.error(f"❌ Error inicializando Square: {e}")
+        return False
 
-payments = client.payments
-cards = client.cards
-customers = client.customers
-
-print(f"✅ Square client inicializado - ENV: {ENV}")
-print(f"📍 Location ID: {SQUARE_LOCATION_ID}")
+# Inicializar al importar
+init_square_client()
 
 @bp.route("/health", methods=["GET"])
 def health():
     """💚 Health check del servicio Square"""
     return jsonify({
-        "ok": True, 
+        "ok": client is not None, 
         "env": ENV,
         "location_id": SQUARE_LOCATION_ID,
-        "service": "square-payments"
+        "service": "square-payments",
+        "initialized": client is not None
     })
 
 @bp.route("/charge", methods=["POST"])
 def charge_nonce():
     """💳 Cobrar con nonce de tarjeta (tokenización directa)"""
+    if not client:
+        return jsonify({"ok": False, "error": "Square client no inicializado"}), 503
+    
     try:
         data = request.get_json()
         nonce = data.get("nonce")
@@ -110,6 +130,9 @@ def charge_nonce():
 @bp.route("/save-card", methods=["POST"])
 def save_card():
     """💾 Guardar tarjeta para uso futuro (Card on File)"""
+    if not client:
+        return jsonify({"ok": False, "error": "Square client no inicializado"}), 503
+    
     try:
         data = request.get_json()
         nonce = data.get("nonce")
@@ -163,6 +186,9 @@ def save_card():
 @bp.route("/charge-cof", methods=["POST"])
 def charge_cof():
     """💳 Cobrar con tarjeta guardada (Card on File)"""
+    if not client:
+        return jsonify({"ok": False, "error": "Square client no inicializado"}), 503
+    
     try:
         data = request.get_json()
         customer_id = data.get("customer_id")
@@ -221,6 +247,9 @@ def charge_cof():
 @bp.route("/create-customer", methods=["POST"])
 def create_customer():
     """👤 Crear cliente en Square"""
+    if not client:
+        return jsonify({"ok": False, "error": "Square client no inicializado"}), 503
+    
     try:
         data = request.get_json()
         email = data.get("email")
