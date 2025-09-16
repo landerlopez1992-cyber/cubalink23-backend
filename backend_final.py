@@ -94,13 +94,14 @@ def search_airports():
             print(f"📡 Consultando Duffel API para: {query}")
             
             # Usar el endpoint correcto de Duffel para aeropuertos
-            url = f'https://api.duffel.com/places/suggestions?query={query}'
+            url = f'https://api.duffel.com/places?query={query}'
             response = requests.get(url, headers=headers, timeout=10)
             
             print(f"📡 Status Duffel: {response.status_code}")
             
             if response.status_code == 200:
                 data = response.json()
+                print(f"🔍 RESPUESTA DUFFEL: {data}")  # Debug: ver qué devuelve Duffel
                 airports = []
                 
                 if 'data' in data:
