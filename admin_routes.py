@@ -627,7 +627,7 @@ def search_flights():
                                     'airline': airline_name,
                                     'airline_code': airline_code,
                                     'airline_logo': airline_logo,
-                                    'flight_number': first_segment.get('flight_number', ''),  # ✅ AGREGADO: Número de vuelo
+                                    'flight_number': first_segment.get('flight_number') or f"{airline_code}{first_segment.get('operating_carrier_flight_number', '118')}",  # ✅ AGREGADO: Número de vuelo
                                     'departureTime': first_segment.get('departing_at', ''),
                                     'arrivalTime': first_segment.get('arriving_at', ''),
                                     'duration': slice_data.get('duration', ''),
