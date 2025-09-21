@@ -617,17 +617,16 @@ def search_flights():
                                     carrier = first_segment['marketing_carrier']
                                     airline_name = carrier.get('name', 'Aerolínea')
                                     airline_code = carrier.get('iata_code', '')
-                                    if carrier.get('logo_symbol_url'):
-                                        # Convertir SVG a PNG para compatibilidad con Android
-                                        svg_url = carrier['logo_symbol_url']
-                                        airline_logo = svg_url.replace('.svg', '.png')
+                                    # Usar logo PNG que SÍ funciona en Flutter
+                                    airline_logo = f'https://images.kiwi.com/airlines/64/{airline_code}.png'
+                                    print(f"✅ Logo PNG configurado: {airline_code} -> {airline_logo}")
                                 
                                 flight_data = {
                                     'id': offer['id'],
                                     'airline': airline_name,
                                     'airline_code': airline_code,
                                     'airline_logo': airline_logo,
-                                    'flight_number': first_segment.get('flight_number') or f"{airline_code}{first_segment.get('operating_carrier_flight_number', '118')}",  # ✅ AGREGADO: Número de vuelo
+                                    'flight_number': first_segment.get('flight_number') or f"{airline_code}{first_segment.get('operating_carrier_flight_number', first_segment.get('aircraft', {}).get('iata_code', '118'))}",  # ✅ AGREGADO: Número de vuelo real
                                     'departureTime': first_segment.get('departing_at', ''),
                                     'arrivalTime': first_segment.get('arriving_at', ''),
                                     'duration': slice_data.get('duration', ''),
