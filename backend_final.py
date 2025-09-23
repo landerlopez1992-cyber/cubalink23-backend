@@ -301,12 +301,15 @@ def search_flights():
                         'airline': 'Unknown Airline',
                         'airline_code': 'XX',
                         'airline_logo': '',
+                        'flight_number': '',
                         'departureTime': '',
                         'arrivalTime': '',
                         'duration': '',
                         'stops': 0,
                         'origin_airport': origin,
-                        'destination_airport': destination
+                        'destination_airport': destination,
+                        'intermediate_stops': [],
+                        'segments': []
                     }
                     
                     # Extraer información de la aerolínea
@@ -314,23 +317,65 @@ def search_flights():
                         first_slice = offer['slices'][0]
                         if 'segments' in first_slice and first_slice['segments']:
                             first_segment = first_slice['segments'][0]
+                            last_segment = first_slice['segments'][-1]
                             
                             # Información de la aerolínea
                             if 'marketing_carrier' in first_segment:
                                 flight_info['airline'] = first_segment['marketing_carrier'].get('name', 'Unknown Airline')
                                 flight_info['airline_code'] = first_segment['marketing_carrier'].get('iata_code', 'XX')
-                                flight_info['airline_logo'] = f"https://daisycon.io/images/airline/?width=60&height=60&color=ffffff&iata={flight_info['airline_code']}"
+                                flight_info['airline_logo'] = f"https://images.kiwi.com/airlines/64/{flight_info['airline_code']}.png"
                             
                             # Horarios
                             flight_info['departureTime'] = first_segment.get('departing_at', '')
-                            flight_info['arrivalTime'] = first_segment.get('arriving_at', '')
+                            flight_info['arrivalTime'] = last_segment.get('arriving_at', '')
                             
                             # Duración
                             if 'duration' in first_slice:
                                 flight_info['duration'] = first_slice['duration']
                             
                             # Paradas
-                            flight_info['stops'] = len(first_slice.get('segments', [])) - 1
+                            segments_list = first_slice.get('segments', [])
+                            flight_info['stops'] = max(len(segments_list) - 1, 0)
+
+                            # Origen y destino reales
+                            origin_segment = first_segment.get('origin', {}) if isinstance(first_segment.get('origin'), dict) else {}
+                            destination_segment = last_segment.get('destination', {}) if isinstance(last_segment.get('destination'), dict) else {}
+                            flight_info['origin_airport'] = origin_segment.get('iata_code', origin_segment.get('code', flight_info['origin_airport'])) or flight_info['origin_airport']
+                            flight_info['destination_airport'] = destination_segment.get('iata_code', destination_segment.get('code', flight_info['destination_airport'])) or flight_info['destination_airport']
+
+                            # Número de vuelo principal
+                            flight_number = first_segment.get('marketing_carrier_flight_number') or first_segment.get('operating_carrier_flight_number') or first_segment.get('flight_number')
+                            if flight_info['airline_code'] and flight_number and not flight_number.startswith(flight_info['airline_code']):
+                                flight_info['flight_number'] = f"{flight_info['airline_code']}{flight_number}"
+                            else:
+                                flight_info['flight_number'] = flight_number or ''
+
+                            # Paradas intermedias
+                            intermediate_stops = []
+                            for idx, segment in enumerate(segments_list[:-1]):
+                                destination_data = segment.get('destination', {}) if isinstance(segment.get('destination'), dict) else {}
+                                stop_code = destination_data.get('iata_code') or destination_data.get('code')
+                                if stop_code and stop_code != flight_info['destination_airport']:
+                                    intermediate_stops.append(stop_code)
+                            flight_info['intermediate_stops'] = intermediate_stops
+
+                            # Detalle de segmentos
+                            segment_details = []
+                            for segment in segments_list:
+                                origin_data = segment.get('origin', {}) if isinstance(segment.get('origin'), dict) else {}
+                                dest_data = segment.get('destination', {}) if isinstance(segment.get('destination'), dict) else {}
+                                segment_details.append({
+                                    'origin_airport': origin_data.get('iata_code') or origin_data.get('code') or '',
+                                    'destination_airport': dest_data.get('iata_code') or dest_data.get('code') or '',
+                                    'departing_at': segment.get('departing_at', ''),
+                                    'arriving_at': segment.get('arriving_at', ''),
+                                    'duration': segment.get('duration', ''),
+                                    'marketing_carrier': segment.get('marketing_carrier', {}),
+                                    'operating_carrier': segment.get('operating_carrier', {}),
+                                    'aircraft': segment.get('aircraft', {}),
+                                    'flight_number': segment.get('flight_number') or segment.get('marketing_carrier_flight_number') or segment.get('operating_carrier_flight_number') or ''
+                                })
+                            flight_info['segments'] = segment_details
                         else:
                             # Si no hay segments, usar información básica
                             flight_info['stops'] = 0
