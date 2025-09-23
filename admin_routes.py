@@ -607,6 +607,7 @@ def search_flights():
                             slice_data = offer['slices'][0]
                             if slice_data.get('segments') and len(slice_data['segments']) > 0:
                                 first_segment = slice_data['segments'][0]
+                                last_segment = slice_data['segments'][-1]  # Último segmento
                                 
                                 # Obtener información de aerolínea
                                 airline_name = 'Aerolínea'
@@ -636,8 +637,8 @@ def search_flights():
                                     'price': float(offer.get('total_amount', '0')),  # Mantener para compatibilidad
                                     'currency': offer.get('total_currency', 'USD'),  # Mantener para compatibilidad
                                     'origin_airport': first_segment.get('origin', {}).get('iata_code', origin),
-                                    'destination_airport': destination,  # Usar destino original de la búsqueda
-                                    'intermediate_stop': first_segment.get('destination', {}).get('iata_code', '')  # Parada intermedia
+                                    'destination_airport': last_segment.get('destination', {}).get('iata_code', destination),  # Destino final real
+                                    'intermediate_stops': [seg.get('destination', {}).get('iata_code', '') for seg in slice_data['segments'][:-1]]  # Todas las paradas
                                 }
                                 flights.append(flight_data)
             
