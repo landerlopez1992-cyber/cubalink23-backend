@@ -636,7 +636,8 @@ def search_flights():
                                     'price': float(offer.get('total_amount', '0')),  # Mantener para compatibilidad
                                     'currency': offer.get('total_currency', 'USD'),  # Mantener para compatibilidad
                                     'origin_airport': first_segment.get('origin', {}).get('iata_code', origin),
-                                    'destination_airport': first_segment.get('destination', {}).get('iata_code', destination)
+                                    'destination_airport': destination,  # Usar destino original de la búsqueda
+                                    'intermediate_stop': first_segment.get('destination', {}).get('iata_code', '')  # Parada intermedia
                                 }
                                 flights.append(flight_data)
             
@@ -2085,4 +2086,20 @@ def delete_vehicle(vehicle_id):
             return jsonify({'success': False, 'error': 'Vehículo no encontrado'}), 404
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+            success = supabase_service.delete_vehicle(vehicle_id)
+            if success:
+                return jsonify({'success': True, 'message': 'Vehículo eliminado exitosamente'})
+        except:
+            pass
+        
+        # Si falla Supabase, usar base de datos local
+        success = local_db.delete_vehicle(vehicle_id)
+        if success:
+            return jsonify({'success': True, 'message': 'Vehículo eliminado exitosamente'})
+        else:
+            return jsonify({'success': False, 'error': 'Vehículo no encontrado'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
