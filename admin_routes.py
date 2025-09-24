@@ -573,10 +573,53 @@ def search_flights():
                 })
                 print(f"✅ AGREGADO SLICE DE REGRESO: {destination} → {origin} el {return_date}")
             
+            passengers_input = passengers
+            passengers_data = []
+            passengers_count = 0
+
+            if isinstance(passengers_input, dict):
+                adults = int(passengers_input.get('adults', 0) or 0)
+                seniors = int(passengers_input.get('seniors', 0) or 0)
+                children = int(passengers_input.get('children', 0) or 0)
+                infants = int(passengers_input.get('infants', 0) or 0)
+                passengers_count = adults + seniors + children + infants
+
+                if adults + seniors <= 0:
+                    return jsonify({'success': False, 'error': 'Debe existir al menos un pasajero adulto', 'data': []}), 400
+
+                for _ in range(max(adults + seniors, 0)):
+                    passengers_data.append({'type': 'adult'})
+                for _ in range(max(children, 0)):
+                    passengers_data.append({'type': 'child'})
+                for _ in range(max(infants, 0)):
+                    passengers_data.append({'type': 'infant_without_seat'})
+
+            elif isinstance(passengers_input, list):
+                passengers_data = passengers_input
+                passengers_count = len(passengers_data)
+
+                has_adult = any(
+                    isinstance(p, dict) and p.get('type') in {'adult', 'adult_with_seat', 'adult_fare'}
+                    for p in passengers_data
+                )
+                if not has_adult:
+                    return jsonify({'success': False, 'error': 'Debe existir al menos un pasajero adulto', 'data': []}), 400
+
+            else:
+                try:
+                    passengers_count = int(passengers_input)
+                except (ValueError, TypeError):
+                    passengers_count = 1
+                passengers_count = max(passengers_count, 1)
+                passengers_data = [{'type': 'adult'} for _ in range(passengers_count)]
+
+            if passengers_count <= 0:
+                return jsonify({'success': False, 'error': 'Debe existir al menos un pasajero', 'data': []}), 400
+
             offer_request_data = {
                 'data': {
                     'slices': slices,
-                    'passengers': [{'type': 'adult'}] * passengers,
+                    'passengers': passengers_data,
                     'cabin_class': 'economy'
                 }
             }
