@@ -672,7 +672,7 @@ def search_flights():
                                     'airline_logo': airline_logo,
                                     'flight_number': first_segment.get('flight_number') or f"{airline_code}{first_segment.get('operating_carrier_flight_number', first_segment.get('aircraft', {}).get('iata_code', '118'))}",  # ✅ AGREGADO: Número de vuelo real
                                     'departureTime': first_segment.get('departing_at', ''),
-                                    'arrivalTime': first_segment.get('arriving_at', ''),
+                                    'arrivalTime': last_segment.get('arriving_at', ''),
                                     'duration': slice_data.get('duration', ''),
                                     'stops': len(slice_data['segments']) - 1,
                                     'total_amount': float(offer.get('total_amount', '0')),  # CORREGIR: usar total_amount
@@ -683,6 +683,32 @@ def search_flights():
                                     'destination_airport': last_segment.get('destination', {}).get('iata_code', destination),  # Destino final real
                                     'intermediate_stops': [seg.get('destination', {}).get('iata_code', '') for seg in slice_data['segments'][:-1]]  # Todas las paradas
                                 }
+
+                                segment_details = []
+                                for segment in slice_data['segments']:
+                                    origin_data = segment.get('origin', {}) if isinstance(segment.get('origin'), dict) else {}
+                                    destination_data = segment.get('destination', {}) if isinstance(segment.get('destination'), dict) else {}
+                                    marketing_carrier = segment.get('marketing_carrier', {}) if isinstance(segment.get('marketing_carrier'), dict) else {}
+                                    operating_carrier = segment.get('operating_carrier', {}) if isinstance(segment.get('operating_carrier'), dict) else {}
+                                    aircraft_data = segment.get('aircraft', {}) if isinstance(segment.get('aircraft'), dict) else {}
+
+                                    segment_details.append({
+                                        'origin_airport': origin_data.get('iata_code') or origin_data.get('code') or '',
+                                        'origin_name': origin_data.get('name') or origin_data.get('city'),
+                                        'origin_terminal': origin_data.get('terminal'),
+                                        'destination_airport': destination_data.get('iata_code') or destination_data.get('code') or '',
+                                        'destination_name': destination_data.get('name') or destination_data.get('city'),
+                                        'destination_terminal': destination_data.get('terminal'),
+                                        'departing_at': segment.get('departing_at', ''),
+                                        'arriving_at': segment.get('arriving_at', ''),
+                                        'duration': segment.get('duration', ''),
+                                        'marketing_carrier': marketing_carrier,
+                                        'operating_carrier': operating_carrier,
+                                        'aircraft': aircraft_data,
+                                        'flight_number': segment.get('flight_number') or segment.get('marketing_carrier_flight_number') or segment.get('operating_carrier_flight_number') or ''
+                                    })
+
+                                flight_data['segments'] = segment_details
                                 flights.append(flight_data)
             
             print(f"✈️ Vuelos Duffel encontrados: {len(flights)}")
