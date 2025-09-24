@@ -164,8 +164,48 @@ def search_flights():
         origin = data.get('origin', '')
         destination = data.get('destination', '')
         departure_date = data.get('departure_date', '')
-        passengers = data.get('passengers', 1)
-        cabin_class_raw = data.get('cabin_class', 'economy')
+        passengers_input = data.get('passengers', 1)
+        passengers_data = []
+        passengers_count = 0
+
+        if isinstance(passengers_input, dict):
+            adults = int(passengers_input.get('adults', 0) or 0)
+            seniors = int(passengers_input.get('seniors', 0) or 0)
+            children = int(passengers_input.get('children', 0) or 0)
+            infants = int(passengers_input.get('infants', 0) or 0)
+            passengers_count = adults + seniors + children + infants
+
+            if adults + seniors <= 0:
+                return jsonify({"error": "Debe existir al menos un pasajero adulto"}), 400
+
+            for _ in range(max(adults + seniors, 0)):
+                passengers_data.append({"type": "adult"})
+            for _ in range(max(children, 0)):
+                passengers_data.append({"type": "child"})
+            for _ in range(max(infants, 0)):
+                passengers_data.append({"type": "infant"})
+
+        elif isinstance(passengers_input, list):
+            passengers_data = passengers_input
+            passengers_count = len(passengers_data)
+
+            has_adult = any(
+                isinstance(p, dict) and p.get("type") in {"adult", "adult_fare", "adult_with_seat"}
+                for p in passengers_data
+            )
+            if not has_adult:
+                return jsonify({"error": "Debe existir al menos un pasajero adulto"}), 400
+
+        else:
+            try:
+                passengers_count = int(passengers_input)
+            except (ValueError, TypeError):
+                passengers_count = 1
+            passengers_count = max(passengers_count, 1)
+            passengers_data = [{"type": "adult"} for _ in range(passengers_count)]
+
+        if passengers_count <= 0:
+            return jsonify({"error": "Debe existir al menos un pasajero"}), 400
         
         # Mapear cabin_class a valores válidos de Duffel
         cabin_class_mapping = {
@@ -183,7 +223,7 @@ def search_flights():
         print(f"🎯 Cabin class mapeado: '{cabin_class_raw}' → '{cabin_class}'")
         
         print(f"🔍 Buscando vuelos: {origin} → {destination}")
-        print(f"📅 Fecha: {departure_date} | Pasajeros: {passengers}")
+        print(f"📅 Fecha: {departure_date} | Pasajeros: {passengers_count}")
         
         if not DUFFEL_API_KEY:
             return jsonify({"error": "API key no configurada"}), 500
@@ -207,7 +247,7 @@ def search_flights():
                             "departure_date": departure_date
                         }
                     ],
-                    "passengers": [{"type": "adult"}] * passengers,
+                    "passengers": passengers_data,
                     "cabin_class": cabin_class
                 }
             }
