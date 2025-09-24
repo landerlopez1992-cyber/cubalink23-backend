@@ -350,13 +350,18 @@ def search_flights():
                             else:
                                 flight_info['flight_number'] = flight_number or ''
 
-                            # Paradas intermedias
+                            # Paradas intermedias con nombres
                             intermediate_stops = []
-                            for idx, segment in enumerate(segments_list[:-1]):
+                            for segment in segments_list[:-1]:
                                 destination_data = segment.get('destination', {}) if isinstance(segment.get('destination'), dict) else {}
                                 stop_code = destination_data.get('iata_code') or destination_data.get('code')
-                                if stop_code and stop_code != flight_info['destination_airport']:
-                                    intermediate_stops.append(stop_code)
+                                stop_name = destination_data.get('name') or destination_data.get('city')
+                                stop = {
+                                    'code': stop_code,
+                                    'name': stop_name,
+                                    'terminal': destination_data.get('terminal')
+                                }
+                                intermediate_stops.append(stop)
                             flight_info['intermediate_stops'] = intermediate_stops
 
                             # Detalle de segmentos
@@ -366,7 +371,11 @@ def search_flights():
                                 dest_data = segment.get('destination', {}) if isinstance(segment.get('destination'), dict) else {}
                                 segment_details.append({
                                     'origin_airport': origin_data.get('iata_code') or origin_data.get('code') or '',
+                                    'origin_name': origin_data.get('name') or origin_data.get('city'),
+                                    'origin_terminal': origin_data.get('terminal'),
                                     'destination_airport': dest_data.get('iata_code') or dest_data.get('code') or '',
+                                    'destination_name': dest_data.get('name') or dest_data.get('city'),
+                                    'destination_terminal': dest_data.get('terminal'),
                                     'departing_at': segment.get('departing_at', ''),
                                     'arriving_at': segment.get('arriving_at', ''),
                                     'duration': segment.get('duration', ''),
